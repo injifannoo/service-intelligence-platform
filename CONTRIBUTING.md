@@ -15,7 +15,7 @@ Thank you for contributing! This document provides guidelines, setup instruction
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/](https://github.com/)<YOUR_GITHUB_USERNAME>/service-intelligence-platform.git
+   git clone https://github.com/injifannoo/service-intelligence-platform.git
    cd service-intelligence-platform
    ```
 
