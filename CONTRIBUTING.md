@@ -1,9 +1,7 @@
-````markdown
 # Contributing to Service Intelligence Platform
 
 Thank you for contributing! This document provides guidelines, setup instructions, and quality standards to ensure a smooth, collaborative development process.
 
----
 
 ## 1. Quick Start & Local Setup
 
