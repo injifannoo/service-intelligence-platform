@@ -18,7 +18,7 @@ Thank you for contributing! This document provides guidelines, setup instruction
    git clone [https://github.com/](https://github.com/)<YOUR_GITHUB_USERNAME>/service-intelligence-platform.git
    cd service-intelligence-platform
    ```
-````
+
 
 2. **Set up environment variables:**
 
@@ -52,7 +52,7 @@ docker compose ps
 
 ```
 
----
+
 
 ## 2. Git Workflow & Branching Guidelines
 
@@ -93,7 +93,6 @@ git rebase origin/main
 2. **PR Checks:** All automated CI checks (linting, static typing, unit tests) must pass.
 3. **Review:** At least one code review approval is required prior to merging into `main`.
 
----
 
 ## 3. Code Quality Standards
 
@@ -138,7 +137,7 @@ docker compose exec frontend npx tsc --noEmit
 
 ```
 
----
+
 
 ## 4. Testing Guidelines
 
@@ -163,12 +162,12 @@ docker compose exec frontend npm run test
 - **Services & Core Business Logic:** 85%+ coverage
 - **Database Selectors & API Controllers:** 80%+ coverage
 
----
+
 
 ## 5. Getting Help
 
 Refer to the specification documents in the `docs/` directory for system architecture (`03_Software_Architecture.md`), database schemas (`04_Database_Design.md`), and API design guidelines (`05_API_Design.md`).
 
-```
 
-```
+
+
