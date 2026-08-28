@@ -95,6 +95,10 @@ Users should be able to evaluate services quickly regardless of technical expert
 
 Every interaction contributes to improving recommendations, analytics, and service quality.
 
+## Data Provenance & Auditability
+
+Every AI-generated summary, sentiment score, and recommendation must be deterministic, auditable, and traceable to verified underlying user data to maintain absolute trust.
+
 ---
 
 # 5. Problem Statement
@@ -173,39 +177,41 @@ Core capabilities include:
 
 # 7. Platform Overview
 
-The platform connects three ecosystems:
+The platform connects three core ecosystems, mapped directly to bounded engineering domains (Vertical Slices):
 
-## Customer Ecosystem
+## Customer Ecosystem(Engagement & Discovery Context)
 
 Customers can:
 
-- Search services.
-- Discover organizations.
-- Compare providers.
-- Read verified reviews.
-- Receive AI recommendations.
-- Save favorites.
+- Search services via semantic and keyword search.
+- Discover organizations and explore structured service catalogues.
+- Compare providers across standardized operational dimensions.
+- Read verified reviews and AI-generated sentiment summaries.
+- Receive personalized, context-aware AI recommendations.
+- Save favorites and manage personal interaction history.
 - Submit reviews.
 - Track previous interactions.
 
 ---
 
-## Organization Ecosystem
+## Organization Ecosystem(Directory & Management Context)
 
 Organizations can:
 
-- Register.
+- Register and undergo domain verification.
 - Verify ownership.
 - Create profiles.
 - Manage services.
-- Respond to reviews.
+- Monitor and respond to customer reviews.
+- Access multi-tenant Business Intelligence (BI) dashboards.
+- Review AI-driven customer sentiment insights and competitive benchmarks.
 - Monitor customer satisfaction.
 - View AI insights.
 - Access analytics dashboards.
 
 ---
 
-## Platform Ecosystem
+## Platform Ecosystem(Core & Intelligence Infrastructure Context)
 
 The platform manages:
 
@@ -213,10 +219,12 @@ The platform manages:
 - Verification.
 - AI processing.
 - Search indexing.
+- Identity, multi-tenant isolation, and RBAC permissions.
+- Domain event telemetry and audit logging.
 - Recommendation generation.
-- Fraud detection.
+- AI pipeline orchestration (vector indexing, summary generation, fraud detection).
 - Data quality.
-- Moderation.
+- Content moderation, verification queues, and system governance.
 - Reporting.
 
 ---
@@ -275,6 +283,10 @@ Responsible for:
 - Compliance
 - Data quality
 - Platform governance
+
+### Data Security & Multi-Tenancy Boundary Note
+
+All business intelligence, internal operational metrics, and competitor analytics rendered to Organizations must adhere to strict multi-tenant boundary isolation. Proprietary organizational data and customer insights must never bleed across tenant boundaries or pollute shared AI model contexts.
 
 ---
 
@@ -501,6 +513,7 @@ Every feature should satisfy at least one of the following:
 - Scale across industries.
 - Leverage AI responsibly.
 - Protect user privacy.
+- **Event-Driven Telemetry:** Capture granular domain events across all user interactions to feed analytics and AI models continuously without coupling business services.
 
 ---
 
@@ -530,6 +543,9 @@ AI Metrics
 - Sentiment classification accuracy
 - Search relevance
 - AI response quality
+
+Event-Driven Telemetry:
+To feed the AI/Analytics engine (Section 18 metrics), the platform foundation must capture domain events (e.g., ReviewSubmitted, ComparisonExecuted, OrganizationVerified) via Celery/Redis from day one.
 
 ---
 

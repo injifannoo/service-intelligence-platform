@@ -61,7 +61,6 @@ All sensitive operations require authentication.
 
 API versions are maintained.
 
-
 Example:
 
 ```
@@ -83,7 +82,6 @@ Technology:
 
 # 3. API Architecture
 
-
 ```
 Frontend
 
@@ -104,19 +102,15 @@ Business Logic
 Database
 ```
 
-
 ---
 
 # 4. Authentication
-
 
 Technology:
 
 - JWT Authentication
 
-
 Flow:
-
 
 ```
 User
@@ -142,34 +136,29 @@ Access Protected Resources
 
 ## Authentication Endpoints
 
-
 ## Register User
 
-
 POST
-
 
 ```
 /api/v1/auth/register/
 ```
 
-
 Request:
 
 ```json
 {
-"name":"John",
-"email":"john@example.com",
-"password":"password"
+  "name": "John",
+  "email": "john@example.com",
+  "password": "password"
 }
 ```
-
 
 Response:
 
 ```json
 {
-"message":"Account created"
+  "message": "Account created"
 }
 ```
 
@@ -177,22 +166,18 @@ Response:
 
 ## Login
 
-
 POST
-
 
 ```
 /api/v1/auth/login/
 ```
 
-
 Response:
-
 
 ```json
 {
-"access_token":"token",
-"refresh_token":"token"
+  "access_token": "token",
+  "refresh_token": "token"
 }
 ```
 
@@ -200,9 +185,7 @@ Response:
 
 ## Logout
 
-
 POST
-
 
 ```
 /api/v1/auth/logout/
@@ -212,67 +195,73 @@ POST
 
 # 5. API Standards
 
-
 ## Response Format
 
-
-Success:
-
+Success( Single Resource):
 
 ```json
 {
-"success":true,
-"data":{}
+  "success": true,
+  "data": {}
 }
 ```
 
+Success (Paginated List):
+
+```json
+{
+  "success": true,
+  "data": [],
+  "pagination": {
+    "count": 100,
+    "next": "/api/v1/organizations/?page=2",
+    "previous": null,
+    "page_size": 20
+  }
+}
+```
 
 Error:
 
-
 ```json
 {
-"success":false,
-"message":"Error description"
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Detailed description of error",
+    "details": {}
+  }
 }
 ```
-
 
 ---
 
 ## HTTP Methods
 
-
-| Method | Purpose |
-|-|-|
-| GET | Retrieve data |
-| POST | Create data |
-| PUT | Update data |
-| DELETE | Remove data |
+| Method | Purpose       |
+| ------ | ------------- |
+| GET    | Retrieve data |
+| POST   | Create data   |
+| PUT    | Update data   |
+| DELETE | Remove data   |
 
 ---
 
 # 6. User APIs
 
-
 ## Get Profile
 
-
 GET
-
 
 ```
 /api/v1/users/profile/
 ```
 
-
 ---
 
 ## Update Profile
 
-
 PUT
-
 
 ```
 /api/v1/users/profile/
@@ -282,26 +271,21 @@ PUT
 
 # 7. Organization APIs
 
-
 ## Create Organization
 
-
 POST
-
 
 ```
 /api/v1/organizations/
 ```
 
-
 Request:
-
 
 ```json
 {
-"name":"ABC Technology",
-"industry":"Technology",
-"description":"Software company"
+  "name": "ABC Technology",
+  "industry": "Technology",
+  "description": "Software company"
 }
 ```
 
@@ -309,17 +293,13 @@ Request:
 
 ## Get Organizations
 
-
 GET
-
 
 ```
 /api/v1/organizations/
 ```
 
-
 Filters:
-
 
 ```
 industry
@@ -335,23 +315,19 @@ price
 
 ## Get Organization Detail
 
-
 GET
-
 
 ```
 /api/v1/organizations/{id}/
 ```
 
-
 Response:
-
 
 ```json
 {
-"name":"ABC Technology",
-"rating":4.5,
-"services":[]
+  "name": "ABC Technology",
+  "rating": 4.5,
+  "services": []
 }
 ```
 
@@ -359,37 +335,47 @@ Response:
 
 ## Update Organization
 
-
 PUT
-
 
 ```
 /api/v1/organizations/{id}/
 ```
 
----
-
-# 8. Service APIs
-
-
-## Create Service
-
+## Organization Verification Claim
 
 POST
 
+/api/v1/organizations/{id}/verify/
+Request:
+
+```json
+{
+  "document_type": "BUSINESS_LICENSE",
+  "document_url": "[https://storage.example.com/docs/license.pdf](https://storage.example.com/docs/license.pdf)"
+}
+```
+
+## Organization Services (Nested Slice)
+
+GET `/api/v1/organizations/{id}/services/`
+POST `/api/v1/organizations/{id}/services/`
+
+# 8. Service APIs
+
+## Create Service
+
+POST
 
 ```
 /api/v1/services/
 ```
 
-
 Example:
-
 
 ```json
 {
-"name":"Website Development",
-"price":5000
+  "name": "Website Development",
+  "price": 5000
 }
 ```
 
@@ -397,9 +383,7 @@ Example:
 
 ## List Services
 
-
 GET
-
 
 ```
 /api/v1/services/
@@ -409,9 +393,7 @@ GET
 
 ## Service Detail
 
-
 GET
-
 
 ```
 /api/v1/services/{id}/
@@ -421,26 +403,21 @@ GET
 
 # 9. Review APIs
 
-
 ## Create Review
 
-
 POST
-
 
 ```
 /api/v1/reviews/
 ```
 
-
 Request:
-
 
 ```json
 {
-"organization_id":1,
-"rating":5,
-"comment":"Excellent service"
+  "organization_id": 1,
+  "rating": 5,
+  "comment": "Excellent service"
 }
 ```
 
@@ -448,9 +425,7 @@ Request:
 
 ## Get Reviews
 
-
 GET
-
 
 ```
 /api/v1/organizations/{id}/reviews/
@@ -460,9 +435,7 @@ GET
 
 ## Report Review
 
-
 POST
-
 
 ```
 /api/v1/reviews/{id}/report/
@@ -472,61 +445,48 @@ POST
 
 # 10. Search APIs
 
-
 ## Basic Search
 
-
 GET
-
 
 ```
 /api/v1/search/
 ```
 
-
 Example:
-
 
 ```
 /api/v1/search/?query=hotel
 ```
 
-
 ---
 
 ## AI Semantic Search
 
-
 POST
-
 
 ```
 /api/v1/search/ai/
 ```
 
-
 Request:
-
 
 ```json
 {
-"query":
-"Affordable hotel near airport with breakfast"
+  "query": "Affordable hotel near airport with breakfast"
 }
 ```
 
-
 Response:
-
 
 ```json
 {
-"results":[
-{
-"name":"Hotel ABC",
-"reason":"Matches your requirements"
-}
-]
+  "results": [
+    {
+      "name": "Hotel ABC",
+      "reason": "Matches your requirements"
+    }
+  ]
 }
 ```
 
@@ -534,39 +494,28 @@ Response:
 
 # 11. Comparison APIs
 
-
 ## Compare Organizations
 
-
 POST
-
 
 ```
 /api/v1/comparison/
 ```
 
-
 Request:
-
 
 ```json
 {
-"organizations":[1,2,3],
-"criteria":[
-"price",
-"rating",
-"location"
-]
+  "organizations": [1, 2, 3],
+  "criteria": ["price", "rating", "location"]
 }
 ```
 
-
 Response:
-
 
 ```json
 {
-"comparison":[]
+  "comparison": []
 }
 ```
 
@@ -574,90 +523,66 @@ Response:
 
 # 12. AI APIs
 
+## Review Summary (Asynchronous LLM Queue)
 
-# Review Summary
+POST `/api/v1/organizations/{id}/ai/review-summary/`
 
-
-POST
-
-
-```
-/api/v1/ai/review-summary/
-```
-
-
-Input:
-
-
-```
-organization_id
-```
-
-
-Output:
-
+Response (202 Accepted - Trigger Celery Job):
 
 ```json
 {
-"summary":
-"Customers like service quality but complain about waiting time"
+  "success": true,
+  "data": {
+    "task_id": "c56a4180-65aa-42ec-a945-5fd21dec0538",
+    "status": "PROCESSING"
+  }
 }
 ```
 
 ---
 
-# Sentiment Analysis
-
+## Sentiment Analysis
 
 POST
-
 
 ```
 /api/v1/ai/sentiment/
 ```
 
-
 Output:
-
 
 ```json
 {
-"positive":75,
-"negative":25
+  "positive": 75,
+  "negative": 25
 }
 ```
 
 ---
 
-# Recommendation API
-
+## Recommendation API
 
 POST
-
 
 ```
 /api/v1/ai/recommend/
 ```
 
-
 Request:
-
 
 ```json
 {
-"category":"hotel",
-"budget":"medium",
-"location":"Addis Ababa"
+  "category": "hotel",
+  "budget": "medium",
+  "location": "Addis Ababa"
 }
 ```
 
-
 Response:
-
 
 ```json
 {
-"recommendations":[]
+  "recommendations": []
 }
 ```
 
@@ -665,22 +590,16 @@ Response:
 
 # 13. Analytics APIs
 
-
 ## Organization Dashboard
 
-
-GET
-
+GET `/api/v1/organizations/{id}/analytics/dashboard/`
 
 ```
-/api/v1/analytics/dashboard/
-```
-
 
 Returns:
 
-
 ```
+
 Profile views
 
 Reviews
@@ -690,80 +609,76 @@ Rating trends
 Customer sentiment
 
 Competitor position
+
 ```
 
 ---
 
 # 14. Error Handling
 
-
 Common errors:
-
 
 ## 400
 
 Bad Request
 
-
 ## 401
 
 Unauthorized
-
 
 ## 403
 
 Forbidden
 
-
 ## 404
 
 Not Found
-
 
 ## 500
 
 Server Error
 
-
 ---
 
 # 15. Future API Expansion
 
-
 Future APIs:
-
 
 ## Payment API
 
 ```
-/api/v1/payments/
-```
 
+/api/v1/payments/
+
+```
 
 ## Booking API
 
 ```
-/api/v1/bookings/
-```
 
+/api/v1/bookings/
+
+```
 
 ## Partner API
 
 ```
-/api/v1/partners/
-```
 
+/api/v1/partners/
+
+```
 
 ## Public Developer API
 
 ```
+
 /api/v1/public/
+
 ```
 
 ---
 
 # Final API Strategy
-
 
 The platform API should be:
 
@@ -773,25 +688,27 @@ The platform API should be:
 - Scalable
 - AI-ready
 
-
 Technology:
 
 ```
+
 Django REST Framework
 
-+
+-
 
 OpenAPI Documentation
 
-+
+-
 
 JWT Authentication
 
-+
+-
 
 REST Architecture
+
 ```
 
 ---
 
 End of Document
+```

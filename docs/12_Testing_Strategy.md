@@ -41,20 +41,17 @@ Testing must happen throughout development, not only before launch.
 
 Find problems before production.
 
-
 ---
 
 ## Automate Repetitive Testing
 
 Automated tests should run on every code change.
 
-
 ---
 
 ## Test Business Logic
 
 The most important parts of the system must have strong coverage.
-
 
 ---
 
@@ -66,9 +63,7 @@ A few meaningful tests are better than many weak tests.
 
 # 3. Testing Levels
 
-
 The testing pyramid:
-
 
 ```mermaid
 flowchart TD
@@ -90,82 +85,30 @@ Integration --> E2E
 
 # 4. Backend Testing
 
+## Technology Stack
 
-Technology:
+- **Framework:** `pytest`, `pytest-django`, `pytest-cov`
+- **Isolation:** Transactional DB fixtures with `factory_boy` test factories
 
+## Service & Selector Layer Testing
 
-```
-Python
+Following the vertical slice pattern (`features/<feature_name>/services.py` & `selectors.py`):
 
-Pytest
-
-Django Test Framework
-```
-
-
----
-
-# Unit Testing
-
-
-Purpose:
-
-Test individual functions.
-
-
-Example:
-
-
-Testing:
-
-
-```
-calculate_rating_score()
-```
-
-
-Verify:
-
-
-```
-Correct score calculation
-```
-
----
-
-# Service Layer Testing
-
-
-Test:
-
-
-- Business rules
-- Calculations
-- Validation
-
-
-Example:
-
-
-```
-Organization verification process
-```
+- **Service Unit Tests:** Test isolated business mutations (e.g., `create_review()`, `verify_organization()`).
+- **Selector Tests:** Verify read queries, pagination wrappers, and strict `organization_id` foreign-key filters.
+- **Async Task Tests:** Mock Celery tasks (`@pytest.mark.celery`) to verify job dispatch for background LLM processing.
 
 ---
 
 # Model Testing
 
-
 Test:
-
 
 - Database relationships
 - Constraints
 - Validation
 
-
 Example:
-
 
 ```
 Organization cannot exist without industry
@@ -175,9 +118,7 @@ Organization cannot exist without industry
 
 # 5. Frontend Testing
 
-
 Technology:
-
 
 ```
 Jest
@@ -187,23 +128,18 @@ React Testing Library
 Playwright
 ```
 
-
 ---
 
 # Component Testing
 
-
 Test:
-
 
 - Buttons
 - Forms
 - Cards
 - Search components
 
-
 Example:
-
 
 ```
 Login button submits correctly
@@ -213,9 +149,7 @@ Login button submits correctly
 
 # User Interface Testing
 
-
 Verify:
-
 
 - Pages load
 - Forms work
@@ -225,14 +159,11 @@ Verify:
 
 # 6. API Testing
 
-
 Purpose:
 
 Ensure backend communication works correctly.
 
-
 Technology:
-
 
 ```
 Postman
@@ -242,89 +173,60 @@ Pytest
 OpenAPI Testing
 ```
 
-
 ---
 
 # Test:
 
-
 ## Authentication API
 
-
 Verify:
-
 
 - User registration
 - Login
 - Token validation
 
-
 ---
 
 ## Organization API
 
-
 Verify:
-
 
 - Create organization
 - Update profile
 - Permission rules
 
-
 ---
 
-## Review API
+## Review & Async AI API Testing
 
+Verify endpoints adhering to the standard response wrapper:
 
-Verify:
-
-
-- Create review
-- Rating validation
-- Fraud prevention
+- **POST `/api/v1/organizations/{id}/reviews/`:** Create review, trigger Celery worker, and validate schema.
+- **POST `/api/v1/organizations/{id}/ai/review-summary/`:** Returns `202 Accepted` with `task_id`.
+- **GET `/api/v1/ai/tasks/{task_id}/`:** Poll status (`PENDING` $\rightarrow$ `SUCCESS`) and assert JSON body contract.
 
 ---
 
 # 7. Database Testing
 
-
 Test:
 
+## Data Integrity & Multi-Tenancy Isolation
 
-## Data Integrity
+- Verify foreign-key cascading rules and multi-tenant scoping (`organization_id`).
+- Validate strict database constraints (e.g., unique constraints on user reviews per service).
 
+## Vector Similarity (`pgvector`) Testing
 
-Example:
-
-
-```
-Review must belong to existing user
-```
-
-
----
-
-## Relationships
-
-
-Example:
-
-
-```
-Organization
-
-has many services
-```
-
+- **HNSW Index Query Execution:** Test cosine distance queries (`<->` operator) on `vector(1536)` fields.
+- **Embedding Ingestion Pipeline:** Verify that mock text embeddings populate and index without throwing dimensionality mismatches.
+- **Query Latency:** Benchmark `pgvector` query execution against seeded dataset baseline.
 
 ---
 
 ## Performance
 
-
 Test:
-
 
 - Query speed
 - Large datasets
@@ -332,103 +234,32 @@ Test:
 
 ---
 
-# 8. AI Testing
+# 8. AI Testing & Prompt Evaluation
 
-
-AI requires special testing because outputs are probabilistic.
-
----
-
-# AI Feature Testing
-
-
-## Semantic Search
-
-
-Measure:
-
-
-- Search relevance
-- Result quality
-
-
-Example:
-
-
-User:
-
-
-"Affordable hotel near airport"
-
-
-Expected:
-
-
-Relevant hotels appear.
+AI outputs require specialized evaluation because LLM responses are probabilistic.
 
 ---
 
-# Recommendation Testing
+## Prompt & Pipeline Testing
 
+- **Prompt Verification:** Unit test prompt templates in `ai-engine/prompts/` to prevent missing dynamic variables.
+- **Deterministic Mocking:** Mock external LLM API calls (OpenAI/Claude) using `vcrpy` or `pytest-mock` to isolate API testing costs.
 
-Measure:
+## Semantic Search & Recommendation Metrics
 
+- **Vector Search Relevance:** Evaluated using Mean Reciprocal Rank (MRR) and Normalized Discounted Cumulative Gain (NDCG).
+- **Sentiment Classification:** Measured using Precision, Recall, and F1 Score against labeled validation sets.
 
-- Accuracy
-- Click rate
-- User satisfaction
+## Safety & Hallucination Guardrails
 
-
----
-
-# Sentiment Analysis Testing
-
-
-Metrics:
-
-
-## Precision
-
-
-How many predicted results are correct.
-
-
----
-
-## Recall
-
-
-How many actual results are found.
-
-
----
-
-## F1 Score
-
-
-Balance between precision and recall.
-
----
-
-# AI Safety Testing
-
-
-Check:
-
-
-- Hallucination
-- Incorrect recommendations
-- Bias
-- Unsafe content
-
+- **Grounding Validation:** Ensure AI review summaries strictly derive from ingested user reviews without hallucinating facts.
+- **Structured Output Parsing:** Assert that LLM responses parse cleanly into JSON schemas via Pydantic validator models.
 
 ---
 
 # AI Model Version Testing
 
-
 Track:
-
 
 ```
 Model Version
@@ -444,7 +275,6 @@ Performance
 
 # 9. Security Testing
 
-
 Purpose:
 
 Protect users and businesses.
@@ -453,22 +283,17 @@ Protect users and businesses.
 
 # Authentication Testing
 
-
 Check:
-
 
 - Password security
 - Token expiration
 - Unauthorized access
 
-
 ---
 
 # Authorization Testing
 
-
 Example:
-
 
 Customer cannot access admin dashboard.
 
@@ -476,22 +301,17 @@ Customer cannot access admin dashboard.
 
 # Input Security
 
-
 Test:
-
 
 - SQL injection
 - XSS attacks
 - Invalid data
 
-
 ---
 
 # API Security
 
-
 Test:
-
 
 - Rate limiting
 - Permission checks
@@ -501,7 +321,6 @@ Test:
 
 # 10. Performance Testing
 
-
 Purpose:
 
 Ensure the system works under load.
@@ -510,12 +329,9 @@ Ensure the system works under load.
 
 # Load Testing
 
-
 Test:
 
-
 Example:
-
 
 ```
 10,000 users searching at the same time
@@ -525,12 +341,9 @@ Example:
 
 # Stress Testing
 
-
 Find system limits.
 
-
 Example:
-
 
 Increase traffic until failure.
 
@@ -538,175 +351,113 @@ Increase traffic until failure.
 
 # Performance Metrics
 
-
 Measure:
 
-
 ## Backend
-
 
 - API response time
 - Database queries
 
-
 ## Frontend
-
 
 - Page loading speed
 
-
 ## AI
-
 
 - Response time
 - Processing cost
 
 ---
 
-# 11. Automated Testing Pipeline
-
+# 11. Automated Testing Pipeline (CI/CD)
 
 Testing workflow:
 
-
 ```mermaid
 flowchart LR
-
-
-Developer[Developer]
-
-
-Developer --> GitHub[GitHub]
-
-
-GitHub --> CI[CI Pipeline]
-
-
-CI --> Unit[Unit Tests]
-
-
-CI --> Integration[Integration Tests]
-
-
-CI --> Security[Security Checks]
-
-
-CI --> Deploy[Deployment]
+    Dev[Developer Push] --> GitHub[GitHub Actions]
+    GitHub --> Lint[Ruff / ESLint Check]
+    GitHub --> TypeCheck[mypy / TypeScript Compiler]
+    GitHub --> Pytest[Pytest Engine + pgvector Container]
+    GitHub --> Playwright[Frontend E2E Tests]
+    GitHub --> Security[Bandit / Trivy Container Scan]
+    Security --> Merge[Block or Merge PR]
 
 ```
 
 ---
 
-# CI Pipeline Checks
+# Mandatory CI Pipeline Checks
 
-
-Every pull request:
-
+Mandatory CI Pipeline Checks
+Every Pull Request must pass the following automated gates before merge:
 
 Run:
 
-
 ```
-Code formatting
 
-Unit tests
+Linting & Formatter: ruff check (Backend) & eslint + prettier (Frontend).
 
-API tests
+Static Type Analysis: mypy --strict (Python) & tsc --noEmit (TypeScript).
 
-Security checks
+Automated Test Suite: Full pytest execution against containerized PostgreSQL (pgvector) and Redis instances.
 
-Build verification
+Security Vulnerability Scan: bandit static analysis and dependency vulnerability checks (npm audit, pip-audit ).
 ```
 
 ---
 
-# 12. Release Checklist
+# 12. Release Checklist & Coverage Goals
 
+## Release Checklist
 
-Before production release:
+### Functionality
 
+- [ ] All feature requirements verified against specification standards
+- [ ] Core user flows (registration, organization setup, review submission, search) tested end-to-end
+- [ ] Zero critical or high-severity open bugs
 
-## Functionality
+### Security & Multi-Tenancy
 
+- [ ] Authentication and JWT token rotation mechanisms verified
+- [ ] Tenant boundaries (`organization_id`) tested on all CRUD and selector endpoints
+- [ ] Input validation, CORS policies, and rate limits configured and active
+- [ ] Sensitive keys and production secrets managed via secure environment injection
 
-✓ All features work
+### Performance & Scaling
 
-✓ User flows tested
+- [ ] API endpoint latency benchmarks met (under 200ms for standard REST calls)
+- [ ] `pgvector` HNSW index similarity queries benchmarked under load
+- [ ] Database query count optimized (N+1 queries eliminated via select/prefetch related)
 
-✓ Critical bugs fixed
+### AI Quality & Reliability
 
+- [ ] Prompt templates in `ai-engine/prompts/` tested for dynamic parameter injection
+- [ ] AI review summarization background jobs correctly dispatches and handles failures
+- [ ] Grounding checks verified to prevent hallucination in business summaries
 
----
+### Infrastructure & Deployment
 
-## Security
-
-
-✓ Authentication tested
-
-✓ Permissions verified
-
-✓ Sensitive data protected
-
-
----
-
-## Performance
-
-
-✓ Load testing completed
-
-✓ Database optimized
-
+- [ ] Database migration scripts executed and verified on staging environment
+- [ ] Containerized builds (Backend, Frontend, Celery Workers) passing CI checks
+- [ ] Sentry error logging and health monitoring active
 
 ---
 
-## AI Quality
+## Code Coverage Benchmarks
 
-
-✓ Model evaluated
-
-✓ Outputs reviewed
-
-✓ Accuracy measured
-
-
----
-
-## Documentation
-
-
-✓ API documentation updated
-
-✓ Architecture updated
-
-✓ Deployment instructions updated
-
----
-
-# Testing Coverage Goal
-
-
-Target:
-
-
-```
-Critical backend logic:
-
-80%+ coverage
-
-
-Overall application:
-
-70%+ coverage
-```
+| System Layer                  | Target Coverage | Priority Focus Area                                                 |
+| :---------------------------- | :-------------- | :------------------------------------------------------------------ |
+| **Services & Business Logic** | `85%+`          | Tenant isolation, service management, verification workflows        |
+| **Selectors & DB Queries**    | `80%+`          | `pgvector` distance queries, HNSW search, multi-attribute filtering |
+| **API Views & Controllers**   | `75%+`          | DRF serializers, custom response schemas, HTTP error handlers       |
+| **Frontend Core Components**  | `70%+`          | Auth state management, comparison matrix, search filters            |
 
 ---
 
 # Final Testing Strategy
 
-
 The platform follows:
-
 
 ```
 Prevent Problems

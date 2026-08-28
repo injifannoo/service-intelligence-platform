@@ -107,21 +107,24 @@ Manages platform configuration.
 
 # 5. Core Features
 
-- Authentication
-- Organization Management
-- Service Management
-- Industry Management
-- Search
-- Reviews
-- Ratings
-- AI Search
-- AI Recommendations
-- Comparison Engine
-- Analytics Dashboard
-- Notifications
-- Verification
-- Subscription
-- Reporting
+Mapped across domain vertical slices (`features/`):
+
+- **Authentication:** User registration, login, session management, and role-based access control (RBAC).
+- **Organization Management:** Profile creation, business details, locations, operational hours, and media galleries.
+- **Service Management:** Catalog creation, service offerings, descriptions, pricing, and category tagging.
+- **Industry Management:** Multi-industry categorization, taxonomy structure, and domain-specific attributes.
+- **Search:** Keyword, location-based, category, and multi-criteria filtering capabilities.
+- **Reviews:** User-generated review submissions, feedback collection, and detailed customer responses.
+- **Ratings:** Multi-criteria numerical scoring for organizations and specific services.
+- **AI Search:** Semantic search using natural language processing to understand user intent beyond simple keywords.
+- **AI Recommendations:** Context-aware engine suggesting relevant organizations based on user preferences and history.
+- **Comparison Engine:** Side-by-side evaluation of multiple service providers across ratings, price, services, and features.
+- **Analytics Dashboard:** Visual reporting on customer trends, review sentiment, and performance metrics for businesses.
+- **Notifications:** In-app and transactional alerts for account updates, review responses, and platform events.
+- **Verification:** Business identity verification queue and trust-badge validation workflows.
+- **Subscription:** Monetization framework for business tiers, paid features, and entitlement tracking.
+- **Reporting:** Exportable business metrics, administrative audit logs, and platform performance data.
+- **Content Moderation:** Automated and manual abuse reporting queues to catch spam or fraudulent reviews.
 
 ---
 
@@ -196,13 +199,13 @@ Compare organizations by:
 
 ---
 
-## AI
+## AI (Asynchronous Engine)
 
-- Review summary
-- Sentiment analysis
-- Recommendations
-- Smart search
-- AI Assistant
+- AI Review Summaries (Generated asynchronously via background worker queue)
+- Sentiment Analysis & Score Aggregation
+- Context-Aware Recommendations
+- Hybrid Semantic Search
+- Interactive AI Decision Assistant
 
 ---
 
@@ -220,28 +223,26 @@ Organizations can view:
 
 # 7. Non-Functional Requirements
 
-Performance
+## Performance & Latency
 
-- Fast response
-- High availability
-- Scalable
+- **Core API Response Time:** p95 < 200ms for read/write endpoints.
+- **AI Processing:** Async task execution for LLM summary generation; search query latency p95 < 500ms.
+- **Availability:** 99.9% uptime baseline.
+- **Scalability:** Stateless API layer capable of horizontal scaling via container orchestration.
 
-Security
+## Security & Data Integrity
 
-- JWT Authentication
-- RBAC
-- HTTPS
-- Encryption
+- **Authentication & Security:** JWT/Session-based Auth, strict Role-Based Access Control (RBAC), HTTPS enforcement, and field-level encryption for sensitive payloads.
+- **Multi-Tenant Isolation:** Strict logical tenant isolation preventing cross-organization telemetry and data leakage.
 
-Reliability
+## Reliability & Operations
 
-- Daily backups
-- Monitoring
-- Logging
+- **Data Retention & Backups:** Daily automated database backups with point-in-time recovery.
+- **Observability:** Centralized structured logging, health probes, and domain metric tracking.
 
-Maintainability
+## Maintainability
 
-- Modular architecture
+- **Architecture:** Modular Monolith with Vertical Slicing, API-first contract design, and clean feature encapsulation.
 - Clean code
 - Documentation
 
@@ -312,6 +313,8 @@ So customers trust the platform.
 - AI recommendations are advisory only.
 - Reviews are moderated.
 - Fraudulent reviews are removed.
+- Organization analytics must strictly reflect verified tenant boundaries.
+- AI summaries and sentiment processing must execute asynchronously out-of-band without blocking primary HTTP write operations.
 
 ---
 

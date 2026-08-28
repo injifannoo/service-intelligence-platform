@@ -41,7 +41,6 @@ The database should support multiple industries and future expansion.
 
 PostgreSQL
 
-
 Used for:
 
 - Transactional data
@@ -50,6 +49,15 @@ Used for:
 - Services
 - Reviews
 
+---
+
+## Vector Database Extensions
+
+**pgvector (PostgreSQL Extension)**
+Used from Day 1 for:
+
+- Storing vector embeddings (organization descriptions, reviews, queries).
+- In-database AI semantic search and recommendation matching without requiring external SaaS vector DBs initially.
 
 ---
 
@@ -57,13 +65,11 @@ Used for:
 
 Redis
 
-
 Used for:
 
 - Sessions
 - Frequently accessed data
 - Background jobs
-
 
 ---
 
@@ -75,10 +81,8 @@ Used for:
 - Document embeddings
 - Recommendation system
 
-
 Examples:
 
-- pgvector
 - Pinecone
 - Weaviate
 
@@ -112,9 +116,7 @@ Protect personal and business information.
 
 # 4. Main Entities
 
-
 Core entities:
-
 
 ```
 User
@@ -147,7 +149,6 @@ AI Insight
 ---
 
 # 5. Entity Relationship Diagram
-
 
 ```mermaid
 erDiagram
@@ -238,31 +239,25 @@ created_at datetime
 
 # 6. Core Tables
 
-
 # User Table
-
 
 Purpose:
 
 Stores platform users.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| name | String |
-| email | String |
-| password_hash | String |
-| role | Enum |
-| status | Boolean |
-| created_at | DateTime |
-
+| Field         | Type     |
+| ------------- | -------- |
+| id            | UUID     |
+| name          | String   |
+| email         | String   |
+| password_hash | String   |
+| role          | Enum     |
+| status        | Boolean  |
+| created_at    | DateTime |
 
 Roles:
-
 
 ```
 Customer
@@ -278,40 +273,33 @@ Super Admin
 
 # Organization Table
 
-
 Purpose:
 
 Stores registered service providers.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| name | String |
-| description | Text |
-| industry_id | UUID |
-| location | String |
-| phone | String |
-| website | String |
-| verification_status | Enum |
-| created_at | DateTime |
-
+| Field               | Type     |
+| ------------------- | -------- |
+| id                  | UUID     |
+| name                | String   |
+| description         | Text     |
+| industry_id         | UUID     |
+| location            | String   |
+| phone               | String   |
+| website             | String   |
+| verification_status | Enum     |
+| created_at          | DateTime |
 
 ---
 
 # Industry Table
 
-
 Purpose:
 
 Categorizes organizations.
 
-
 Examples:
-
 
 ```
 Healthcare
@@ -329,61 +317,50 @@ Finance
 
 # Service Table
 
-
 Purpose:
 
 Stores services offered by organizations.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| organization_id | UUID |
-| name | String |
-| description | Text |
-| price | Decimal |
-| status | Boolean |
-
+| Field           | Type    |
+| --------------- | ------- |
+| id              | UUID    |
+| organization_id | UUID    |
+| name            | String  |
+| description     | Text    |
+| price           | Decimal |
+| status          | Boolean |
 
 ---
 
 # Review Table
 
-
 Purpose:
 
 Stores customer feedback.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| user_id | UUID |
-| organization_id | UUID |
-| rating | Integer |
-| comment | Text |
-| verified | Boolean |
-| created_at | DateTime |
-
+| Field           | Type     |
+| --------------- | -------- |
+| id              | UUID     |
+| user_id         | UUID     |
+| organization_id | UUID     |
+| rating          | Integer  |
+| comment         | Text     |
+| verified        | Boolean  |
+| created_at      | DateTime |
 
 ---
 
 # Rating Table
 
-
 Purpose:
 
 Stores scoring information.
 
-
 Possible ratings:
-
 
 ```
 Quality
@@ -401,101 +378,82 @@ Overall Experience
 
 # Verification Table
 
-
 Purpose:
 
 Confirms organization authenticity.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| organization_id | UUID |
-| document | File |
-| status | Enum |
-| verified_at | DateTime |
-
+| Field           | Type     |
+| --------------- | -------- |
+| id              | UUID     |
+| organization_id | UUID     |
+| document        | File     |
+| status          | Enum     |
+| verified_at     | DateTime |
 
 ---
 
 # Recommendation Table
 
-
 Purpose:
 
 Stores AI recommendations.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| user_id | UUID |
-| organization_id | UUID |
-| score | Float |
-| reason | Text |
-
+| Field           | Type  |
+| --------------- | ----- |
+| id              | UUID  |
+| user_id         | UUID  |
+| organization_id | UUID  |
+| score           | Float |
+| reason          | Text  |
 
 ---
 
 # Comparison Table
 
-
 Purpose:
 
 Stores comparison results.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| user_id | UUID |
-| organizations | JSON |
-| created_at | DateTime |
-
+| Field         | Type     |
+| ------------- | -------- |
+| id            | UUID     |
+| user_id       | UUID     |
+| organizations | JSON     |
+| created_at    | DateTime |
 
 ---
 
 # Subscription Table
 
-
 Purpose:
 
 Business revenue management.
 
-
 Fields:
 
-
-| Field | Type |
-|-|-|
-| id | UUID |
-| organization_id | UUID |
-| plan | String |
-| status | String |
-| expires_at | DateTime |
-
+| Field           | Type     |
+| --------------- | -------- |
+| id              | UUID     |
+| organization_id | UUID     |
+| plan            | String   |
+| status          | String   |
+| expires_at      | DateTime |
 
 ---
 
 # Analytics Table
 
-
 Purpose:
 
 Stores business metrics.
 
-
 Examples:
-
 
 ```
 Profile views
@@ -509,18 +467,25 @@ Customer sentiment
 Competitor comparison
 ```
 
+# Analytics Table
+
+| Field           | Type     | Notes                                 |
+| --------------- | -------- | ------------------------------------- |
+| id              | UUID     | Primary Key                           |
+| organization_id | UUID     | FK -> Organization (Tenant Isolation) |
+| metric_type     | String   | Indexed                               |
+| metric_value    | JSONB    | Structured performance payload        |
+| created_at      | DateTime | Indexed                               |
+
 ---
 
 # AI Insight Table
-
 
 Purpose:
 
 Stores AI-generated business intelligence.
 
-
 Examples:
-
 
 ```
 Customer complaints
@@ -534,52 +499,54 @@ Reputation score
 
 ---
 
-# 7. Relationships
+# AI Insight Table
 
+| Field           | Type         | Notes                                 |
+| --------------- | ------------ | ------------------------------------- |
+| id              | UUID         | Primary Key                           |
+| organization_id | UUID         | FK -> Organization (Tenant Isolation) |
+| summary         | Text         | Aggregated review output              |
+| sentiment_score | Float        | Aggregate score                       |
+| embedding       | Vector(1536) | HNSW Indexed (pgvector)               |
+| created_at      | DateTime     | Indexed                               |
+
+---
+
+# 7. Relationships
 
 ## User → Review
 
 One user can create many reviews.
 
-
 ```
 User 1 ---- N Review
 ```
-
 
 ---
 
 ## Organization → Service
 
-
 One organization can provide many services.
-
 
 ```
 Organization 1 ---- N Service
 ```
 
-
 ---
 
 ## Organization → Review
 
-
 One organization receives many reviews.
-
 
 ```
 Organization 1 ---- N Review
 ```
 
-
 ---
 
 ## Industry → Organization
 
-
 One industry contains many organizations.
-
 
 ```
 Industry 1 ---- N Organization
@@ -589,38 +556,33 @@ Industry 1 ---- N Organization
 
 # 8. AI Data Storage
 
-
 AI requires additional data.
 
-
-## Embeddings
-
+## Vector Storage Schema (PostgreSQL + pgvector)
 
 Store vector representations of:
-
 
 - Organization descriptions
 - Services
 - Reviews
 - Documents
 
+Embeddings are stored natively within PostgreSQL using the `vector` type with **HNSW (Hierarchical Navigable Small World)** indexing for fast cosine similarity search.
+
+- **Review Vector:** `vector(1536)` (OpenAI/HuggingFace embeddings)
+- **Organization Profile Vector:** `vector(1536)`
+- **Index Type:** `CREATE INDEX ON ai_insight USING hnsw (embedding vector_cosine_ops);`
 
 Example:
-
 
 ```
 Organization Text
 
 ↓
-
 Embedding Model
-
 ↓
-
 Vector
-
 ↓
-
 Vector Database
 ```
 
@@ -628,9 +590,7 @@ Vector Database
 
 ## AI Processing Data
 
-
 Store:
-
 
 - Sentiment results
 - Summaries
@@ -641,47 +601,45 @@ Store:
 
 # 9. Data Security
 
-
 Implement:
-
 
 ## Access Control
 
 Users only access permitted data.
 
-
 ## Encryption
 
 Sensitive information encrypted.
-
 
 ## Audit Logs
 
 Track important actions.
 
-
 ## Backup
 
 Regular database backups.
 
+## Multi-Tenant Isolation
+
+All organization analytics, AI insights, and billing records must enforce foreign-key level isolation (`organization_id`) to prevent cross-tenant telemetry leaks.
+
+## Audit Logs Table
+
+Track critical mutations (verifications, role changes, deleted reviews) via a centralized `audit_logs` table (`user_id`, `action`, `resource_id`, `timestamp`).
 
 ---
 
 # 10. Future Scaling
 
-
 When data grows:
 
-
 Current:
-
 
 ```
 PostgreSQL
 ```
 
 Future:
-
 
 ```
 PostgreSQL
@@ -703,14 +661,11 @@ Data Warehouse
 Vector Database
 ```
 
-
 ---
 
 # Final Database Strategy
 
-
 The platform starts with:
-
 
 ```
 PostgreSQL
@@ -724,14 +679,12 @@ Redis
 pgvector
 ```
 
-
 This provides:
 
 - Fast development
 - AI readiness
 - Easy scaling
 - Enterprise capability
-
 
 ---
 

@@ -76,14 +76,11 @@ Priority:
 
 2 weeks
 
-
 ## Goal
 
 Prepare engineering environment.
 
-
 ## Tasks
-
 
 - Create repository
 - Setup architecture
@@ -94,9 +91,7 @@ Prepare engineering environment.
 - Create documentation
 - Configure CI/CD
 
-
 ## Result
-
 
 A working development environment.
 
@@ -108,14 +103,11 @@ A working development environment.
 
 3-4 months
 
-
 ## Goal
 
 Launch first usable platform.
 
-
 ## Features
-
 
 ### User Management
 
@@ -123,7 +115,6 @@ Launch first usable platform.
 - Login
 - User roles
 - Profile
-
 
 ---
 
@@ -134,7 +125,6 @@ Launch first usable platform.
 - Verification
 - Industry classification
 
-
 ---
 
 ### Service System
@@ -142,7 +132,6 @@ Launch first usable platform.
 - Service creation
 - Service categories
 - Service details
-
 
 ---
 
@@ -152,7 +141,6 @@ Launch first usable platform.
 - Ratings
 - Review moderation
 
-
 ---
 
 ### Search System
@@ -160,7 +148,6 @@ Launch first usable platform.
 - Keyword search
 - Filtering
 - Location search
-
 
 ---
 
@@ -170,11 +157,9 @@ Launch first usable platform.
 - Compare ratings
 - Compare services
 
-
 ---
 
 ## MVP Result
-
 
 Customers can:
 
@@ -182,7 +167,6 @@ Customers can:
 - View information
 - Compare services
 - Read reviews
-
 
 Organizations can:
 
@@ -198,28 +182,21 @@ Organizations can:
 
 3-6 months
 
-
 ## Goal
 
 Transform platform from directory into intelligence engine.
 
-
 ## AI Features
-
 
 ## AI Review Summary
 
-
 Input:
-
 
 ```
 100 customer reviews
 ```
 
-
 Output:
-
 
 ```
 Strengths:
@@ -235,7 +212,6 @@ Weakness:
 
 ## Sentiment Analysis
 
-
 Analyze:
 
 - Positive feedback
@@ -247,15 +223,11 @@ Analyze:
 
 ## Semantic Search
 
-
 Example:
-
 
 User:
 
-
 "Affordable software company in Addis Ababa for small business"
-
 
 AI understands:
 
@@ -268,16 +240,13 @@ AI understands:
 
 ## Recommendation Engine
 
-
 Uses:
-
 
 - User preferences
 - Location
 - Reviews
 - Price
 - Quality
-
 
 ---
 
@@ -287,45 +256,34 @@ Uses:
 
 6-12 months
 
-
 ## Goal
 
 Create revenue from organizations.
 
-
 Features:
-
 
 ## Business Dashboard
 
-
 Shows:
-
 
 - Reputation score
 - Customer sentiment
 - Review trends
 - Competitor analysis
 
-
 ---
 
 ## AI Business Advisor
 
-
 Example:
 
-
 "The main customer complaint this month is slow response time."
-
 
 ---
 
 ## Subscription System
 
-
 Plans:
-
 
 Free
 
@@ -349,23 +307,17 @@ Enterprise
 
 12-24 months
 
-
 Expand from first industry to multiple industries.
-
 
 ---
 
 # Initial Industry
 
-
 Recommended:
-
 
 ## Technology Services
 
-
 Examples:
-
 
 - Software companies
 - AI companies
@@ -373,20 +325,16 @@ Examples:
 - Digital agencies
 - Cybersecurity firms
 
-
 Reason:
-
 
 - Easy data collection
 - Lower regulation
 - High demand
 - Suitable for B2B revenue
 
-
 ---
 
 # Expansion Industries
-
 
 ## Hospitality
 
@@ -394,26 +342,22 @@ Reason:
 - Restaurants
 - Tourism
 
-
 ## Healthcare
 
 - Hospitals
 - Clinics
 - Laboratories
 
-
 ## Education
 
 - Universities
 - Training centers
-
 
 ## Finance
 
 - Banks
 - Insurance
 - FinTech
-
 
 ## Professional Services
 
@@ -429,9 +373,7 @@ Reason:
 
 2-5 years
 
-
 Expansion:
-
 
 ```
 Ethiopia
@@ -453,119 +395,96 @@ Global
 
 # 4. MVP Roadmap
 
-
-## MVP Version 1
-
+## MVP Version 1 (Core Directory & Vector Infrastructure)
 
 Must have:
 
-
-```
-Authentication
-
-Organization Profiles
-
-Service Listing
-
-Search
-
-Reviews
-
-Ratings
-
-Basic Comparison
-
-Admin Panel
-```
-
+- Authentication & JWT Token Management
+- Organization Profiles & Multi-Tenant Boundaries
+- Service Listing (Vertical Feature Slices)
+- Basic Keyword Search & `pgvector` Structural Setup
+- Reviews & Verification Workflows
+- Ratings & Provider Comparison Matrix
+- Admin Panel & Basic Audit Logs
 
 ---
 
-## MVP Version 2
-
+## MVP Version 2 (AI Layer & Async Processing)
 
 Add:
 
-
 ```
-AI Review Summary
 
-Better Search
+AI Review Summary: Asynchronous AI Review Summarization (Celery + LLM Task Queue)
 
-Recommendations
+Better Search: Semantic Vector Search (`pgvector` HNSW Cosine Indexing)
 
-Analytics Dashboard
+Recommendations: Algorithmic Recommendations
+
+Analytics Dashboard: Tenant Organization Analytics Dashboard
+
 ```
 
 ---
 
 # 5. AI Development Roadmap
 
-
-## Level 1
-
-AI Assistance
-
+## Level 1: AI Assistance & Batch Text Processing
 
 Features:
 
-- Review summaries
-- Text analysis
-
+- Asynchronous LLM Review Summarizations (Celery Task Execution)
+- Basic Sentiment Analysis & Classification
+- Strict Prompt File Management (`ai-engine/prompts/`)
 
 ---
 
-## Level 2
+## Level 2: Native Semantic Search
 
 AI Search
-
 
 Features:
 
 - Semantic search
-- Natural language queries
-
+- Natural language queries: Natural Language & Vector Similarity Queries
+- PostgreSQL `pgvector` HNSW Index Execution
+- Multi-Attribute Filtering (Location, Category, Budget + Vector Distance)
 
 ---
 
-## Level 3
+## Level 3 : Personalization & Hybrid Ranking
 
 AI Recommendations
 
-
 Features:
 
-- Personalization
-- Ranking models
-
+- Hybrid Search (BM25 Full-Text Search + Dense Vector Embeddings)
+- Contextual Recommendation Models
+- Dynamic Business Ranking Algorithms
 
 ---
 
-## Level 4
+## Level 4: Predictive Business Intelligence
 
 AI Business Intelligence
 
-
 Features:
 
-- Predictions
-- Market insights
-- Optimization suggestions
+- Predictions:Time-Series Customer Sentiment Forecasting
+- Market insights Market Trend Predictions & Competitor Benchmark Scoring
+- Optimization suggestions: Automated Strategic AI Advisory Reports
 
 ---
 
 # 6. Business Expansion Roadmap
 
-
 ## Stage 1
 
 Free platform adoption
 
-
 Goal:
 
 Build data and users.
-
 
 ---
 
@@ -573,14 +492,11 @@ Build data and users.
 
 Business subscriptions
 
-
 Revenue:
-
 
 - Premium profiles
 - Analytics dashboard
 - Advertising
-
 
 ---
 
@@ -588,9 +504,7 @@ Revenue:
 
 Enterprise solutions
 
-
 Revenue:
-
 
 - Market intelligence
 - Data API
@@ -600,64 +514,35 @@ Revenue:
 
 # 7. Milestones
 
-
-| Milestone | Target |
-|-|-|
-| Project Foundation | Complete |
-| MVP Development | 3-4 months |
-| First Users | 4-6 months |
-| AI Features | 6-12 months |
-| Business Revenue | 12 months |
-| Multi-industry Platform | 24 months |
-
----
-
-# 8. Risks
-
-
-## Data Problem
-
-Solution:
-
-Start with focused industries and verified sources.
-
+| Milestone               | Target      |
+| ----------------------- | ----------- |
+| Project Foundation      | Complete    |
+| MVP Development         | 3-4 months  |
+| First Users             | 4-6 months  |
+| AI Features             | 6-12 months |
+| Business Revenue        | 12 months   |
+| Multi-industry Platform | 24 months   |
 
 ---
 
-## Low User Adoption
+# 8. Risks and Mitigation
 
-Solution:
-
-Provide strong AI value and useful comparisons.
-
-
----
-
-## Fake Reviews
-
-Solution:
-
-Verification and fraud detection.
-
-
----
-
-## Technical Complexity
-
-Solution:
-
-Start modular and scale gradually.
-
+| Risk Factor                            | Impact   | Mitigation Strategy                                                                                   |
+| -------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| **Data Scarcity / Bootstrapping**      | High     | Focus initial rollout strictly on Technology Services (B2B) with verified seed profiles.              |
+| **Fake Reviews & Manipulation**        | High     | Mandate user authentication, audit logging, and automated sentiment anomaly detection.                |
+| **Cross-Tenant Data Leaks**            | Critical | Enforce strict `organization_id` foreign-key isolation and policy checks at the database/API level.   |
+| **LLM Latency & API Cost Overshoot**   | Medium   | Offload LLM summarization to asynchronous Celery queues; cache embedding outputs in Redis/PostgreSQL. |
+| **Technical Complexity & Scope Creep** | Medium   | Maintain vertical feature slicing; deploy a strict Modular Monolith before microservice extraction.   |
 
 ---
 
 # Final Roadmap Strategy
 
-
 The platform development follows:
 
-
 ```
+
 Simple Platform
 
 ↓
@@ -675,8 +560,13 @@ Business Intelligence Platform
 ↓
 
 Global Service Intelligence Infrastructure
+
 ```
 
 ---
 
 End of Document
+
+```
+
+```

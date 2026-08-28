@@ -111,21 +111,23 @@ Data Pipeline
 
 # Modular Monolith + AI Service
 
-
 The main application is one backend with separated modules.
 
 Example:
 
 ```
-Backend
+backend/
+├── features/
+│   ├── authentication/
+│   ├── users/
+│   ├── organizations/
+│   ├── services/
+│   ├── reviews/
+│   ├── search/
+│   ├── analytics/
+│   ├── verification/
+│   └── subscriptions/
 
-├── Users
-├── Organizations
-├── Services
-├── Reviews
-├── Search
-├── Analytics
-└── Payments
 ```
 
 AI runs separately:
@@ -188,7 +190,6 @@ Technology:
 - React Query
 - Zustand
 
-
 Responsibilities:
 
 - User interface
@@ -206,7 +207,6 @@ Technology:
 - Python
 - Django
 - Django REST Framework
-
 
 Responsibilities:
 
@@ -227,7 +227,6 @@ Technology:
 - PyTorch
 - LangChain
 
-
 Responsibilities:
 
 - AI search
@@ -242,7 +241,6 @@ Responsibilities:
 Technology:
 
 - PostgreSQL
-
 
 Stores:
 
@@ -268,7 +266,6 @@ Future:
 - Elasticsearch
 - Vector Database
 
-
 Purpose:
 
 - Fast search
@@ -277,61 +274,52 @@ Purpose:
 
 ---
 
+# Background & Task Queue
+
+Technology:
+
+- Celery
+- Redis
+
+Responsibilities:
+
+- Asynchronous AI LLM summary generation
+- Vector embedding recalculation
+- Domain event processing and notification delivery
+
+---
+
 # 7. Backend Architecture
 
 The backend follows:
 
-## Clean Architecture
-
+## Clean Architecture Flow
 
 ```
-API Layer
-
+API (Views/Serializers)
 ↓
-
-Service Layer
-
+Services (Business Logic & Mutations)
 ↓
-
-Repository Layer
-
+Selectors (Read/Query Logic)
 ↓
+Models / Database
 
-Database
 ```
-
 
 ---
 
 ## Backend Modules
 
-
 ```
-backend/apps/
-
-├── users
-
-├── organizations
-
-├── services
-
-├── reviews
-
-├── search
-
-├── recommendations
-
-├── analytics
-
-├── subscriptions
-
-└── verification
+backend/
+├── core/         # Shared infrastructure, base models, permissions
+├── features/     # Encapsulated domain vertical slices
+└── ai_engine/    # Async AI orchestration, embeddings, & LLM integrations
 ```
 
 ---
 
 # Module Responsibility
-
 
 ## Users
 
@@ -341,7 +329,6 @@ Handles:
 - Authentication
 - Roles
 - Permissions
-
 
 ---
 
@@ -353,7 +340,6 @@ Handles:
 - Verification
 - Business information
 
-
 ---
 
 ## Services
@@ -363,7 +349,6 @@ Handles:
 - Service listings
 - Categories
 - Pricing
-
 
 ---
 
@@ -375,7 +360,6 @@ Handles:
 - Feedback
 - Moderation
 
-
 ---
 
 ## Search
@@ -385,7 +369,6 @@ Handles:
 - Search queries
 - Filtering
 - Ranking
-
 
 ---
 
@@ -397,11 +380,9 @@ Handles:
 - Metrics
 - Insights
 
-
 ---
 
 # 8. Frontend Architecture
-
 
 Structure:
 
@@ -429,7 +410,6 @@ frontend/
 
 # Main Features
 
-
 ```
 features/
 
@@ -449,7 +429,6 @@ features/
 ---
 
 # 9. AI Architecture
-
 
 AI components:
 
@@ -473,11 +452,9 @@ Relevant Data
 AI Response
 ```
 
-
 ---
 
 # AI Features
-
 
 ## Semantic Search
 
@@ -491,7 +468,6 @@ instead of only:
 
 "hotel"
 
-
 ---
 
 ## Recommendation Engine
@@ -503,7 +479,6 @@ Uses:
 - Budget
 - Previous behavior
 - Ratings
-
 
 ---
 
@@ -546,9 +521,7 @@ Weakness:
 
 # 10. Data Architecture
 
-
 Data flow:
-
 
 ```
 Users
@@ -578,46 +551,27 @@ Users and Organizations
 
 # 11. Communication Flow
 
-
 Customer search example:
-
 
 ```
 User
-
 ↓
-
-Frontend
-
+Frontend (Next.js)
 ↓
-
-Backend API
-
+Backend API (Django REST Framework)
 ↓
-
-Search Module
-
+Redis Cache (Check for cached result)
+↓ (Cache Miss)
+Database / AI Engine (Vector Search / Celery Async Pipeline)
 ↓
-
-Database
-
-↓
-
-AI Recommendation Service
-
-↓
-
 Response
-
 ↓
-
 Frontend Display
 ```
 
 ---
 
 # 12. Scalability Strategy
-
 
 ## Stage 1
 
@@ -633,13 +587,11 @@ Modular Monolith
 AI Service
 ```
 
-
 ---
 
 ## Stage 2
 
 Growth
-
 
 Separate:
 
@@ -647,13 +599,11 @@ Separate:
 - Analytics Service
 - Recommendation Service
 
-
 ---
 
 ## Stage 3
 
 Large Scale
-
 
 Move to:
 
@@ -665,9 +615,7 @@ Move to:
 
 # 13. Future Microservice Migration
 
-
 Possible services:
-
 
 ```
 User Service
@@ -685,7 +633,6 @@ Analytics Service
 Payment Service
 ```
 
-
 Migration approach:
 
 ```
@@ -698,9 +645,7 @@ Do not rewrite the entire system.
 
 # Final Architecture Decision
 
-
 The project will start with:
-
 
 ```
 Frontend:
@@ -720,8 +665,8 @@ PostgreSQL
 
 Cache:
 
-Redis
-
+Cache & Task Queue:
+Redis + Celery
 
 AI:
 
@@ -732,7 +677,6 @@ Infrastructure:
 
 Docker + Cloud
 ```
-
 
 This architecture provides fast development while keeping a clear path to enterprise scale.
 
