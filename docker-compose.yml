@@ -1,190 +1,83 @@
-version: "3.8"
-
-networks:
-  platform-net:
-    driver: bridge
-
-volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-  frontend_node_modules:
-    driver: local
-  backend_static:
-    driver: local
-
 services:
-  # ----------------------------------------------------------------------------
-  # Database Service (PostgreSQL)
-  # ----------------------------------------------------------------------------
   postgres:
-    image: postgres:15-alpine
-    container_name: sip-postgres
-    restart: always
+    image: postgres:16-alpine
+    container_name: sip_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-service_intelligence}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_password_change_me}
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d service_intelligence"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - platform-net
 
-  # ----------------------------------------------------------------------------
-  # Caching and Message Broker Service (Redis)
-  # ----------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: sip-redis
-    restart: always
+    container_name: sip_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - platform-net
 
-  # ----------------------------------------------------------------------------
-  # Backend API Service (Django + Gunicorn/Uvicorn)
-  # ----------------------------------------------------------------------------
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: sip-backend
-    restart: always
-    command: python manage.py runserver 0.0.0.0:8000
+      dockerfile: ../infrastructure/docker/dev/backend.Dockerfile
+    container_name: sip_backend
+    restart: unless-stopped
     volumes:
       - ./backend:/app
-      - backend_static:/app/static
     ports:
       - "8000:8000"
-    environment:
-      - DEBUG=True
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=${POSTGRES_DB:-service_intelligence}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_secure_password_change_me}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - platform-net
 
-  # ----------------------------------------------------------------------------
-  # Celery Asynchronous Worker
-  # ----------------------------------------------------------------------------
   celery_worker:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: sip-celery-worker
-    restart: always
+      dockerfile: ../infrastructure/docker/dev/backend.Dockerfile
+    container_name: sip_celery_worker
     command: celery -A config worker --loglevel=info
     volumes:
       - ./backend:/app
-    environment:
-      - DEBUG=True
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=${POSTGRES_DB:-service_intelligence}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_secure_password_change_me}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
+    env_file:
+      - .env
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - platform-net
+      - backend
+      - redis
 
-  # ----------------------------------------------------------------------------
-  # Celery Periodic Task Scheduler (Beat)
-  # ----------------------------------------------------------------------------
-  celery_beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: sip-celery-beat
-    restart: always
-    command: celery -A config beat --loglevel=info
-    volumes:
-      - ./backend:/app
-    environment:
-      - DEBUG=True
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=${POSTGRES_DB:-service_intelligence}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_secure_password_change_me}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - platform-net
-
-  # ----------------------------------------------------------------------------
-  # Frontend Client App (Next.js)
-  # ----------------------------------------------------------------------------
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: sip-frontend
-    restart: always
-    ports:
-      - "3000:3000"
+      dockerfile: ../infrastructure/docker/dev/frontend.Dockerfile
+    container_name: sip_frontend
+    restart: unless-stopped
     volumes:
       - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
     depends_on:
       - backend
-    networks:
-      - platform-net
 
-  # ----------------------------------------------------------------------------
-  # AI Engine Microservice (Planned for future integration)
-  # ----------------------------------------------------------------------------
-  ai_engine:
-    build:
-      context: ./ai-engine
-      dockerfile: Dockerfile
-    container_name: sip-ai-engine
-    restart: always
-    ports:
-      - "5005:5005"
-    volumes:
-      - ./ai-engine:/app
-    environment:
-      - NODE_ENV=development
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    networks:
-      - platform-net
+volumes:
+  postgres_data:
