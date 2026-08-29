@@ -1,0 +1,30 @@
+# Python bytecode & cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE & OS metadata
+.idea/
+.vscode/
+.DS_Store
+
+# Git directory
+.git/
+.gitignore
+
+# Environment files (loaded via docker-compose env_file instead)
+.env

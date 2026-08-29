@@ -5,12 +5,20 @@ import environ
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
-
-SECRET_KEY = env('SECRET_KEY')
-DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
-
+# Read .env if present (checks backend/ and project root)
+env_file = os.path.join(BASE_DIR.parent, '.env')
+if not os.path.exists(env_file):
+    env_file = os.path.join(BASE_DIR.parent.parent, '.env')
+if os.path.exists(env_file):
+    environ.Env.read_env(env_file)
+    
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-fallback-key-change-in-prod')
+DEBUG = env.bool('DEBUG', default=True)
+# Safe fallback list for ALLOWED_HOSTS
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS', 
+    default=['localhost', '127.0.0.1', 'backend', '0.0.0.0']
+)
 INSTALLED_APPS = [
     # Core Django
     'django.contrib.admin',
