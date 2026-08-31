@@ -11,14 +11,16 @@ if not os.path.exists(env_file):
     env_file = os.path.join(BASE_DIR.parent.parent, '.env')
 if os.path.exists(env_file):
     environ.Env.read_env(env_file)
-    
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-fallback-key-change-in-prod')
+
+SECRET_KEY = env(
+    'SECRET_KEY', default='django-insecure-fallback-key-change-in-prod')
 DEBUG = env.bool('DEBUG', default=True)
 # Safe fallback list for ALLOWED_HOSTS
 ALLOWED_HOSTS = env.list(
-    'ALLOWED_HOSTS', 
+    'ALLOWED_HOSTS',
     default=['localhost', '127.0.0.1', 'backend', '0.0.0.0']
 )
+
 INSTALLED_APPS = [
     # Core Django
     'django.contrib.admin',
@@ -33,8 +35,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # Domain Applications (Modular Monolith)
-    'apps.common',
-    'apps.organizations',
+    'features.organizations',
 ]
 
 MIDDLEWARE = [
@@ -83,7 +84,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'apps.common.pagination.StandardResultsSetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
