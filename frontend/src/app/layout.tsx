@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "AI Service Intelligence Platform",
+  title: "AI-Powered System Intelligence Platform",
   description:
     "Enterprise AI-powered directory, analytics, and recommendation engine.",
 };
