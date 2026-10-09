@@ -7,6 +7,8 @@ export interface SearchFilters {
   industry?: string;
   location?: string;
   rating?: number;
+  /** Upper budget bound applied to the cheapest listed service. Contradiction 8: no currency. */
+  price?: number;
   page?: number;
 }
 
@@ -31,6 +33,7 @@ export const searchApi = {
         industry: filters.industry,
         location: filters.location,
         rating: filters.rating,
+        price: filters.price,
         page: filters.page,
         page_size: 20,
       },

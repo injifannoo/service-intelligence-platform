@@ -64,3 +64,19 @@ export function useDeleteService(organizationId?: string) {
     onSuccess: () => invalidate(organizationId),
   });
 }
+
+/**
+ * Updates an existing catalogue entry.
+ *
+ * Sprint 4 (docs/09_Sprint_Plan.md:291-308) lists "Edit service" as part of the
+ * service-management deliverable.
+ */
+export function useUpdateService(organizationId?: string) {
+  const invalidate = useInvalidateServices();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ServiceInput }) =>
+      servicesApi.update(id, payload),
+    onSuccess: (service) => invalidate(organizationId ?? service.organization_id),
+  });
+}

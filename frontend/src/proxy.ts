@@ -9,8 +9,32 @@ import { AUTH_COOKIES, ROUTES } from "@/config/site-config";
  * runtime override available. The presence of an access token is checked here
  * purely to decide the redirect; the token's validity and the user's role are
  * enforced by the backend, never here.
+ *
+ * `/admin` is in the list but its role check is NOT here. Distinguishing ADMIN
+ * from CUSTOMER would mean verifying the JWT or calling `/users/profile/` on
+ * every admin request, and this file deliberately does not decode tokens. The
+ * admin layout guards the role client-side and each admin endpoint enforces it
+ * server-side, which is the layer that actually has to be right.
  */
-const PROTECTED_PREFIXES = ["/organizations", "/services", "/analytics", "/verification"];
+/**
+ * Every page in the `(dashboard)` route group.
+ *
+ * Kept as an explicit list rather than matching the group, because a group is a
+ * filesystem convention the proxy cannot see. `/search` and `/comparison` were
+ * previously unguarded even though both call authenticated endpoints
+ * (`POST /search/ai/`, `POST /comparison/`), which left those surfaces rendering
+ * inline 401 errors instead of redirecting to login.
+ */
+const PROTECTED_PREFIXES = [
+  "/organizations",
+  "/services",
+  "/analytics",
+  "/verification",
+  "/search",
+  "/comparison",
+  "/profile",
+  "/admin",
+];
 
 const AUTH_ROUTES: readonly string[] = [ROUTES.login, ROUTES.register];
 

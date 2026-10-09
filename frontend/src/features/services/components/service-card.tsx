@@ -14,6 +14,7 @@ interface ServiceCardProps {
   /** When present, the viewer manages the parent organization and may edit. */
   canManage?: boolean;
   onDelete?: (id: string) => void;
+  onEdit?: (service: Service) => void;
   isDeleting?: boolean;
 }
 
@@ -21,6 +22,7 @@ export function ServiceCard({
   service,
   canManage = false,
   onDelete,
+  onEdit,
   isDeleting = false,
 }: ServiceCardProps) {
   return (
@@ -29,7 +31,7 @@ export function ServiceCard({
         <CardTitle className="text-base">{service.name}</CardTitle>
         {service.price !== undefined && service.price !== null && (
           <Badge variant="accent" className="shrink-0 tabular-nums">
-            ${service.price}
+            {service.price}
           </Badge>
         )}
       </CardHeader>
@@ -45,7 +47,12 @@ export function ServiceCard({
         )}
         {canManage && onDelete && (
           <div className="flex gap-2 border-t border-border pt-3">
-            <Button variant="outline" size="sm" disabled>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit?.(service)}
+              disabled={onEdit === undefined}
+            >
               <PencilIcon />
               Edit
             </Button>

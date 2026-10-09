@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeftIcon, ExternalLinkIcon, MapPinIcon, PlusIcon, ShieldCheckIcon } from "lucide-react";
+import { ArrowLeftIcon, BarChartIcon, ExternalLinkIcon, MapPinIcon, PencilIcon, PlusIcon, ShieldCheckIcon } from "lucide-react";
 
 import { ReviewForm, ReviewList, StarRating } from "@/features/reviews";
 import { ServiceForm, useDeleteService } from "@/features/services";
@@ -13,11 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VERIFICATION_STATUS_LABELS } from "@/types";
+import { VERIFICATION_STATUS_LABELS, type Service } from "@/types";
 
 import { ServiceList } from "@/features/services";
 
 import { useOrganization } from "../api/use-organization";
+import { useOrganizationUiStore } from "../store/organization-store";
+import { OrganizationForm } from "./organization-form";
+import { ReviewSummaryCard } from "./review-summary-card";
 
 /**
  * Organization detail.
@@ -32,6 +35,8 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
   const { data: currentUser } = useCurrentUser();
   const deleteService = useDeleteService(organizationId);
   const [isServiceFormOpen, setServiceFormOpen] = useState(false);
+  const [editingService, setEditingService] = useState<Service | undefined>();
+  const openEditForm = useOrganizationUiStore((state) => state.openEditForm);
 
   if (isPending) {
     return (
@@ -143,7 +148,7 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
       <Separator />
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Services</h2>
             <p className="text-sm text-muted-foreground">
@@ -151,10 +156,32 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
             </p>
           </div>
           {isOwner && (
-            <Button size="sm" onClick={() => setServiceFormOpen(true)}>
-              <PlusIcon />
-              Add service
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openEditForm(organizationId)}
+              >
+                <PencilIcon />
+                Edit profile
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/organizations/${organizationId}/analytics`}>
+                  <BarChartIcon />
+                  Analytics
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditingService(undefined);
+                  setServiceFormOpen(true);
+                }}
+              >
+                <PlusIcon />
+                Add service
+              </Button>
+            </div>
           )}
         </div>
 
@@ -162,6 +189,10 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
           organizationId={organizationId}
           canManage={isOwner}
           onDelete={(id) => deleteService.mutate(id)}
+          onEdit={(service) => {
+            setEditingService(service);
+            setServiceFormOpen(true);
+          }}
           deletingId={deleteService.isPending ? deleteService.variables : null}
         />
 
@@ -170,11 +201,16 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
             organizationId={organizationId}
             open={isServiceFormOpen}
             onOpenChange={setServiceFormOpen}
+            service={editingService}
           />
         )}
       </section>
 
       <Separator />
+
+      <section className="space-y-4">
+        <ReviewSummaryCard organizationId={organizationId} />
+      </section>
 
       <section className="space-y-4">
         <div>
@@ -187,6 +223,10 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
         <ReviewList organizationId={organizationId} />
         <ReviewForm organizationId={organizationId} />
       </section>
+
+      {/* Mounted here as well as on the list page: the store drives the dialog,
+          so whichever page opens `openEditForm` must also host the form. */}
+      {isOwner && <OrganizationForm />}
 
       {isOwner && (
         <>

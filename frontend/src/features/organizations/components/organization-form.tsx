@@ -13,11 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PHASE_ONE_INDUSTRIES } from "@/config/site-config";
 
 import {
   useCreateOrganization,
+  useOrganization,
   useUpdateOrganization,
 } from "../api/use-organization";
 import { useOrganizationUiStore } from "../store/organization-store";
@@ -28,6 +33,11 @@ import { useOrganizationUiStore } from "../store/organization-store";
  * Kept as its own component so Radix unmounting `DialogContent` on close
  * discards the local state. That avoids a reset-on-open effect, which React 19
  * flags as a cascading-render risk.
+ *
+ * In edit mode the record is fetched first and used as the initial state. Seeding
+ * from the server rather than resetting with an effect matters: an edit form
+ * that started blank would silently blank every field the operator did not
+ * retype.
  */
 function OrganizationFormFields({
   editingId,
@@ -39,21 +49,48 @@ function OrganizationFormFields({
   const createOrganization = useCreateOrganization();
   const updateOrganization = useUpdateOrganization();
 
+  const isEditing = editingId !== null;
+  const existing = useOrganization(editingId);
+
   const [name, setName] = useState("");
   const [industry, setIndustry] = useState<string>(PHASE_ONE_INDUSTRIES[0]);
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  const isEditing = editingId !== null;
   const isPending = createOrganization.isPending || updateOrganization.isPending;
+
+  // The record arrives after the fields mount, so the initial state is filled
+  // once on arrival rather than on every render.
+  const [seededFrom, setSeededFrom] = useState<string | null>(null);
+  if (isEditing && existing.data && seededFrom !== existing.data.id) {
+    setSeededFrom(existing.data.id);
+    setName(existing.data.name);
+    setDescription(existing.data.description ?? "");
+    setLocation(existing.data.location ?? "");
+    setPhone(existing.data.phone ?? "");
+    setWebsite(existing.data.website ?? "");
+    if (existing.data.industry?.name) {
+      setIndustry(existing.data.industry.name);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
     setFieldErrors({});
 
-    const payload = { name, industry, description: description || undefined };
+    const payload = {
+      name,
+      industry,
+      description: description || undefined,
+      location: location || undefined,
+      phone: phone || undefined,
+      website: website || undefined,
+    };
 
     try {
       if (editingId) {
@@ -72,69 +109,90 @@ function OrganizationFormFields({
     }
   }
 
+  if (isEditing && existing.isPending) {
+    return (
+      <div className="space-y-4" aria-busy="true">
+        <Skeleton className="h-10" />
+        <Skeleton className="h-10" />
+        <Skeleton className="h-24" />
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       {formError && <AlertMessage tone="error">{formError}</AlertMessage>}
 
-      <div className="space-y-2">
-        <label htmlFor="org-name" className="text-sm font-medium">
-          Organization name
-        </label>
+      <Field id="org-name" label="Organization name" errors={fieldErrors.name}>
         <Input
           id="org-name"
           value={name}
           onChange={(event) => setName(event.target.value)}
           required
-          aria-invalid={Boolean(fieldErrors.name)}
+          placeholder="Acme Technologies"
         />
-        {fieldErrors.name?.map((message) => (
-          <p key={message} className="text-xs text-destructive">
-            {message}
-          </p>
-        ))}
-      </div>
+      </Field>
 
-      <div className="space-y-2">
-        <label htmlFor="org-industry" className="text-sm font-medium">
-          Industry
-        </label>
-        <select
+      <Field id="org-industry" label="Industry" errors={fieldErrors.industry}>
+        <Select
           id="org-industry"
           value={industry}
           onChange={(event) => setIndustry(event.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {PHASE_ONE_INDUSTRIES.map((option) => (
             <option key={option} value={option}>
               {option}
             </option>
           ))}
-        </select>
-      </div>
+        </Select>
+      </Field>
 
-      <div className="space-y-2">
-        <label htmlFor="org-description" className="text-sm font-medium">
-          Description
-        </label>
-        <textarea
+      <Field id="org-description" label="Description" errors={fieldErrors.description}>
+        <Textarea
           id="org-description"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           rows={3}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder="What the business does, and who it serves."
         />
-      </div>
+      </Field>
+
+      <Field id="org-location" label="Location" errors={fieldErrors.location}>
+        <Input
+          id="org-location"
+          value={location}
+          onChange={(event) => setLocation(event.target.value)}
+          placeholder="Addis Ababa"
+        />
+      </Field>
+
+      <Field id="org-phone" label="Phone" errors={fieldErrors.phone}>
+        <Input
+          id="org-phone"
+          type="tel"
+          value={phone}
+          onChange={(event) => setPhone(event.target.value)}
+          placeholder="+251 ..."
+        />
+      </Field>
+
+      <Field id="org-website" label="Website" errors={fieldErrors.website}>
+        <Input
+          id="org-website"
+          type="url"
+          inputMode="url"
+          value={website}
+          onChange={(event) => setWebsite(event.target.value)}
+          placeholder="https://example.com"
+        />
+      </Field>
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending
-            ? "Saving…"
-            : isEditing
-              ? "Save changes"
-              : "Create organization"}
+        <Button type="submit" loading={isPending}>
+          {isEditing ? "Save changes" : "Create organization"}
         </Button>
       </DialogFooter>
     </form>
@@ -158,7 +216,10 @@ export function OrganizationForm() {
           </DialogDescription>
         </DialogHeader>
 
-        <OrganizationFormFields editingId={editingId} onDone={closeForm} />
+        {/* Mounted only while open so the body remounts and re-seeds on each open. */}
+        {isOpen && (
+          <OrganizationFormFields editingId={editingId} onDone={closeForm} />
+        )}
       </DialogContent>
     </Dialog>
   );

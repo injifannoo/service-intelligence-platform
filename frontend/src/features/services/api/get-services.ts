@@ -31,6 +31,10 @@ export const servicesApi = {
     return apiClient.post<Service>("/services/", payload);
   },
 
+  update(id: string, payload: ServiceInput): Promise<Service> {
+    return apiClient.put<Service>(`/services/${id}/`, payload);
+  },
+
   remove(id: string): Promise<{ message: string }> {
     return apiClient.delete<{ message: string }>(`/services/${id}/`);
   },

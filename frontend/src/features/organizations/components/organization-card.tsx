@@ -6,16 +6,10 @@ import { BadgeCheckIcon, MapPinIcon, StarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import type { Organization, VerificationStatus } from "@/types";
+import type { Organization } from "@/types";
 
 import { useOrganizationUiStore } from "../store/organization-store";
-import { VERIFICATION_LABELS } from "../types";
-
-const BADGE_VARIANT: Record<VerificationStatus, "success" | "warning" | "muted"> = {
-  VERIFIED: "success",
-  PENDING: "warning",
-  REJECTED: "muted",
-};
+import { VERIFICATION_BADGE_VARIANT, VERIFICATION_LABELS } from "../types";
 
 interface OrganizationCardProps {
   organization: Organization;
@@ -58,7 +52,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
           )}
         </div>
 
-        <Badge variant={BADGE_VARIANT[organization.verification_status]}>
+        <Badge variant={VERIFICATION_BADGE_VARIANT[organization.verification_status]}>
           {isVerified && <BadgeCheckIcon aria-hidden="true" />}
           {VERIFICATION_LABELS[organization.verification_status]}
         </Badge>

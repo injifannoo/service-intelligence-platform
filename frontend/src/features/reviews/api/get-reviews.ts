@@ -25,4 +25,24 @@ export const reviewsApi = {
       note: note || undefined,
     });
   },
+
+  /**
+   * Edit own review — docs/02:181.
+   *
+   * ASSUMPTION, PENDING BACKEND CONFIRMATION: undocumented (docs/05 stops at
+   * `POST /reviews/{id}/report/`), see the comment on the route handler.
+   * `comment` is optional rather than required so a rating-only edit does not
+   * have to resend text the server already has.
+   */
+  update(
+    id: string,
+    payload: { rating?: number; comment?: string | null },
+  ): Promise<Review> {
+    return apiClient.put<Review>(`/reviews/${id}/`, payload);
+  },
+
+  /** Delete own review — docs/02:182. ASSUMPTION, PENDING BACKEND CONFIRMATION. */
+  remove(id: string): Promise<{ message: string }> {
+    return apiClient.delete<{ message: string }>(`/reviews/${id}/`);
+  },
 };

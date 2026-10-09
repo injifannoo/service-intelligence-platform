@@ -12,8 +12,10 @@ export { reviewsApi } from "./api/get-reviews";
 export {
   reviewKeys,
   useCreateReview,
+  useDeleteReview,
   useOrganizationReviews,
   useReportReview,
+  useUpdateReview,
 } from "./api/use-reviews";
 
 export type {

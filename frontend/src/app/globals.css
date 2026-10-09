@@ -7,58 +7,65 @@
  * Design tokens. Domain-agnostic only — per docs/07_Project_Structure.md:225,
  * business concepts are forbidden inside components/ui/.
  *
- * The neutral ramp is slightly cool and the brand accent is a deep indigo, so
- * primary actions and links read as intentional rather than as "black buttons".
+ * The neutral ramp is a clean white-and-blue and the brand accent is ASIP blue
+ * (#0866F5), so primary actions and links read as intentional rather than as
+ * "black buttons". Light/pale blue surfaces, a deep-navy ink and a light-blue
+ * border come next; semantic success/warning tones are tokens because feature
+ * components previously hardcoded emerald/amber classes.
  * Semantic success/warning tones are tokens because feature components were
  * previously hardcoding emerald/amber classes, which broke the moment the
  * palette shifted.
  */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.9rem;
 
-  --background: oklch(0.985 0.002 265);
-  --foreground: oklch(0.21 0.02 265);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.34 0.1 263);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 265);
+  --card-foreground: oklch(0.34 0.1 263);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.02 265);
+  --popover-foreground: oklch(0.34 0.1 263);
 
-  --primary: oklch(0.51 0.19 273);
-  --primary-foreground: oklch(0.99 0 0);
-  --primary-hover: oklch(0.45 0.19 273);
+  --primary: oklch(0.556 0.228 260.6);
+  --primary-foreground: oklch(1 0 0);
+  --primary-hover: oklch(0.5 0.21 260);
 
-  --secondary: oklch(0.968 0.004 265);
-  --secondary-foreground: oklch(0.28 0.03 265);
+  --secondary: oklch(0.975 0.015 240);
+  --secondary-foreground: oklch(0.34 0.1 263);
 
-  --muted: oklch(0.968 0.004 265);
-  --muted-foreground: oklch(0.53 0.02 265);
+  --muted: oklch(0.985 0.008 240);
+  --muted-foreground: oklch(0.55 0.06 258);
 
-  --accent: oklch(0.96 0.014 273);
-  --accent-foreground: oklch(0.36 0.13 273);
+  --accent: oklch(0.975 0.015 240);
+  --accent-foreground: oklch(0.556 0.228 260.6);
 
   --destructive: oklch(0.58 0.22 27);
-  --destructive-foreground: oklch(0.99 0 0);
+  --destructive-foreground: oklch(1 0 0);
 
-  --success: oklch(0.55 0.13 155);
-  --success-foreground: oklch(0.99 0 0);
-  --success-subtle: oklch(0.96 0.035 155);
+  --success: oklch(0.69 0.15 163);
+  --success-foreground: oklch(1 0 0);
+  --success-subtle: oklch(0.96 0.04 163);
 
-  --warning: oklch(0.72 0.15 75);
-  --warning-foreground: oklch(0.28 0.06 60);
-  --warning-subtle: oklch(0.97 0.04 85);
+  --warning: oklch(0.8 0.15 85);
+  --warning-foreground: oklch(0.34 0.08 70);
+  --warning-subtle: oklch(0.97 0.04 90);
 
-  --border: oklch(0.91 0.006 265);
-  --input: oklch(0.9 0.008 265);
-  --ring: oklch(0.51 0.19 273);
+  --border: oklch(0.92 0.03 245);
+  --input: oklch(0.9 0.035 245);
+  --ring: oklch(0.556 0.228 260.6);
+
+  /* Deep navy used by the footer and high-contrast panels. */
+  --navy: oklch(0.3 0.11 262);
+  --navy-foreground: oklch(0.97 0.012 250);
 
   /* Brand wash used behind heroes and section bands. */
   --surface-gradient: radial-gradient(
       60rem 32rem at 12% -10%,
-      oklch(0.93 0.05 273 / 0.75),
+      oklch(0.93 0.05 258 / 0.75),
       transparent 60%
     ),
-    radial-gradient(48rem 28rem at 88% 0%, oklch(0.94 0.04 220 / 0.7), transparent 62%);
+    radial-gradient(48rem 28rem at 88% 0%, oklch(0.94 0.04 225 / 0.7), transparent 62%);
 }
 
 .dark {
@@ -70,9 +77,9 @@
   --popover: oklch(0.22 0.018 265);
   --popover-foreground: oklch(0.97 0.003 265);
 
-  --primary: oklch(0.66 0.16 273);
+  --primary: oklch(0.7 0.17 260);
   --primary-foreground: oklch(0.16 0.02 265);
-  --primary-hover: oklch(0.72 0.15 273);
+  --primary-hover: oklch(0.77 0.14 260);
 
   --secondary: oklch(0.27 0.02 265);
   --secondary-foreground: oklch(0.97 0.003 265);
@@ -80,8 +87,8 @@
   --muted: oklch(0.26 0.02 265);
   --muted-foreground: oklch(0.71 0.015 265);
 
-  --accent: oklch(0.3 0.05 273);
-  --accent-foreground: oklch(0.93 0.03 273);
+  --accent: oklch(0.3 0.06 258);
+  --accent-foreground: oklch(0.92 0.04 258);
 
   --destructive: oklch(0.66 0.19 25);
   --destructive-foreground: oklch(0.99 0 0);
@@ -96,14 +103,14 @@
 
   --border: oklch(1 0 0 / 11%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.66 0.16 273);
+  --ring: oklch(0.7 0.17 260);
 
   --surface-gradient: radial-gradient(
       60rem 32rem at 12% -10%,
-      oklch(0.35 0.09 273 / 0.5),
+      oklch(0.35 0.09 258 / 0.5),
       transparent 60%
     ),
-    radial-gradient(48rem 28rem at 88% 0%, oklch(0.33 0.07 220 / 0.45), transparent 62%);
+    radial-gradient(48rem 28rem at 88% 0%, oklch(0.33 0.07 225 / 0.45), transparent 62%);
 }
 
 @theme inline {
@@ -139,13 +146,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
 
-  /* Elevation ramp. Cards sit one step above the page; interactive cards lift
-   * to two on hover, which is the main depth cue on a light background. */
-  --shadow-xs: 0 1px 2px oklch(0.21 0.02 265 / 0.05);
-  --shadow-sm: 0 1px 3px oklch(0.21 0.02 265 / 0.07), 0 1px 2px oklch(0.21 0.02 265 / 0.04);
-  --shadow-md: 0 4px 12px oklch(0.21 0.02 265 / 0.08), 0 2px 4px oklch(0.21 0.02 265 / 0.04);
-  --shadow-lg: 0 12px 32px oklch(0.21 0.02 265 / 0.1), 0 4px 8px oklch(0.21 0.02 265 / 0.04);
+  /* Elevation ramp, tinted toward the brand navy rather than pure black. Cards
+   * sit one step above the page; interactive cards lift to two on hover, which
+   * is the main depth cue on a light background. */
+  --shadow-xs: 0 1px 2px oklch(0.34 0.1 263 / 0.05);
+  --shadow-sm: 0 1px 3px oklch(0.34 0.1 263 / 0.06), 0 1px 2px oklch(0.34 0.1 263 / 0.04);
+  --shadow-md: 0 4px 12px oklch(0.34 0.1 263 / 0.07), 0 2px 4px oklch(0.34 0.1 263 / 0.04);
+  --shadow-lg: 0 12px 32px oklch(0.34 0.1 263 / 0.1), 0 4px 8px oklch(0.34 0.1 263 / 0.04);
   --shadow-ring: 0 0 0 1px var(--color-border);
 
   --font-sans:
@@ -214,6 +224,41 @@
   /* Ambient brand wash for hero and section bands. */
   .surface-gradient {
     background-image: var(--surface-gradient);
+  }
+
+  /* Faint blueprint grid behind the hero. The radial mask fades it toward the
+   * edges so it reads as depth rather than as a visible table. */
+  .hero-grid {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 3.5rem 3.5rem;
+    -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 0%, black, transparent 78%);
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 0%, black, transparent 78%);
+  }
+
+  /* Re-maps the ink tokens so shared components using `text-foreground` and
+   * `text-muted-foreground` stay legible on the deep-navy footer. */
+  .on-dark {
+    --color-foreground: oklch(0.99 0 0);
+    --color-muted-foreground: oklch(0.82 0.04 250);
+    --color-border: oklch(1 0 0 / 14%);
+  }
+
+  /* Local remap so a default `Button` renders as a solid white action when it
+   * sits on the solid brand CTA band, without adding a one-off button variant. */
+  .cta-inverse {
+    --color-primary: oklch(1 0 0);
+    --color-primary-foreground: oklch(0.34 0.16 261);
+    --color-primary-hover: oklch(0.93 0.02 260);
   }
 
   /* Thin scrollbars so dense panels do not dominate the layout. */

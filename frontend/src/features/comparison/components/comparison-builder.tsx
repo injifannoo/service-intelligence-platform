@@ -12,14 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api-client";
 
+import { COMPARISON_CRITERIA } from "../comparison-criteria";
 import { useCompare } from "../api/use-comparison";
 import { ComparisonTable } from "./comparison-table";
-
-const CRITERIA = [
-  { value: "rating", label: "Customer rating" },
-  { value: "services", label: "Services offered" },
-  { value: "location", label: "Location" },
-];
 
 /** Upper bound chosen for a readable matrix; not specified by any document. */
 const MAX_ORGANIZATIONS = 4;
@@ -119,7 +114,7 @@ export function ComparisonBuilder() {
         <section className="space-y-3">
           <h2 className="text-sm font-medium">Criteria</h2>
           <ul className="space-y-0.5 rounded-lg border border-border bg-card p-2 shadow-xs">
-            {CRITERIA.map((criterion) => (
+            {COMPARISON_CRITERIA.map((criterion) => (
               <li
                 key={criterion.value}
                 className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"

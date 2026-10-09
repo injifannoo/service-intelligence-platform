@@ -5,6 +5,11 @@
  * through this barrel. Deep imports into `features/authentication/*` from
  * outside the slice are an architectural violation.
  */
+export {
+  AuthModalProvider,
+  useAuthModal,
+  type AuthModalMode,
+} from "./components/auth-modal";
 export { LoginForm } from "./components/login-form";
 export { ProfilePanel } from "./components/profile-panel";
 export { RegisterForm } from "./components/register-form";
@@ -17,8 +22,6 @@ export {
   useLogout,
   useRegister,
 } from "./api/use-auth";
-
-export { useAuthUiStore } from "./store/auth-store";
 
 export type {
   LoginResponse,

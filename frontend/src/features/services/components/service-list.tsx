@@ -5,6 +5,7 @@ import { Loader2Icon, PackageOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Service } from "@/types";
 
 import { useServices } from "../api/use-service";
 import { ServiceCard } from "./service-card";
@@ -13,6 +14,7 @@ interface ServiceListProps {
   organizationId: string;
   canManage?: boolean;
   onDelete?: (id: string) => void;
+  onEdit?: (service: Service) => void;
   deletingId?: string | null;
 }
 
@@ -20,6 +22,7 @@ export function ServiceList({
   organizationId,
   canManage = false,
   onDelete,
+  onEdit,
   deletingId = null,
 }: ServiceListProps) {
   const { data, isPending, isError, error, refetch } = useServices(organizationId);
@@ -72,6 +75,7 @@ export function ServiceList({
           service={service}
           canManage={canManage}
           onDelete={onDelete}
+          onEdit={onEdit}
           isDeleting={deletingId === service.id}
         />
       ))}

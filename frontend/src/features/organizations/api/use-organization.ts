@@ -7,6 +7,7 @@ import type {
   AiTaskResult,
   OrganizationFilters,
   OrganizationInput,
+  ReviewSummary,
 } from "@/types";
 
 import { organizationsApi } from "./get-organizations";
@@ -26,6 +27,7 @@ export const organizationKeys = {
   detail: (id: string) => [...organizationKeys.all, "detail", id] as const,
   aiSummaryTask: (id: string, taskId: string) =>
     [...organizationKeys.all, "ai-summary", id, taskId] as const,
+  dashboard: (id: string) => [...organizationKeys.all, "dashboard", id] as const,
 };
 
 export function useOrganizations(filters: OrganizationFilters = {}) {
@@ -107,7 +109,10 @@ export function useAiReviewSummaryTask(
   return useQuery({
     queryKey: organizationKeys.aiSummaryTask(organizationId ?? "", taskId ?? ""),
     queryFn: () =>
-      apiClient.get<AiTaskResult>(`/ai/tasks/${taskId as string}/`),
+      // Typed as the summary payload so consumers do not have to cast `result`.
+      // The generic lives here because this is the only task whose result shape is
+      // known; a generic `AiTask<unknown>` would just move the cast elsewhere.
+      apiClient.get<AiTaskResult<ReviewSummary>>(`/ai/tasks/${taskId as string}/`),
     enabled: Boolean(organizationId && taskId),
     refetchInterval: (query) => {
       const status = query.state.data?.status;

@@ -177,6 +177,108 @@ export interface AuthTokens {
   refresh_token: string;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Admin area (assumed contracts — no admin endpoint in docs/05)               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A user row in the admin area, `GET /api/v1/admin/users/`.
+ *
+ * Assumed contract. `docs/05_API_Design.md` documents no admin endpoint; this
+ * shape is derived from `docs/04:250-258` plus the `organization_id` extension
+ * already justified on `UserProfile`. It is an alias rather than an
+ * `interface extends` because the admin row carries no extra fields yet, and an
+ * empty extending interface would be identical to its supertype.
+ */
+export type AdminUser = UserProfile;
+
+/** Roles an admin may assign. Ownership is never assignable. */
+export const ASSIGNABLE_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"] as const;
+export type AssignableAdminRole = (typeof ASSIGNABLE_ADMIN_ROLES)[number];
+
+/** Request of `POST /api/v1/admin/users/` — Super Admin only. */
+export interface AdminUserCreateInput {
+  name: string;
+  email: string;
+  password: string;
+  role: AssignableAdminRole;
+}
+
+/**
+ * Request of `PATCH /api/v1/admin/users/{id}/`.
+ *
+ * All fields optional; role changes require SUPER_ADMIN.
+ */
+export interface AdminUserUpdateInput {
+  role?: AssignableAdminRole;
+  status?: boolean;
+  name?: string;
+}
+
+export interface AdminUserFilters {
+  query?: string;
+  role?: UserRole;
+  status?: boolean;
+}
+
+/**
+ * Response of `GET /api/v1/admin/stats/`.
+ *
+ * Live counts, not the success metrics from docs/01:520-546 — there is no event
+ * telemetry to derive MAU, search success rate, or recommendation acceptance.
+ */
+export interface AdminStats {
+  users: {
+    total: number;
+    active: number;
+    deactivated: number;
+    by_role: Partial<Record<UserRole, number>>;
+  };
+  organizations: {
+    total: number;
+    verified: number;
+    pending: number;
+    rejected: number;
+  };
+  services: { total: number; active: number };
+  reviews: { total: number; reported: number };
+  verifications: { pending: number };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Homepage settings (site configuration)                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The homepage sections an administrator can switch on and off.
+ *
+ * Not in docs/05_API_Design.md: the docs give Super Admin "platform
+ * configuration" (docs/02:96-104) but no settings model. This is an admin
+ * workflow the frontend owns until the backend gains one.
+ */
+export const HOMEPAGE_SECTIONS = [
+  "hero",
+  "metrics",
+  "categories",
+  "howItWorks",
+  "featuredProviders",
+  "forBusinesses",
+  "whyChoose",
+  "finalCta",
+] as const;
+
+export type HomepageSectionKey = (typeof HOMEPAGE_SECTIONS)[number];
+
+/** Response of `GET /api/v1/settings/homepage/`. */
+export interface HomepageSettings {
+  sections: Record<HomepageSectionKey, boolean>;
+}
+
+/** Request of `PUT /api/v1/settings/homepage/` — Super Admin only. */
+export interface HomepageSettingsUpdate {
+  sections: Partial<Record<HomepageSectionKey, boolean>>;
+}
+
 /** Request of `PUT /api/v1/users/profile/` (docs/05:262-268). */
 export interface UserProfileInput {
   name: string;
@@ -313,6 +415,39 @@ export const REVIEW_REPORT_REASONS = [
 
 export type ReviewReportReason = (typeof REVIEW_REPORT_REASONS)[number];
 
+/**
+ * One abuse report filed against a review (docs/05:436-441).
+ *
+ * Keyed by `review_id` rather than by its own id because the report endpoint
+ * answers 409 when a review is already on file, so a review can carry at most
+ * one report and its id is already unique within the queue.
+ */
+export interface ReportedReview {
+  review_id: UUID;
+  reason: string;
+  note: string | null;
+  reported_at: string;
+}
+
+/**
+ * One row of `GET /api/v1/admin/reports/`.
+ *
+ * The abuse-reporting queue required by docs/02:127 and the moderation
+ * workflow required by docs/09 Sprint 6:358. ASSUMPTION, PENDING BACKEND
+ * CONFIRMATION: docs/05_API_Design.md documents the act of reporting a review
+ * but no way to list or resolve those reports.
+ */
+export interface ModerationReport extends ReportedReview {
+  review: Review;
+  organization_id: UUID;
+  organization_name: string | null;
+}
+
+/** Request of `POST /api/v1/admin/reports/{id}/`. */
+export interface ModerationInput {
+  action: "DISMISS" | "REMOVE";
+}
+
 /* -------------------------------------------------------------------------- */
 /* Verification (docs/04_Database_Design.md:379-393)                           */
 /* -------------------------------------------------------------------------- */
@@ -379,6 +514,22 @@ export interface Comparison {
   created_at: string;
 }
 
+/**
+ * One column of the comparison matrix.
+ *
+ * ASSUMPTION: docs/04:415-428 stores comparison rows as untyped JSON and no
+ * document fixes the row shape, so the organization plus its catalogue is
+ * extended with the aggregates docs/09:380 turns into criteria.
+ */
+export interface ComparisonRow extends OrganizationDetail {
+  /**
+   * AI sentiment index over the reviews on file, 0-1, matching the scale of
+   * `ReviewSummary.sentiment_score`. `null` when there are no reviews to score,
+   * which is not the same as a neutral index.
+   */
+  sentiment_score?: number | null;
+}
+
 /** Request of `POST /api/v1/comparison/` (docs/05:502-510). */
 export interface ComparisonRequest {
   organizations: UUID[];
@@ -393,9 +544,9 @@ export interface ComparisonResult {
   /**
    * Each row is an organization plus its service catalogue, which is what a
    * comparison matrix needs. ASSUMPTION: the inner row shape is unspecified by
-   * every document, so `OrganizationDetail` is reused here.
+   * every document, so `ComparisonRow` is reused here.
    */
-  organizations: OrganizationDetail[];
+  organizations: ComparisonRow[];
   criteria: string[];
 }
 
@@ -409,11 +560,20 @@ export interface SearchResults {
   pagination: Pagination | null;
 }
 
-/** One entry of `POST /api/v1/search/ai/` (docs/05:480-491). */
+/**
+ * One entry of `POST /api/v1/search/ai/` (docs/05:480-491).
+ *
+ * docs/05:484-490 shows only `name` and `reason`, but the hit is otherwise
+ * indistinguishable from any other organization listing. `id` and `score` are
+ * added by the dev BFF so the UI can link to the profile and show relevance;
+ * confirm with the backend before relying on them, since a real embedding
+ * pipeline would express score as a similarity rather than this 0-1 value.
+ */
 export interface SemanticSearchHit {
   name: string;
   reason: string;
   id?: UUID;
+  score?: number;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -491,5 +651,15 @@ export interface OrganizationDashboard {
   reviews?: number;
   rating_trends?: { period: string; average: number }[];
   customer_sentiment?: SentimentScore;
-  competitor_position?: { organization_id: UUID; rank: number }[];
+  /**
+   * `organization_name` and `verification_status` are dev-backend additions.
+   * The documented contract (docs/05) carries only `organization_id` and `rank`,
+   * so both are optional and the UI falls back when absent.
+   */
+  competitor_position?: {
+    organization_id: UUID;
+    rank: number;
+    organization_name?: string;
+    verification_status?: VerificationStatus;
+  }[];
 }

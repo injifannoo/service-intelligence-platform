@@ -1,8 +1,14 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  VERIFICATION_BADGE_VARIANT,
+  VERIFICATION_LABELS,
+} from "@/features/organizations";
 import { StarRating } from "@/features/reviews";
-import type { OrganizationDetail } from "@/types";
+import type { ComparisonRow } from "@/types";
+
+import { criterionLabel } from "../comparison-criteria";
 
 /**
  * Side-by-side comparison matrix.
@@ -15,7 +21,7 @@ export function ComparisonTable({
   organizations,
   criteria,
 }: {
-  organizations: OrganizationDetail[];
+  organizations: ComparisonRow[];
   criteria: string[];
 }) {
   return (
@@ -53,7 +59,7 @@ export function ComparisonTable({
         {criteria.map((criterion) => (
           <div key={criterion} className="rounded-lg border border-border">
             <p className="border-b border-border bg-muted/40 px-4 py-2 text-sm font-medium">
-              {criterion}
+              {criterionLabel(criterion)}
             </p>
             <div
               className="grid gap-px bg-border"
@@ -82,9 +88,9 @@ function CriterionValue({
   organization,
 }: {
   criterion: string;
-  organization: OrganizationDetail;
+  organization: ComparisonRow;
 }) {
-  switch (criterion.toLowerCase()) {
+  switch (criterion.trim().toLowerCase()) {
     case "rating":
       return organization.rating === null ? (
         <span className="text-muted-foreground">No reviews</span>
@@ -92,8 +98,37 @@ function CriterionValue({
         <span>{organization.rating.toFixed(1)} / 5</span>
       );
 
+    case "reviews": {
+      const count = organization.review_count ?? 0;
+      return count === 0 ? (
+        <span className="text-muted-foreground">No reviews</span>
+      ) : (
+        <span className="tabular-nums">
+          {count} {count === 1 ? "review" : "reviews"}
+        </span>
+      );
+    }
+
+    case "price":
+      return <PriceRange services={organization.services} />;
+
     case "location":
       return organization.location ?? <span className="text-muted-foreground">—</span>;
+
+    case "verification":
+      return (
+        <Badge variant={VERIFICATION_BADGE_VARIANT[organization.verification_status]}>
+          {VERIFICATION_LABELS[organization.verification_status]}
+        </Badge>
+      );
+
+    case "sentiment": {
+      const score = organization.sentiment_score;
+      if (score === null || score === undefined) {
+        return <span className="text-muted-foreground">Nothing to score</span>;
+      }
+      return <span className="tabular-nums">{Math.round(score * 100)} / 100</span>;
+    }
 
     case "services":
       return organization.services.length === 0 ? (
@@ -104,7 +139,9 @@ function CriterionValue({
             <li key={service.id}>
               {service.name}
               {service.price !== undefined && service.price !== null && (
-                <span className="text-muted-foreground"> — ${service.price}</span>
+                // contradiction 8: docs/04 defines no currency column, so the
+                // price is drawn bare rather than with an assumed symbol.
+                <span className="text-muted-foreground"> — {service.price}</span>
               )}
             </li>
           ))}
@@ -119,4 +156,29 @@ function CriterionValue({
         </span>
       );
   }
+}
+
+/**
+ * Spread of listed prices for the "Price" criterion.
+ *
+ * docs/02:189-199 asks for price without defining an aggregate, and a single
+ * organization has no meaningful average of one service, so the range answers
+ * "what does this cost?" without inventing a figure.
+ */
+function PriceRange({ services }: { services: ComparisonRow["services"] }) {
+  const prices = services
+    .map((service) => service.price)
+    .filter((price): price is number => typeof price === "number");
+
+  if (prices.length === 0) {
+    return <span className="text-muted-foreground">Not listed</span>;
+  }
+
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+
+  // contradiction 8: no currency column exists, so no symbol is drawn.
+  return (
+    <span className="tabular-nums">{low === high ? low : `${low} – ${high}`}</span>
+  );
 }

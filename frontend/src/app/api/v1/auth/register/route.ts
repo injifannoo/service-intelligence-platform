@@ -48,6 +48,21 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  /*
+   * Admin-tier accounts are provisioned in the background, never through public
+   * registration: there is no self-service signup for ADMIN or SUPER_ADMIN.
+   *
+   * `createUser` already defaults to CUSTOMER and is called without a role, so an
+   * injected `role` field is ignored. Rejecting it explicitly as well makes the
+   * rule observable instead of silent, so a client bug surfaces as an error
+   * rather than as an account quietly created with the wrong role.
+   */
+  if ("role" in body) {
+    return failure(400, "VALIDATION_ERROR", "Please correct the highlighted fields.", {
+      role: ["Role cannot be set through registration."],
+    });
+  }
+
   createUser({ name, email, password });
 
   return created({ message: "Account created" });

@@ -59,3 +59,50 @@ export function useReportReview(organizationId: string) {
     },
   });
 }
+
+/**
+ * Edit an own review (docs/02:181) and delete it (docs/02:182).
+ *
+ * Both invalidate the organization row as well as the list: a rating change
+ * moves the organization's aggregate rating and a deletion removes a vote from
+ * it, and docs/04 keeps that average server-computed rather than stored.
+ */
+export function useUpdateReview(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      rating,
+      comment,
+    }: {
+      id: string;
+      rating?: number;
+      comment?: string | null;
+    }) => reviewsApi.update(id, { rating, comment }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: reviewKeys.byOrganization(organizationId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: organizationKeys.detail(organizationId),
+      });
+    },
+  });
+}
+
+export function useDeleteReview(organizationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) => reviewsApi.remove(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: reviewKeys.byOrganization(organizationId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: organizationKeys.detail(organizationId),
+      });
+    },
+  });
+}

@@ -11,10 +11,12 @@ import {
 } from "@/lib/dev-backend/http";
 import {
   findOrganization,
+  listReviews,
   listServices,
   reviewCountFor,
   withRating,
 } from "@/lib/dev-backend/store";
+import { analyzeSentiment } from "@/lib/dev-backend/ai";
 
 /**
  * POST /api/v1/comparison/ — docs/05_API_Design.md:495-520.
@@ -57,11 +59,20 @@ export async function POST(request: NextRequest) {
   const organizations = ids
     .map((id) => findOrganization(id))
     .filter((organization) => organization !== undefined)
-    .map((organization) => ({
-      ...withRating(organization),
-      services: listServices(organization.id),
-      review_count: reviewCountFor(organization.id),
-    }));
+    .map((organization) => {
+      const reviews = listReviews(organization.id);
+
+      return {
+        ...withRating(organization),
+        services: listServices(organization.id),
+        review_count: reviewCountFor(organization.id),
+        // docs/09:380 makes the AI sentiment index a comparison criterion. It is
+        // scored from the same reviews as the AI summary, and stays null when
+        // there are none: an organization with no reviews has no sentiment, not
+        // a neutral one, and 0.5 would read as "middling".
+        sentiment_score: reviews.length > 0 ? analyzeSentiment(reviews).positive / 100 : null,
+      };
+    });
 
   if (organizations.length !== ids.length) {
     return failure(404, "NOT_FOUND", "One or more organizations could not be found.");

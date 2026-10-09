@@ -9,6 +9,7 @@ import { AlertMessage } from "@/components/shared/alert-message";
 import { Button } from "@/components/ui/button";
 import { DASHBOARD_NAV, ROUTES } from "@/config/site-config";
 import { useCurrentUser, useLogout } from "@/features/authentication";
+import { useHydrated } from "@/lib/use-hydrated";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types";
 
@@ -16,13 +17,32 @@ function canSee(item: { roles?: readonly UserRole[] }, role: UserRole | undefine
   return !item.roles || (role !== undefined && item.roles.includes(role));
 }
 
+/**
+ * Header for the signed-in application shell.
+ *
+ * There is deliberately no "Sign in / Get started" pair here. Every page using
+ * this header is a protected route, so a visitor without a session is redirected
+ * to `/login?next=…` before they ever see it — and even if one slipped through,
+ * the proxy would bounce a click on "Sign in" straight back here. Signup and
+ * sign-in live on the public homepage as modals instead.
+ *
+ * The session is cookie-derived, so it is unknowable during SSR: the server
+ * renders no user and the client renders the account menu, which is exactly the
+ * mismatch that throws "Hydration failed". `useHydrated()` holds the session-
+ * dependent pane back until the DOM the browser built can no longer be compared
+ * against the server's.
+ */
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: user } = useCurrentUser();
+  const hydrated = useHydrated();
+  const { data: user, isFetching } = useCurrentUser();
   const logout = useLogout();
 
-  const initials = user?.name
+  const session = hydrated ? user : undefined;
+  const reservingSpace = hydrated && session === undefined && isFetching;
+
+  const initials = session?.name
     .split(" ")
     .map((part) => part[0])
     .slice(0, 2)
@@ -45,7 +65,7 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {DASHBOARD_NAV.filter((item) => canSee(item, user?.role)).map((item) => {
+          {DASHBOARD_NAV.filter((item) => canSee(item, session?.role)).map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -68,7 +88,7 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {user ? (
+          {session && (
             <>
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                 <Link href={ROUTES.profile}>
@@ -78,7 +98,7 @@ export function Header() {
                   >
                     {initials}
                   </span>
-                  {user.name}
+                  {session.name}
                 </Link>
               </Button>
               <Button
@@ -92,15 +112,9 @@ export function Header() {
                 <LogOutIcon />
               </Button>
             </>
-          ) : (
-            <>
-              <Button asChild variant="ghost" size="sm">
-                <Link href={ROUTES.login}>Sign in</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link href={ROUTES.register}>Get started</Link>
-              </Button>
-            </>
+          )}
+          {reservingSpace && (
+            <div className="h-8 w-32 animate-pulse rounded-md bg-muted" aria-hidden="true" />
           )}
         </div>
       </div>

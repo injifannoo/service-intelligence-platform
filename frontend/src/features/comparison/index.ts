@@ -10,4 +10,11 @@ export { ComparisonTable } from "./components/comparison-table";
 export { comparisonApi } from "./api/get-comparison";
 export { comparisonKeys, useCompare } from "./api/use-comparison";
 
-export type { Comparison, ComparisonRequest, ComparisonResult } from "./types";
+export type {
+  Comparison,
+  ComparisonRequest,
+  ComparisonResult,
+  ComparisonRow,
+} from "./types";
+
+export { COMPARISON_CRITERIA, criterionLabel } from "./comparison-criteria";

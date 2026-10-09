@@ -12,8 +12,13 @@ export {
 export { OrganizationDetail } from "./components/organization-detail";
 export { OrganizationForm } from "./components/organization-form";
 export { OrganizationList } from "./components/organization-list";
+export { OrganizationDashboardPanel } from "./components/organization-dashboard";
+export { DashboardExportButton } from "./components/dashboard-export";
+export { OrganizationAnalytics } from "./components/organization-analytics";
+export { ReviewSummaryCard } from "./components/review-summary-card";
 
 export { organizationsApi } from "./api/get-organizations";
+export { useOrganizationDashboard } from "./api/use-dashboard";
 export {
   organizationKeys,
   useAiReviewSummaryTask,
@@ -26,7 +31,10 @@ export {
 
 export { useOrganizationUiStore } from "./store/organization-store";
 
-export { VERIFICATION_LABELS } from "./types";
+export {
+  VERIFICATION_BADGE_VARIANT,
+  VERIFICATION_LABELS,
+} from "./types";
 export type {
   Organization,
   OrganizationFilters,

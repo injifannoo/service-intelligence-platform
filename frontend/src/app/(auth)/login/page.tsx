@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { LoginForm } from "@/features/authentication";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -15,7 +17,13 @@ export default function LoginPage() {
           Sign in to manage your organizations and insights.
         </p>
       </div>
-      <LoginForm />
+
+      {/* The form reads `?next=` to return the visitor to the page that bounced
+          them here, which opts it into a client-side bailout. Without this
+          boundary `next build` fails to prerender /login. */}
+      <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }

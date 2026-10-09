@@ -4,7 +4,6 @@
  * Features are consumed exclusively through this barrel
  * (docs/07_Project_Structure.md:219).
  */
-export { AdminPanel } from "./components/admin-panel";
 export { AuditLogTable } from "./components/audit-log-table";
 export { VerificationClaimForm } from "./components/verification-claim-form";
 export { VerificationQueue } from "./components/verification-queue";

@@ -22,6 +22,15 @@ const RATING_OPTIONS = [
   { value: "4.5", label: "4.5+ stars" },
 ];
 
+/** Budget ceilings matched against the cheapest listed service. Contradiction 8: no currency. */
+const PRICE_OPTIONS = [
+  { value: "", label: "Any price" },
+  { value: "25", label: "Under 25" },
+  { value: "100", label: "Under 100" },
+  { value: "500", label: "Under 500" },
+  { value: "1000", label: "Under 1,000" },
+];
+
 /**
  * Keyword search over organizations, docs/05_API_Design.md:446-459.
  *
@@ -39,6 +48,9 @@ export function SearchPanel() {
   const [rating, setRating] = useState(
     filters.rating === undefined ? "" : String(filters.rating),
   );
+  const [price, setPrice] = useState(
+    filters.price === undefined ? "" : String(filters.price),
+  );
 
   const { data, isPending, isFetching, isError, error, refetch } = useSearch(filters);
 
@@ -49,6 +61,7 @@ export function SearchPanel() {
       industry: industry || undefined,
       location: location.trim() || undefined,
       rating: rating ? Number(rating) : undefined,
+      price: price ? Number(price) : undefined,
     });
   }
 
@@ -58,7 +71,7 @@ export function SearchPanel() {
     <div className="space-y-6">
       <form
         onSubmit={handleSubmit}
-        className="grid gap-4 rounded-xl border border-border bg-card p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-4 rounded-xl border border-border bg-card p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-6"
       >
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="search-query">What are you looking for?</Label>
@@ -118,7 +131,22 @@ export function SearchPanel() {
           </Select>
         </div>
 
-        <div className="flex items-end gap-2">
+        <div className="space-y-2">
+          <Label htmlFor="search-price">Maximum price</Label>
+          <Select
+            id="search-price"
+            value={price}
+            onChange={(event) => setPrice(event.target.value)}
+          >
+            {PRICE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-6">
           <Button type="submit" loading={isFetching} className="flex-1">
             <SearchIcon />
             Search
@@ -131,6 +159,7 @@ export function SearchPanel() {
               setIndustry("");
               setLocation("");
               setRating("");
+              setPrice("");
               reset();
             }}
           >

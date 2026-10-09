@@ -24,3 +24,19 @@ export const VERIFICATION_LABELS: Record<
   VERIFIED: "Verified",
   REJECTED: "Not verified",
 };
+
+/**
+ * Badge tone per verification status.
+ *
+ * Lives next to `VERIFICATION_LABELS` because the admin area renders the same
+ * three states. It was previously a private constant in `organization-card.tsx`,
+ * which meant a second surface had to re-derive the mapping and could drift.
+ */
+export const VERIFICATION_BADGE_VARIANT: Record<
+  import("@/types").VerificationStatus,
+  "success" | "warning" | "muted"
+> = {
+  VERIFIED: "success",
+  PENDING: "warning",
+  REJECTED: "muted",
+};
