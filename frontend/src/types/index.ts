@@ -31,11 +31,12 @@
  *    API returns. `VERIFICATION_STATUSES` is assumed; confirm with the backend.
  *
  * 4. `Review.rating` RANGE IS AN ASSUMPTION OF 1-5.
- *    docs/04:350 types it Integer and never states the scale. docs/04:365-375
- *    lists a separate multi-dimension `Rating` vocabulary (Quality, Price,
- *    Customer Service, Speed, Overall Experience) that contradicts a single
- *    integer, and defines no columns at all. Treated as 1-5 stars here; the
- *    multi-dimension model is not implemented.
+ *    docs/04:350 types it Integer and never states the scale. Treated as 1-5
+ *    stars here. docs/04:357-375 lists a multi-dimension `Rating` vocabulary
+ *    (Quality, Price, Customer Service, Speed, Overall Experience) but defines
+ *    no columns, so `Review.ratings` carries those five scores on the review
+ *    row; the integer `rating` stays the documented overall score and always
+ *    equals `ratings.overall_experience`.
  *
  * 5. ORGANIZATION OWNERSHIP IS NOT IN THE SCHEMA — SEE `UserProfile`.
  *    The role `Organization Owner` exists (04:266) and every analytics, AI, and
@@ -94,11 +95,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
  * Verification enum. Values are ASSUMED; docs/04:291 never enumerates them.
  * See contradiction 3.
  */
-export const VERIFICATION_STATUSES = [
-  "PENDING",
-  "VERIFIED",
-  "REJECTED",
-] as const;
+export const VERIFICATION_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
 
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
@@ -109,12 +106,7 @@ export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
 };
 
 /** The only other enum in the docs is `User.role`; everything else is a boolean. */
-export const AUDIENCE_ROLES = [
-  "ALL",
-  "CUSTOMER",
-  "ORGANIZATION_OWNER",
-  "ADMIN",
-] as const;
+export const AUDIENCE_ROLES = ["ALL", "CUSTOMER", "ORGANIZATION_OWNER", "ADMIN"] as const;
 export type AudienceRole = (typeof AUDIENCE_ROLES)[number];
 
 /* -------------------------------------------------------------------------- */
@@ -388,26 +380,57 @@ export interface ServiceInput {
 /* Review (docs/04_Database_Design.md:337-353)                                 */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Rating dimensions, docs/04_Database_Design.md:357-375.
+ *
+ * docs/04 names the vocabulary (Quality, Price, Customer Service, Speed,
+ * Overall Experience) but defines no columns, so the five scores ride on the
+ * review row as `Review.ratings`; `Review.rating` remains the integer the docs
+ * define and mirrors `overall_experience`.
+ */
+export const RATING_DIMENSIONS = [
+  "quality",
+  "price",
+  "customer_service",
+  "speed",
+  "overall_experience",
+] as const;
+
+export type RatingDimension = (typeof RATING_DIMENSIONS)[number];
+
+export const RATING_DIMENSION_LABELS: Record<RatingDimension, string> = {
+  quality: "Quality",
+  price: "Price",
+  customer_service: "Customer service",
+  speed: "Speed",
+  overall_experience: "Overall experience",
+};
+
+/** One 1-5 score per dimension. See contradiction 4. */
+export type ReviewScores = Record<RatingDimension, number>;
+
 export interface Review {
   id: UUID;
   user_id: UUID;
   organization_id: UUID;
   /** 1-5, assumed. See contradiction 4. */
   rating: number;
+  /** One 1-5 score per dimension, docs/04:357-375. See contradiction 4. */
+  ratings: ReviewScores;
   comment: string | null;
   /** Meaning is undefined in docs/04:352. */
   verified: boolean;
   created_at: string;
   /** Convenience field for rendering; not a `reviews` column. */
   author_name?: string;
-  /** Dev-backend / UI multi-dimensional scores; initialized for all mock reviews. */
-  ratings: ReviewScores;
 }
+
 /** Request of `POST /api/v1/reviews/` (docs/05:409-421). */
 export interface ReviewInput {
   organization_id: UUID;
   rating: number;
   comment?: string;
+  /** Optional dimension breakdown; misses default to `rating`. */
   ratings?: Partial<ReviewScores>;
 }
 
@@ -487,8 +510,7 @@ export const VERIFICATION_DOCUMENT_TYPES = [
   "OTHER",
 ] as const;
 
-export type VerificationDocumentType =
-  (typeof VERIFICATION_DOCUMENT_TYPES)[number];
+export type VerificationDocumentType = (typeof VERIFICATION_DOCUMENT_TYPES)[number];
 
 /** Request of `POST /api/v1/organizations/{id}/verify/` (docs/05:348-356). */
 export interface VerificationClaimInput {
@@ -675,19 +697,3 @@ export interface OrganizationDashboard {
     verification_status?: VerificationStatus;
   }[];
 }
-
-/* -------------------------------------------------------------------------- */
-/* Review Rating Dimensions (Dev Backend & Mock Store Only)                   */
-/* -------------------------------------------------------------------------- */
-
-export const RATING_DIMENSIONS = [
-  "quality",
-  "price",
-  "customer_service",
-  "speed",
-  "overall_experience",
-] as const;
-
-export type RatingDimension = (typeof RATING_DIMENSIONS)[number];
-
-export type ReviewScores = Record<RatingDimension, number>;

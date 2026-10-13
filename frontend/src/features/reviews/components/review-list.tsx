@@ -22,8 +22,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api-client";
 import { useCurrentUser } from "@/features/authentication";
 import {
+  RATING_DIMENSIONS,
+  RATING_DIMENSION_LABELS,
   REVIEW_REPORT_REASONS,
   type OrganizationReview,
+  type ReviewScores,
 } from "@/types";
 
 import {
@@ -32,7 +35,7 @@ import {
   useReportReview,
   useUpdateReview,
 } from "../api/use-reviews";
-import { RatingInput, StarRating } from "./star-rating";
+import { RatingBreakdownInput, StarRating } from "./star-rating";
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString(undefined, {
@@ -149,7 +152,7 @@ function EditReviewDialog({
 }) {
   const updateReview = useUpdateReview(organizationId);
 
-  const [rating, setRating] = useState(review.rating);
+  const [ratings, setRatings] = useState<Partial<ReviewScores>>(review.ratings);
   const [comment, setComment] = useState(review.comment ?? "");
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -163,7 +166,8 @@ function EditReviewDialog({
     try {
       await updateReview.mutateAsync({
         id: review.id,
-        rating,
+        rating: ratings.overall_experience,
+        ratings,
         comment: comment.trim() || null,
       });
       setDone(true);
@@ -193,12 +197,16 @@ function EditReviewDialog({
           {formError && <AlertMessage tone="error">{formError}</AlertMessage>}
           {done && <AlertMessage tone="success">Review updated.</AlertMessage>}
 
-          <RatingInput
-            name="edit-review-rating"
-            value={rating}
-            onChange={setRating}
-            invalid={Boolean(fieldErrors.rating)}
+          <RatingBreakdownInput
+            value={ratings}
+            onChange={setRatings}
+            invalid={Boolean(fieldErrors.ratings) || Boolean(fieldErrors.rating)}
           />
+          {fieldErrors.ratings?.map((message) => (
+            <p key={message} className="text-xs text-destructive">
+              {message}
+            </p>
+          ))}
           {fieldErrors.rating?.map((message) => (
             <p key={message} className="text-xs text-destructive">
               {message}
@@ -361,6 +369,25 @@ export function ReviewList({ organizationId }: { organizationId: string }) {
             {review.comment && (
               <p className="mt-3 text-sm leading-relaxed">{review.comment}</p>
             )}
+
+            <dl className="mt-4 grid max-w-md grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2">
+              {RATING_DIMENSIONS.map((dimension) => (
+                <div
+                  key={dimension}
+                  className="flex items-center justify-between gap-3"
+                >
+                  <dt className="text-xs text-muted-foreground">
+                    {RATING_DIMENSION_LABELS[dimension]}
+                  </dt>
+                  <dd className="flex items-center gap-2">
+                    <StarRating rating={review.ratings[dimension]} />
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {review.ratings[dimension]}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
 
             <div className="mt-3 flex items-center gap-2 border-t border-border pt-2">
               {isAuthor ? (

@@ -7,6 +7,7 @@ import {
   failure,
   num,
   readJson,
+  readRatingScores,
   requireUser,
   str,
 } from "@/lib/dev-backend/http";
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
     // assumption recorded in src/types/index.ts contradiction 4.
     errors.add("rating", "Rating must be a whole number between 1 and 5.");
   }
+  const ratings = readRatingScores(body.ratings, errors);
   if (!errors.isEmpty) return errors.toResponse();
 
   if (!findOrganization(organizationId as string)) {
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
     author_name: auth.user.name,
     rating: rating as number,
     comment,
+    ratings,
   });
 
   recordAudit({

@@ -5,7 +5,7 @@ import { Building2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/config/site-config";
-import { useAuthModal, useCurrentUser } from "@/features/authentication";
+import { useCurrentUser } from "@/features/authentication";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -18,7 +18,6 @@ import { useHydrated } from "@/lib/use-hydrated";
  */
 export function HeroSecondaryCta({ label = "Register a business" }: { label?: string }) {
   const { data: user } = useCurrentUser();
-  const { openAuthModal } = useAuthModal();
   const hydrated = useHydrated();
 
   // `user` comes from a cookie-backed client-only query, so the server always
@@ -36,8 +35,8 @@ export function HeroSecondaryCta({ label = "Register a business" }: { label?: st
   }
 
   return (
-    <Button size="lg" variant="outline" onClick={() => openAuthModal("signup")}>
-      {label}
+    <Button asChild size="lg" variant="outline">
+      <Link href={ROUTES.register}>{label}</Link>
     </Button>
   );
 }

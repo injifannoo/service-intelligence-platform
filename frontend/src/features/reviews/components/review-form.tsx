@@ -15,20 +15,29 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api-client";
+import { RATING_DIMENSIONS, type ReviewScores } from "@/types";
 
 import { useCreateReview } from "../api/use-reviews";
-import { RatingInput } from "./star-rating";
+import { RatingBreakdownInput } from "./star-rating";
+
+function isComplete(value: Partial<ReviewScores>): value is ReviewScores {
+  return RATING_DIMENSIONS.every(
+    (dimension) => Number.isInteger(value[dimension]) && (value[dimension] as number) >= 1,
+  );
+}
 
 /**
  * Review submission form.
  *
  * docs/05_API_Design.md:406-421 takes `organization_id`, `rating`, and an
- * optional `comment`, and the endpoint requires authentication.
+ * optional `comment`, and the endpoint requires authentication. The five
+ * dimension scores come from docs/04:357-375; the overall-experience row is
+ * the same integer the docs define as `rating`.
  */
 export function ReviewForm({ organizationId }: { organizationId: string }) {
   const createReview = useCreateReview(organizationId);
 
-  const [rating, setRating] = useState(0);
+  const [ratings, setRatings] = useState<Partial<ReviewScores>>({});
   const [comment, setComment] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -39,13 +48,16 @@ export function ReviewForm({ organizationId }: { organizationId: string }) {
     setFormError(null);
     setFieldErrors({});
 
+    if (!isComplete(ratings)) return;
+
     try {
       await createReview.mutateAsync({
         organization_id: organizationId,
-        rating,
+        rating: ratings.overall_experience,
+        ratings,
         comment: comment.trim() || undefined,
       });
-      setRating(0);
+      setRatings({});
       setComment("");
       setSubmitted(true);
     } catch (error) {
@@ -81,12 +93,16 @@ export function ReviewForm({ organizationId }: { organizationId: string }) {
             </p>
           )}
 
-          <RatingInput
-            name="review-rating"
-            value={rating}
-            onChange={setRating}
-            invalid={Boolean(fieldErrors.rating)}
+          <RatingBreakdownInput
+            value={ratings}
+            onChange={setRatings}
+            invalid={Boolean(fieldErrors.ratings) || Boolean(fieldErrors.rating)}
           />
+          {fieldErrors.ratings?.map((message) => (
+            <p key={message} className="text-xs text-destructive">
+              {message}
+            </p>
+          ))}
           {fieldErrors.rating?.map((message) => (
             <p key={message} className="text-xs text-destructive">
               {message}
@@ -110,9 +126,17 @@ export function ReviewForm({ organizationId }: { organizationId: string }) {
             ))}
           </div>
 
-          <Button type="submit" disabled={createReview.isPending}>
+          <Button
+            type="submit"
+            disabled={createReview.isPending || !isComplete(ratings)}
+          >
             {createReview.isPending ? "Publishing…" : "Publish review"}
           </Button>
+          {!isComplete(ratings) && (
+            <p className="text-xs text-muted-foreground">
+              Rate each aspect before publishing.
+            </p>
+          )}
         </form>
       </CardContent>
     </Card>

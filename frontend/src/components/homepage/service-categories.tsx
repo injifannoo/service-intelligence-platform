@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -33,6 +34,8 @@ interface Category {
    * result page.
    */
   industry?: string;
+  /** Real workplace photo from `public/assets`; live categories will get one as their slices land. */
+  image?: { src: string; alt: string };
 }
 
 const CATEGORIES: Category[] = [
@@ -41,6 +44,10 @@ const CATEGORIES: Category[] = [
     description: "Hospitals, clinics, and medical services.",
     icon: HeartPulseIcon,
     tone: "bg-[#EEF7FF] text-[#0866F5]",
+    image: {
+      src: "/assets/health.png",
+      alt: "A healthcare professional attending to a patient in a clinic.",
+    },
   },
   {
     title: "Hotels and Hospitality",
@@ -53,6 +60,10 @@ const CATEGORIES: Category[] = [
     description: "Dining, delivery, and food services.",
     icon: UtensilsIcon,
     tone: "bg-[#FFF4E5] text-[#F59E0B]",
+    image: {
+      src: "/assets/restaurant.png",
+      alt: "A restaurant setting with a server preparing an order.",
+    },
   },
   {
     title: "Education",
@@ -66,12 +77,20 @@ const CATEGORIES: Category[] = [
     icon: CpuIcon,
     tone: "bg-[#F3EDFF] text-[#8B5CF6]",
     industry: "Software",
+    image: {
+      src: "/assets/tech.png",
+      alt: "A software engineer working on a screen in an office.",
+    },
   },
   {
     title: "Financial Services",
     description: "Banks, insurance, and financial advisory services.",
     icon: LandmarkIcon,
     tone: "bg-[#EEF7FF] text-[#0866F5]",
+    image: {
+      src: "/assets/business_consultant.png",
+      alt: "A business consultant presenting financial insights to a client.",
+    },
   },
   {
     title: "Home and Professional Services",
@@ -115,19 +134,53 @@ export function ServiceCategories() {
         {CATEGORIES.map((category) => {
           const cardContent = (
             <>
-              <div className="flex items-start justify-between gap-3">
-                <span
-                  className={cn(
-                    "grid size-12 place-items-center rounded-2xl",
-                    category.tone,
+              {category.image ? (
+                <div className="relative -mx-5 -mt-5 mb-5">
+                  <div className="relative h-28">
+                    <Image
+                      src={category.image.src}
+                      alt={category.image.alt}
+                      fill
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover object-center"
+                    />
+                  </div>
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/0 to-black/0"
+                  />
+                  <span
+                    className={cn(
+                      "absolute bottom-3 left-3.5 grid size-10 place-items-center rounded-xl",
+                      category.tone,
+                    )}
+                  >
+                    <category.icon className="size-5" aria-hidden="true" />
+                  </span>
+                  {!category.industry && category.title !== "Other Services" && (
+                    <Badge
+                      variant="muted"
+                      className="absolute top-3 right-3 border-white/40 bg-white/80"
+                    >
+                      Coming soon
+                    </Badge>
                   )}
-                >
-                  <category.icon className="size-6" aria-hidden="true" />
-                </span>
-                {!category.industry && category.title !== "Other Services" && (
-                  <Badge variant="muted">Coming soon</Badge>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-3">
+                  <span
+                    className={cn(
+                      "grid size-12 place-items-center rounded-2xl",
+                      category.tone,
+                    )}
+                  >
+                    <category.icon className="size-6" aria-hidden="true" />
+                  </span>
+                  {!category.industry && category.title !== "Other Services" && (
+                    <Badge variant="muted">Coming soon</Badge>
+                  )}
+                </div>
+              )}
               <h3 className="mt-4 font-semibold text-foreground">{category.title}</h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 {category.description}
@@ -144,7 +197,7 @@ export function ServiceCategories() {
           );
 
           const baseClass =
-            "group flex flex-col rounded-2xl border border-border bg-card p-5 text-left shadow-xs transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-md";
+            "group flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 text-left shadow-xs transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-md";
 
           if (category.industry) {
             return (

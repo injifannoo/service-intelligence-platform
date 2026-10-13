@@ -7,6 +7,7 @@ import {
   num,
   ok,
   readJson,
+  readRatingScores,
   requireUser,
   str,
 } from "@/lib/dev-backend/http";
@@ -102,13 +103,15 @@ export async function PUT(
     }
   }
 
+  const ratings = readRatingScores(body.ratings, errors);
+
   if (!errors.isEmpty) return errors.toResponse();
 
-  if (rating === undefined && comment === undefined) {
-    return failure(400, "INVALID_PAYLOAD", "Provide `rating`, `comment`, or both.");
+  if (rating === undefined && comment === undefined && ratings === undefined) {
+    return failure(400, "INVALID_PAYLOAD", "Provide `rating`, `ratings`, `comment`, or any combination.");
   }
 
-  const updated = updateReview(id, { rating, comment });
+  const updated = updateReview(id, { rating, comment, ratings });
   if (!updated) {
     return failure(404, "NOT_FOUND", "Review not found.");
   }
