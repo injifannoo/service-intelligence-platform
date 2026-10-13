@@ -1,22 +1,294 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design tokens. Domain-agnostic only — per docs/07_Project_Structure.md:225,
+ * business concepts are forbidden inside components/ui/.
+ *
+ * The neutral ramp is a clean white-and-blue and the brand accent is ASIP blue
+ * (#0866F5), so primary actions and links read as intentional rather than as
+ * "black buttons". Light/pale blue surfaces, a deep-navy ink and a light-blue
+ * border come next; semantic success/warning tones are tokens because feature
+ * components previously hardcoded emerald/amber classes.
+ * Semantic success/warning tones are tokens because feature components were
+ * previously hardcoding emerald/amber classes, which broke the moment the
+ * palette shifted.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.9rem;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.34 0.1 263);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.34 0.1 263);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.34 0.1 263);
+
+  --primary: oklch(0.556 0.228 260.6);
+  --primary-foreground: oklch(1 0 0);
+  --primary-hover: oklch(0.5 0.21 260);
+
+  --secondary: oklch(0.975 0.015 240);
+  --secondary-foreground: oklch(0.34 0.1 263);
+
+  --muted: oklch(0.985 0.008 240);
+  --muted-foreground: oklch(0.55 0.06 258);
+
+  --accent: oklch(0.975 0.015 240);
+  --accent-foreground: oklch(0.556 0.228 260.6);
+
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(1 0 0);
+
+  --success: oklch(0.69 0.15 163);
+  --success-foreground: oklch(1 0 0);
+  --success-subtle: oklch(0.96 0.04 163);
+
+  --warning: oklch(0.8 0.15 85);
+  --warning-foreground: oklch(0.34 0.08 70);
+  --warning-subtle: oklch(0.97 0.04 90);
+
+  --border: oklch(0.92 0.03 245);
+  --input: oklch(0.9 0.035 245);
+  --ring: oklch(0.556 0.228 260.6);
+
+  /* Deep navy used by the footer and high-contrast panels. */
+  --navy: oklch(0.3 0.11 262);
+  --navy-foreground: oklch(0.97 0.012 250);
+
+  /* Brand wash used behind heroes and section bands. */
+  --surface-gradient: radial-gradient(
+      60rem 32rem at 12% -10%,
+      oklch(0.93 0.05 258 / 0.75),
+      transparent 60%
+    ),
+    radial-gradient(48rem 28rem at 88% 0%, oklch(0.94 0.04 225 / 0.7), transparent 62%);
 }
 
-* {
-  box-sizing: border-box;
+.dark {
+  --background: oklch(0.17 0.015 265);
+  --foreground: oklch(0.97 0.003 265);
+
+  --card: oklch(0.21 0.018 265);
+  --card-foreground: oklch(0.97 0.003 265);
+  --popover: oklch(0.22 0.018 265);
+  --popover-foreground: oklch(0.97 0.003 265);
+
+  --primary: oklch(0.7 0.17 260);
+  --primary-foreground: oklch(0.16 0.02 265);
+  --primary-hover: oklch(0.77 0.14 260);
+
+  --secondary: oklch(0.27 0.02 265);
+  --secondary-foreground: oklch(0.97 0.003 265);
+
+  --muted: oklch(0.26 0.02 265);
+  --muted-foreground: oklch(0.71 0.015 265);
+
+  --accent: oklch(0.3 0.06 258);
+  --accent-foreground: oklch(0.92 0.04 258);
+
+  --destructive: oklch(0.66 0.19 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --success: oklch(0.68 0.14 155);
+  --success-foreground: oklch(0.16 0.02 265);
+  --success-subtle: oklch(0.28 0.06 155);
+
+  --warning: oklch(0.78 0.14 78);
+  --warning-foreground: oklch(0.2 0.03 70);
+  --warning-subtle: oklch(0.3 0.06 78);
+
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.7 0.17 260);
+
+  --surface-gradient: radial-gradient(
+      60rem 32rem at 12% -10%,
+      oklch(0.35 0.09 258 / 0.5),
+      transparent 60%
+    ),
+    radial-gradient(48rem 28rem at 88% 0%, oklch(0.33 0.07 225 / 0.45), transparent 62%);
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
+@theme inline {
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+
+  /* Elevation ramp, tinted toward the brand navy rather than pure black. Cards
+   * sit one step above the page; interactive cards lift to two on hover, which
+   * is the main depth cue on a light background. */
+  --shadow-xs: 0 1px 2px oklch(0.34 0.1 263 / 0.05);
+  --shadow-sm: 0 1px 3px oklch(0.34 0.1 263 / 0.06), 0 1px 2px oklch(0.34 0.1 263 / 0.04);
+  --shadow-md: 0 4px 12px oklch(0.34 0.1 263 / 0.07), 0 2px 4px oklch(0.34 0.1 263 / 0.04);
+  --shadow-lg: 0 12px 32px oklch(0.34 0.1 263 / 0.1), 0 4px 8px oklch(0.34 0.1 263 / 0.04);
+  --shadow-ring: 0 0 0 1px var(--color-border);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Display",
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono:
+    ui-monospace, "Cascadia Code", "Segoe UI Mono", "SFMono-Regular", Menlo,
+    Consolas, monospace;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+@layer base {
+  * {
+    border-color: var(--color-border);
+    outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tighten large text so headings read as a single block rather than loosely
+   * spaced words. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-primary) 22%, transparent);
+    color: var(--color-foreground);
+  }
+
+  /* Keyboard focus stays visible; pointer focus does not add a second ring. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Ambient brand wash for hero and section bands. */
+  .surface-gradient {
+    background-image: var(--surface-gradient);
+  }
+
+  /* Faint blueprint grid behind the hero. The radial mask fades it toward the
+   * edges so it reads as depth rather than as a visible table. */
+  .hero-grid {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 3.5rem 3.5rem;
+    -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 0%, black, transparent 78%);
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 0%, black, transparent 78%);
+  }
+
+  /* Re-maps the ink tokens so shared components using `text-foreground` and
+   * `text-muted-foreground` stay legible on the deep-navy footer. */
+  .on-dark {
+    --color-foreground: oklch(0.99 0 0);
+    --color-muted-foreground: oklch(0.82 0.04 250);
+    --color-border: oklch(1 0 0 / 14%);
+  }
+
+  /* Local remap so a default `Button` renders as a solid white action when it
+   * sits on the solid brand CTA band, without adding a one-off button variant. */
+  .cta-inverse {
+    --color-primary: oklch(1 0 0);
+    --color-primary-foreground: oklch(0.34 0.16 261);
+    --color-primary-hover: oklch(0.93 0.02 260);
+  }
+
+  /* Thin scrollbars so dense panels do not dominate the layout. */
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-foreground) 22%, transparent) transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--color-foreground) 20%, transparent);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
