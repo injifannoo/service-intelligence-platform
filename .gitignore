@@ -1,7 +1,6 @@
 # ==========================================
 # Service Intelligence Platform Git Ignore
 # ==========================================
-
 # Environment & Secrets (CRITICAL)
 .env
 .env.local
@@ -12,7 +11,6 @@
 *.key
 *.cert
 *.secrets
-
 # Python & Django
 __pycache__/
 *.py[cod]
@@ -25,8 +23,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -62,7 +60,6 @@ ENV/
 env/
 active_env/
 conda-env/
-
 # Node.js & Next.js
 node_modules/
 /frontend/node_modules/
@@ -73,14 +70,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 .eslintcache
-
+frontend/.devserver.log
 # Docker & Databases
 .docker-volumes/
 postgres_data/
 redis_data/
 *.sql.gz
 *.sql.tar
-
 # IDEs, Editors & System
 .idea/
 .vscode/
