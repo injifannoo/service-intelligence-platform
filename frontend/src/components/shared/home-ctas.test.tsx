@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { hydrateRoot } from "react-dom/client";
 import { act, type ReactElement } from "react";
@@ -8,14 +7,13 @@ import { act, type ReactElement } from "react";
 import { ClosingCtaCopy, ClosingPrimaryCta } from "./closing-cta";
 import { HeroSecondaryCta } from "./hero-secondary-cta";
 import { HomeHeaderActions } from "./home-header-actions";
-import { AuthModalProvider } from "@/features/authentication";
 
 /**
  * Homepage call-to-action rendering.
  *
- * These CTAs used to be plain links to `/login` and `/register`, which threw away
- * the page the visitor was reading. They now open the auth modal in place, so the
- * assertions here are about which button opens which mode rather than about hrefs.
+ * The CTAs are links to the dedicated `/login` and `/register` pages, so the
+ * assertions here are about which href each acquisition prompt targets rather
+ * than about a modal.
  */
 
 const state: {
@@ -39,14 +37,6 @@ const state: {
   logout: vi.fn(),
 };
 
-/*
- * The modal renders the real LoginForm/RegisterForm, so the mutations they call
- * are mocked here too. Only the *trigger* behaviour is under test in this file;
- * what the forms do with a submission is covered by their own suites.
- *
- * Mirrors the real hook: no token means the query is disabled, so there is no
- * data and the status stays "pending".
- */
 vi.mock("@/features/authentication/api/use-auth", () => ({
   useCurrentUser: () => ({
     data: state.cookie ? state.user : undefined,
@@ -54,13 +44,11 @@ vi.mock("@/features/authentication/api/use-auth", () => ({
     isFetching: state.isFetching,
   }),
   useLogout: () => ({ mutateAsync: state.logout, isPending: false }),
-  useLogin: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useRegister: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
-/** Renders a CTA inside the provider it now depends on. */
+/** Renders a CTA on its own, as the real pages do. */
 function renderCta(cta: ReactElement) {
-  return render(<AuthModalProvider>{cta}</AuthModalProvider>);
+  return render(cta);
 }
 
 /** Simulates a visitor who already has a session cookie. */
@@ -100,9 +88,7 @@ describe("hydration safety", () => {
      * and the test would prove nothing.
      */
     state.cookie = false;
-    const serverHtml = renderToString(
-      <AuthModalProvider>{element}</AuthModalProvider>,
-    );
+    const serverHtml = renderToString(element);
     state.cookie = true;
 
     /*
@@ -143,7 +129,7 @@ describe("hydration safety", () => {
      */
     let root: ReturnType<typeof hydrateRoot>;
     act(() => {
-      root = hydrateRoot(container, <AuthModalProvider>{element}</AuthModalProvider>, {
+      root = hydrateRoot(container, element, {
         onRecoverableError,
       });
     });
@@ -208,30 +194,22 @@ describe("hydration safety", () => {
     signIn("CUSTOMER");
     state.cookie = false;
 
-    const headerHtml = renderToString(
-      <AuthModalProvider>
-        <HomeHeaderActions />
-      </AuthModalProvider>,
-    );
+    const headerHtml = renderToString(<HomeHeaderActions />);
     expect(headerHtml).toContain("Sign in");
     expect(headerHtml).toContain("Get started");
+    expect(headerHtml).toContain('href="/login"');
+    expect(headerHtml).toContain('href="/register"');
     expect(headerHtml).not.toContain("Sign out");
     expect(headerHtml).not.toContain("Ada");
 
-    const heroHtml = renderToString(
-      <AuthModalProvider>
-        <HeroSecondaryCta />
-      </AuthModalProvider>,
-    );
+    const heroHtml = renderToString(<HeroSecondaryCta />);
     expect(heroHtml).toContain("Register a business");
+    expect(heroHtml).toContain('href="/register"');
     expect(heroHtml).not.toContain("/organizations");
 
-    const closingHtml = renderToString(
-      <AuthModalProvider>
-        <ClosingPrimaryCta />
-      </AuthModalProvider>,
-    );
+    const closingHtml = renderToString(<ClosingPrimaryCta />);
     expect(closingHtml).toContain("Create your account");
+    expect(closingHtml).toContain('href="/register"');
   });
 
   it("reveals the session once hydration has completed", async () => {
@@ -251,39 +229,39 @@ describe("hydration safety", () => {
 });
 
 describe("HomeHeaderActions", () => {
-  it("opens the sign-in modal from the header CTA", async () => {
+  it("links the header CTA to the dedicated login page", () => {
     renderCta(<HomeHeaderActions />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-
-    expect(screen.getByRole("dialog")).toBeDefined();
-    expect(screen.getByLabelText("Email")).toBeDefined();
-    expect(screen.getByLabelText("Password")).toBeDefined();
-    // The signup form asks for a name too, so its absence proves which form is up.
-    expect(screen.queryByLabelText("Full name")).toBeNull();
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+      "href",
+      "/login",
+    );
   });
 
-  it("opens the sign-up modal from Get started", async () => {
+  it("links Get started to the dedicated register page", () => {
     renderCta(<HomeHeaderActions />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Get started" }));
-
-    expect(screen.getByLabelText("Full name")).toBeDefined();
+    expect(screen.getByRole("link", { name: "Get started" })).toHaveAttribute(
+      "href",
+      "/register",
+    );
   });
 
-  it("no longer navigates away from the homepage", () => {
+  it("renders the acquisition CTAs as real navigation, not modal triggers", () => {
     renderCta(<HomeHeaderActions />);
 
-    expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Get started" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Get started" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Sign in" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Get started" })).toBeDefined();
   });
 
   it("hides both acquisition CTAs once signed in", () => {
     signIn("CUSTOMER");
     renderCta(<HomeHeaderActions />);
 
-    expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Get started" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Get started" })).toBeNull();
     expect(screen.getByRole("link", { name: /Dashboard/i })).toHaveAttribute(
       "href",
       "/organizations",
@@ -320,7 +298,7 @@ describe("HomeHeaderActions", () => {
     state.isFetching = true;
     const { container } = renderCta(<HomeHeaderActions />);
 
-    expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
     expect(container.querySelector(".animate-pulse")).not.toBeNull();
   });
 
@@ -334,8 +312,8 @@ describe("HomeHeaderActions", () => {
     state.isFetching = false;
     const { container } = renderCta(<HomeHeaderActions />);
 
-    expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Get started" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Sign in" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Get started" })).toBeDefined();
     expect(container.querySelector(".animate-pulse")).toBeNull();
   });
 
@@ -348,19 +326,20 @@ describe("HomeHeaderActions", () => {
 });
 
 describe("HeroSecondaryCta", () => {
-  it("acquires a business through the sign-up modal", async () => {
+  it("points a signed-out visitor at the dedicated register page", () => {
     renderCta(<HeroSecondaryCta />);
 
-    await userEvent.click(screen.getByRole("button", { name: /Register a business/i }));
-
-    expect(screen.getByLabelText("Full name")).toBeDefined();
+    expect(screen.getByRole("link", { name: /Register a business/i })).toHaveAttribute(
+      "href",
+      "/register",
+    );
   });
 
   it("points a signed-in visitor at their organizations instead", () => {
     signIn("CUSTOMER");
     renderCta(<HeroSecondaryCta />);
 
-    expect(screen.queryByRole("button", { name: /Register a business/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Register a business/i })).toBeNull();
     expect(screen.getByRole("link", { name: /Your organizations/i })).toHaveAttribute(
       "href",
       "/organizations",
@@ -369,19 +348,20 @@ describe("HeroSecondaryCta", () => {
 });
 
 describe("ClosingPrimaryCta", () => {
-  it("opens the sign-up modal", async () => {
+  it("points a signed-out visitor at the dedicated register page", () => {
     renderCta(<ClosingPrimaryCta />);
 
-    await userEvent.click(screen.getByRole("button", { name: /Create your account/i }));
-
-    expect(screen.getByLabelText("Full name")).toBeDefined();
+    expect(screen.getByRole("link", { name: /Create your account/i })).toHaveAttribute(
+      "href",
+      "/register",
+    );
   });
 
   it("does not tell a signed-in visitor to create an account again", () => {
     signIn("CUSTOMER");
     renderCta(<ClosingPrimaryCta />);
 
-    expect(screen.queryByRole("button", { name: /Create your account/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Create your account/i })).toBeNull();
     expect(screen.getByRole("link", { name: /Go to your dashboard/i })).toHaveAttribute(
       "href",
       "/organizations",

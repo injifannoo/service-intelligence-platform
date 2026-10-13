@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import type { OrganizationReview, Review, ReviewInput } from "@/types";
+import type { OrganizationReview, Review, ReviewInput, ReviewScores } from "@/types";
 
 /**
  * Transport for the reviews slice, docs/05_API_Design.md:403-441.
@@ -36,7 +36,11 @@ export const reviewsApi = {
    */
   update(
     id: string,
-    payload: { rating?: number; comment?: string | null },
+    payload: {
+      rating?: number;
+      comment?: string | null;
+      ratings?: Partial<ReviewScores>;
+    },
   ): Promise<Review> {
     return apiClient.put<Review>(`/reviews/${id}/`, payload);
   },

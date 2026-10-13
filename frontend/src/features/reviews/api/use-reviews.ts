@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { organizationKeys } from "@/features/organizations";
-import type { ReviewInput } from "@/types";
+import type { ReviewInput, ReviewScores } from "@/types";
 
 import { reviewsApi } from "./get-reviews";
 
@@ -75,11 +75,13 @@ export function useUpdateReview(organizationId: string) {
       id,
       rating,
       comment,
+      ratings,
     }: {
       id: string;
       rating?: number;
       comment?: string | null;
-    }) => reviewsApi.update(id, { rating, comment }),
+      ratings?: Partial<ReviewScores>;
+    }) => reviewsApi.update(id, { rating, comment, ratings }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: reviewKeys.byOrganization(organizationId),

@@ -52,6 +52,13 @@ function report(overrides: Partial<ModerationReport> = {}): ModerationReport {
       user_id: "user-1",
       organization_id: "org-1",
       rating: 1,
+      ratings: {
+        quality: 1,
+        price: 1,
+        customer_service: 1,
+        speed: 1,
+        overall_experience: 1,
+      },
       comment: "Buy cheap followers now!!!",
       verified: false,
       created_at: "2026-01-04T10:00:00.000Z",

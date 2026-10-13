@@ -6,7 +6,7 @@ import { LayoutDashboardIcon, LogOutIcon, ShieldCheckIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ADMIN_ROLES, landingRouteForRole, ROUTES } from "@/config/site-config";
-import { useAuthModal, useCurrentUser, useLogout } from "@/features/authentication";
+import { useCurrentUser, useLogout } from "@/features/authentication";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -17,14 +17,13 @@ import { useHydrated } from "@/lib/use-hydrated";
  * Offering a signed-in user "Sign in" is actively misleading: the proxy bounces
  * them straight back out of `/login`.
  *
- * Both CTAs now open the auth modal in place rather than navigating away from the
- * page the visitor is reading.
+ * Both CTAs link to the dedicated `/login` and `/register` pages rather than
+ * opening the auth modal over the page the visitor is reading.
  */
 export function HomeHeaderActions() {
   const router = useRouter();
   const hydrated = useHydrated();
   const { data: user, isPending, isFetching } = useCurrentUser();
-  const { openAuthModal } = useAuthModal();
   const logout = useLogout();
 
   /*
@@ -41,11 +40,11 @@ export function HomeHeaderActions() {
   if (!hydrated || !user) {
     return (
       <>
-        <Button variant="outline" size="sm" onClick={() => openAuthModal("signin")}>
-          Sign in
+        <Button asChild variant="outline" size="sm">
+          <Link href={ROUTES.login}>Sign in</Link>
         </Button>
-        <Button size="sm" onClick={() => openAuthModal("signup")}>
-          Get started
+        <Button asChild size="sm">
+          <Link href={ROUTES.register}>Get started</Link>
         </Button>
       </>
     );

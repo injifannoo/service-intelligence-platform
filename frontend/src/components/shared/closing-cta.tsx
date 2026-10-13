@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { landingRouteForRole } from "@/config/site-config";
-import { useAuthModal, useCurrentUser } from "@/features/authentication";
+import { landingRouteForRole, ROUTES } from "@/config/site-config";
+import { useCurrentUser } from "@/features/authentication";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -17,7 +17,6 @@ import { useHydrated } from "@/lib/use-hydrated";
  */
 export function ClosingPrimaryCta() {
   const { data: user } = useCurrentUser();
-  const { openAuthModal } = useAuthModal();
   const hydrated = useHydrated();
 
   // Cookie-backed session state is invisible to the server, so the first render
@@ -34,9 +33,11 @@ export function ClosingPrimaryCta() {
   }
 
   return (
-    <Button size="lg" onClick={() => openAuthModal("signup")}>
-      Create your account
-      <ArrowRightIcon />
+    <Button asChild size="lg">
+      <Link href={ROUTES.register}>
+        Create your account
+        <ArrowRightIcon />
+      </Link>
     </Button>
   );
 }

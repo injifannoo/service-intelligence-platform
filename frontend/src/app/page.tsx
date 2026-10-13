@@ -1,5 +1,3 @@
-import { AuthModalProvider } from "@/features/authentication";
-
 import { HomeNav } from "@/components/homepage/home-nav";
 import { HomepageSections } from "@/components/homepage/homepage-sections";
 import { SiteFooter } from "@/components/homepage/site-footer";
@@ -14,14 +12,12 @@ import { SiteFooter } from "@/components/homepage/site-footer";
  */
 export default function HomePage() {
   return (
-    <AuthModalProvider>
-      <div className="flex min-h-screen flex-col bg-background">
-        <HomeNav />
-        <main className="flex-1">
-          <HomepageSections />
-        </main>
-        <SiteFooter />
-      </div>
-    </AuthModalProvider>
+    <div className="flex min-h-screen flex-col bg-background">
+      <HomeNav />
+      <main className="flex-1">
+        <HomepageSections />
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import { ArrowRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { landingRouteForRole, ROUTES } from "@/config/site-config";
-import { useAuthModal, useCurrentUser } from "@/features/authentication";
+import { useCurrentUser } from "@/features/authentication";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -17,7 +17,6 @@ import { useHydrated } from "@/lib/use-hydrated";
  */
 export function GrowBusinessCta() {
   const { data: user } = useCurrentUser();
-  const { openAuthModal } = useAuthModal();
   const hydrated = useHydrated();
 
   if (hydrated && user) {
@@ -32,9 +31,11 @@ export function GrowBusinessCta() {
   }
 
   return (
-    <Button size="lg" onClick={() => openAuthModal("signup")}>
-      Grow Your Business
-      <ArrowRightIcon aria-hidden="true" />
+    <Button asChild size="lg">
+      <Link href={ROUTES.register}>
+        Grow Your Business
+        <ArrowRightIcon aria-hidden="true" />
+      </Link>
     </Button>
   );
 }
@@ -42,7 +43,6 @@ export function GrowBusinessCta() {
 /** Outlined white action used on the solid blue closing band. */
 export function JoinBusinessCta() {
   const { data: user } = useCurrentUser();
-  const { openAuthModal } = useAuthModal();
   const hydrated = useHydrated();
 
   if (hydrated && user) {
@@ -55,12 +55,12 @@ export function JoinBusinessCta() {
 
   return (
     <Button
+      asChild
       size="lg"
       variant="outline"
-      onClick={() => openAuthModal("signup")}
       className="!border-white/60 !bg-transparent !text-white shadow-none hover:!bg-white/10 hover:!text-white"
     >
-      Join as a Business
+      <Link href={ROUTES.register}>Join as a Business</Link>
     </Button>
   );
 }

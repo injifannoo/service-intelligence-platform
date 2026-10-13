@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ApiError } from "@/lib/api-client";
@@ -58,6 +58,13 @@ function review(overrides: Partial<OrganizationReview> = {}): OrganizationReview
     user_id: "user-1",
     organization_id: "org-1",
     rating: 4,
+    ratings: {
+      quality: 4,
+      price: 4,
+      customer_service: 4,
+      speed: 4,
+      overall_experience: 4,
+    },
     comment: "Solid work.",
     verified: false,
     created_at: "2026-01-04T10:00:00.000Z",
@@ -149,16 +156,25 @@ describe("editing", () => {
     render(<ReviewList organizationId="org-1" />);
     await user.click(screen.getByRole("button", { name: "Edit" }));
 
-    expect(screen.getByRole("radio", { name: "4 out of 5" })).toBeChecked();
+    // Every dimension carries the review's overall score, including the
+    // overall-experience row, which is what `rating` mirrors.
+    const overall = within(
+      screen.getByRole("group", { name: "Overall experience" }),
+    );
+    expect(overall.getByRole("radio", { name: "4 out of 5" })).toBeChecked();
+    expect(screen.getAllByRole("radio", { name: "4 out of 5" })).toHaveLength(5);
     expect(screen.getByLabelText("Comment")).toHaveValue("Solid work.");
   });
 
-  it("saves the new rating and comment", async () => {
+  it("saves the new rating and dimension breakdown", async () => {
     const user = userEvent.setup();
 
     render(<ReviewList organizationId="org-1" />);
     await user.click(screen.getByRole("button", { name: "Edit" }));
-    await user.click(screen.getByRole("radio", { name: "2 out of 5" }));
+    const overall = within(
+      screen.getByRole("group", { name: "Overall experience" }),
+    );
+    await user.click(overall.getByRole("radio", { name: "2 out of 5" }));
     await user.clear(screen.getByLabelText("Comment"));
     await user.type(screen.getByLabelText("Comment"), "Changed my mind.");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
@@ -167,6 +183,13 @@ describe("editing", () => {
       expect(state.update).toHaveBeenCalledWith({
         id: "review-1",
         rating: 2,
+        ratings: {
+          quality: 4,
+          price: 4,
+          customer_service: 4,
+          speed: 4,
+          overall_experience: 2,
+        },
         comment: "Changed my mind.",
       });
     });
