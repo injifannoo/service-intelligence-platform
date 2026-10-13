@@ -94,7 +94,11 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
  * Verification enum. Values are ASSUMED; docs/04:291 never enumerates them.
  * See contradiction 3.
  */
-export const VERIFICATION_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
+export const VERIFICATION_STATUSES = [
+  "PENDING",
+  "VERIFIED",
+  "REJECTED",
+] as const;
 
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
@@ -105,7 +109,12 @@ export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
 };
 
 /** The only other enum in the docs is `User.role`; everything else is a boolean. */
-export const AUDIENCE_ROLES = ["ALL", "CUSTOMER", "ORGANIZATION_OWNER", "ADMIN"] as const;
+export const AUDIENCE_ROLES = [
+  "ALL",
+  "CUSTOMER",
+  "ORGANIZATION_OWNER",
+  "ADMIN",
+] as const;
 export type AudienceRole = (typeof AUDIENCE_ROLES)[number];
 
 /* -------------------------------------------------------------------------- */
@@ -391,13 +400,15 @@ export interface Review {
   created_at: string;
   /** Convenience field for rendering; not a `reviews` column. */
   author_name?: string;
+  /** Dev-backend / UI multi-dimensional scores; initialized for all mock reviews. */
+  ratings: ReviewScores;
 }
-
 /** Request of `POST /api/v1/reviews/` (docs/05:409-421). */
 export interface ReviewInput {
   organization_id: UUID;
   rating: number;
   comment?: string;
+  ratings?: Partial<ReviewScores>;
 }
 
 /** One row of `GET /api/v1/organizations/{id}/reviews/` (docs/05:426-432). */
@@ -476,7 +487,8 @@ export const VERIFICATION_DOCUMENT_TYPES = [
   "OTHER",
 ] as const;
 
-export type VerificationDocumentType = (typeof VERIFICATION_DOCUMENT_TYPES)[number];
+export type VerificationDocumentType =
+  (typeof VERIFICATION_DOCUMENT_TYPES)[number];
 
 /** Request of `POST /api/v1/organizations/{id}/verify/` (docs/05:348-356). */
 export interface VerificationClaimInput {
@@ -663,3 +675,19 @@ export interface OrganizationDashboard {
     verification_status?: VerificationStatus;
   }[];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Review Rating Dimensions (Dev Backend & Mock Store Only)                   */
+/* -------------------------------------------------------------------------- */
+
+export const RATING_DIMENSIONS = [
+  "quality",
+  "price",
+  "customer_service",
+  "speed",
+  "overall_experience",
+] as const;
+
+export type RatingDimension = (typeof RATING_DIMENSIONS)[number];
+
+export type ReviewScores = Record<RatingDimension, number>;
