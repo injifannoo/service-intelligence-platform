@@ -4,12 +4,11 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site-config";
 
 /**
- * Brand lockup.
+ * Brand lockup with refined visual identity.
  *
- * The mark is an inline AI/search icon on a CSS gradient rather than an asset so
- * it inherits `currentColor`, stays crisp at any size, and keeps the repo free
- * of a binary logo file. `ScanSearch` reads as "intelligent search", which is
- * what the brand promises.
+ * The mark features a sophisticated gradient on an AI/search icon that
+ * represents intelligent search. Designed to be scalable, crisp, and
+ * professional across all contexts.
  */
 export function BrandMark({
   className,
@@ -19,23 +18,23 @@ export function BrandMark({
   showWordmark?: boolean;
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
+    <span className={cn("inline-flex items-center gap-3", className)}>
       <span
         aria-hidden="true"
         className={cn(
-          "grid size-8 shrink-0 place-items-center rounded-[10px] text-primary-foreground",
-          "bg-gradient-to-br from-primary to-primary/70 shadow-sm",
-          "ring-1 ring-primary/20 ring-inset",
+          "grid size-9 shrink-0 place-items-center rounded-xl text-white",
+          "bg-gradient-to-br from-primary to-accent shadow-md",
+          "ring-2 ring-primary/25 ring-offset-2 ring-offset-background transition-transform hover:scale-105",
         )}
       >
-        <ScanSearchIcon className="size-4" />
+        <ScanSearchIcon className="size-4.5" />
       </span>
       {showWordmark && (
         <span className="flex flex-col leading-none">
-          <span className="text-sm font-semibold tracking-tight">
+          <span className="text-[15px] font-bold tracking-tight">
             {siteConfig.shortName}
           </span>
-          <span className="mt-0.5 hidden text-[11px] font-medium text-muted-foreground sm:block">
+          <span className="mt-1 hidden text-[11px] font-medium text-muted-foreground sm:block">
             {siteConfig.name}
           </span>
         </span>

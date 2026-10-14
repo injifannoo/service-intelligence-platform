@@ -21,36 +21,38 @@ const BENEFITS = [
 ] as const;
 
 /**
- * Trust section.
+ * Trust section with refined benefit cards.
  *
- * Rendered as platform benefits rather than testimonials because no verified,
- * attributable customer quotes exist. Inventing either would be a claim the
- * product cannot support.
+ * Platform benefits showcased in elegant cards with modern styling and
+ * sophisticated color palette.
  */
 export function WhyChoose() {
   return (
-    <section id="about" className="scroll-mt-20 border-y border-border bg-[#F5FAFF]">
-      <div className="mx-auto w-full max-w-7xl px-6 py-16 sm:py-20">
+    <section id="about" className="scroll-mt-20 border-y border-border bg-secondary">
+      <div className="mx-auto w-full max-w-7xl px-6 py-14 sm:py-16">
         <SectionHeading
           align="center"
-          eyebrow="Trust"
-          title="Why Choose ASIP?"
-          description="Built to help you make confident service decisions with information you can rely on."
+          eyebrow="Why Choose Us"
+          title="Make Confident Decisions"
+          description="Reliable information and transparent comparisons for better service choices."
         />
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-3">
-          {BENEFITS.map((benefit) => (
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          {BENEFITS.map((benefit, index) => (
             <div
               key={benefit.title}
-              className="rounded-2xl border border-border bg-[#EEF7FF] p-6 text-center"
+              className="group relative rounded-3xl border border-border bg-card p-6 text-center shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-card text-primary shadow-xs">
-                <benefit.icon className="size-6" aria-hidden="true" />
-              </span>
-              <h3 className="mt-4 font-semibold text-foreground">{benefit.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              <div className="mx-auto mb-5 grid size-14 place-items-center rounded-2xl bg-accent/10 text-accent shadow-sm ring-1 ring-accent/25 transition-transform group-hover:scale-110">
+                <benefit.icon className="size-7" aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">{benefit.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {benefit.body}
               </p>
+              {/* Subtle teal top-edge glow on hover */}
+              <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-b from-accent/8 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
             </div>
           ))}
         </div>

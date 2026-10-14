@@ -29,15 +29,15 @@ export function FeaturedProviders() {
   const organizations = data?.data ?? [];
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-6 py-16 sm:py-20">
+    <section className="mx-auto w-full max-w-7xl px-6 py-12 sm:py-14">
       <SectionHeading
-        eyebrow="Directory"
-        title="Featured Service Providers"
-        description="Discover top-rated and trusted service providers in your area."
+        eyebrow="Featured Providers"
+        title="Top-Rated Services"
+        description="Discover trusted and verified service providers."
         action={
           <Button asChild variant="outline">
             <Link href={ROUTES.organizations}>
-              View All Providers
+              View All
               <ArrowRightIcon aria-hidden="true" />
             </Link>
           </Button>
@@ -45,7 +45,7 @@ export function FeaturedProviders() {
       />
 
       {isPending && (
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <OrganizationCardSkeleton />
           <OrganizationCardSkeleton />
           <OrganizationCardSkeleton />
@@ -74,7 +74,7 @@ export function FeaturedProviders() {
       )}
 
       {organizations.length > 0 && (
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {organizations.map((organization) => (
             <OrganizationCard key={organization.id} organization={organization} />
           ))}
