@@ -53,7 +53,7 @@ export function FeaturedProviders() {
       )}
 
       {isError && (
-        <div className="mt-10">
+        <div className="mt-8">
           <AlertMessage tone="error" title="Could not load providers" className="flex-col items-start">
             <p>{error instanceof Error ? error.message : "Please try again."}</p>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -64,7 +64,7 @@ export function FeaturedProviders() {
       )}
 
       {!isPending && !isError && organizations.length === 0 && (
-        <div className="mt-10">
+        <div className="mt-8">
           <EmptyState
             icon={Building2Icon}
             title="No providers listed yet"

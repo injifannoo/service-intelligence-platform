@@ -33,6 +33,7 @@ const PROTECTED_PREFIXES = [
   "/search",
   "/comparison",
   "/profile",
+  "/onboarding",
   "/admin",
 ];
 
@@ -40,7 +41,14 @@ const AUTH_ROUTES: readonly string[] = [ROUTES.login, ROUTES.register];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasToken = request.cookies.has(AUTH_COOKIES.accessToken);
+  /*
+   * The value matters, not just the cookie's presence. A cleared session leaves
+   * an empty `asip_access_token=` behind, and reading presence alone still calls
+   * that "signed in": every `/login` visit would then 307 to `/organizations`,
+   * so the "Sign in" button could never reach the sign-in form. An empty token
+   * carries no credentials, so it must be treated as signed out.
+   */
+  const hasToken = Boolean(request.cookies.get(AUTH_COOKIES.accessToken)?.value);
 
   const isProtected = PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),

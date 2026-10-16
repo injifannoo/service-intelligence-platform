@@ -17,6 +17,13 @@ import { useLogin, useRegister } from "../api/use-auth";
 type RegisterFormProps = {
   onSuccess?: () => void;
   onSwitchMode?: () => void;
+  /**
+   * Where to send a newly created account once it is signed in. Defaults to the
+   * role landing; the business signup passes the organization onboarding step so
+   * a business continues into its profile instead of the customer directory.
+   * `?next=` still wins, so a bounced visitor is returned to where they were going.
+   */
+  redirectTo?: string;
 };
 
 /**
@@ -25,8 +32,10 @@ type RegisterFormProps = {
  * @param onSwitchMode  Replaces the "Already registered? Sign in" link and the
  *   post-registration fallback button, so the modal switches in place instead of
  *   navigating away from the homepage.
+ * @param redirectTo  Overrides the post-sign-in destination for flows like
+ *   business onboarding. Ignored when `?next=` is present.
  */
-export function RegisterForm({ onSuccess, onSwitchMode }: RegisterFormProps = {}) {
+export function RegisterForm({ onSuccess, onSwitchMode, redirectTo }: RegisterFormProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const register = useRegister();
@@ -104,7 +113,7 @@ export function RegisterForm({ onSuccess, onSwitchMode }: RegisterFormProps = {}
     // "email already exists", so the user is routed to sign in instead.
     try {
       const user = await login.mutateAsync({ email, password });
-      router.push(next ?? landingRouteForRole(user.role));
+      router.push(next ?? redirectTo ?? landingRouteForRole(user.role));
       onSuccess?.();
     } catch {
       setCreatedEmail(email);

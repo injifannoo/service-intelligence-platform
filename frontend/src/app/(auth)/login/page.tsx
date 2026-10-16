@@ -10,9 +10,11 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="space-y-7">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+    <div className="space-y-6">
+      <div className="space-y-1.5">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Welcome back
+        </h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Sign in to manage your organizations and insights.
         </p>
@@ -21,7 +23,7 @@ export default function LoginPage() {
       {/* The form reads `?next=` to return the visitor to the page that bounced
           them here, which opts it into a client-side bailout. Without this
           boundary `next build` fails to prerender /login. */}
-      <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+      <Suspense fallback={<Skeleton className="h-72 w-full" />}>
         <LoginForm />
       </Suspense>
     </div>

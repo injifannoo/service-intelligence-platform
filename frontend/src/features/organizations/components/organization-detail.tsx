@@ -66,7 +66,9 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
 
   // Ownership is derived from the profile's organization link because
   // docs/04 declares no owner column on Organization — see src/types/index.ts
-  // contradiction 5.
+  // contradiction 5. The link, not the role, is the source of truth: creating an
+  // organization also promotes the account to ORGANIZATION_OWNER, but this gate
+  // stays on the link so it can never disagree with the tenant boundary.
   // Mirrors the BFF gate exactly: ownership via the profile link, or an admin
   // role. Ownership is the check, not the ORGANIZATION_OWNER role, because a
   // user who registered an organization while still a CUSTOMER owns it.

@@ -71,6 +71,16 @@ describe("registration", () => {
     expect(routerMock.push).toHaveBeenCalledWith("/search");
   });
 
+  it("honours redirectTo so business signup continues into onboarding", async () => {
+    render(<RegisterForm redirectTo="/onboarding/organization" />);
+    await userEvent.type(screen.getByLabelText("Full name"), "Ada Lovelace");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "Password123!");
+    await userEvent.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(routerMock.push).toHaveBeenCalledWith("/onboarding/organization");
+  });
+
   it("reports a registration failure without attempting to sign in", async () => {
     state.register = vi.fn().mockRejectedValue(
       new ApiError(

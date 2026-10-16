@@ -59,7 +59,7 @@ export function HeroSection() {
             <HeroSearch />
           </div>
 
-          <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {FEATURES.map((feature) => (
               <li key={feature.label} className="flex flex-col items-start gap-2.5">
                 <span
@@ -77,7 +77,7 @@ export function HeroSection() {
             ))}
           </ul>
 
-          <div className="mt-10 flex flex-wrap items-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <Button asChild size="lg" className="group">
               <Link href={ROUTES.organizations}>
                 Explore Services

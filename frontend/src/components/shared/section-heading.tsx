@@ -33,12 +33,12 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between",
+        "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between",
         centered && "sm:flex-col sm:items-center",
         className,
       )}
     >
-      <div className={cn("max-w-2xl space-y-3", centered && "mx-auto text-center")}>
+      <div className={cn("max-w-2xl space-y-2", centered && "mx-auto text-center")}>
         {eyebrow && (
           <p className="text-xs font-bold tracking-wider text-primary uppercase">
             {eyebrow}

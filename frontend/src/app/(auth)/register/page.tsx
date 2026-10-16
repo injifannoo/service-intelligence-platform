@@ -10,9 +10,11 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <div className="space-y-7">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
+    <div className="space-y-6">
+      <div className="space-y-1.5">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Create your account
+        </h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Join as a customer, or register a business to manage its profile.
         </p>

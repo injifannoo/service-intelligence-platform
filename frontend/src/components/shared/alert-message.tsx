@@ -27,7 +27,7 @@ const TONES: Record<
     role: "alert",
   },
   info: {
-    wrapper: "border-primary/25 bg-accent text-accent-foreground",
+    wrapper: "border-primary/20 bg-primary/8 text-primary",
     icon: "text-primary",
     Icon: InfoIcon,
     role: "status",

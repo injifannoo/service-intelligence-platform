@@ -38,11 +38,10 @@ export function WhyChoose() {
         />
 
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
-          {BENEFITS.map((benefit, index) => (
+          {BENEFITS.map((benefit) => (
             <div
               key={benefit.title}
               className="group relative rounded-3xl border border-border bg-card p-6 text-center shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10"
-              style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="mx-auto mb-5 grid size-14 place-items-center rounded-2xl bg-accent/10 text-accent shadow-sm ring-1 ring-accent/25 transition-transform group-hover:scale-110">
                 <benefit.icon className="size-7" aria-hidden="true" />

@@ -77,7 +77,7 @@ export function Header() {
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-accent text-accent-foreground"
+                    ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
@@ -94,7 +94,7 @@ export function Header() {
                 <Link href={ROUTES.profile}>
                   <span
                     aria-hidden="true"
-                    className="grid size-6 place-items-center rounded-full bg-primary/12 text-[11px] font-semibold text-primary"
+                    className="grid size-6 place-items-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary"
                   >
                     {initials}
                   </span>

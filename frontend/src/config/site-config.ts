@@ -106,6 +106,15 @@ export const ROUTES = {
   home: "/",
   login: "/login",
   register: "/register",
+  /**
+   * Business signup, step 1 of the guided onboarding (docs/09:256-278).
+   * Separate from `/register` so a business account is created with a business
+   * intent and continues straight into the organization profile, instead of
+   * landing on the customer directory with a hidden create dialog.
+   */
+  businessRegister: "/register/business",
+  /** Step 2: the organization profile, only reachable while signed in. */
+  businessOnboarding: "/onboarding/organization",
   organizations: "/organizations",
   search: "/search",
   comparison: "/comparison",

@@ -57,7 +57,7 @@ export function ForBusinesses() {
             ))}
           </ul>
 
-          <div className="mt-9">
+          <div className="mt-6">
             <GrowBusinessCta />
           </div>
         </div>

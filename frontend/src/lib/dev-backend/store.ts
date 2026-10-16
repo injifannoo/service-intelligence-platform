@@ -602,7 +602,13 @@ export function createOrganization(input: {
   // Closes the gap in docs/04, where Organization has no owner_id.
   if (input.ownerId) {
     const owner = findUserById(input.ownerId);
-    if (owner) owner.organization_id = organization.id;
+    if (owner) {
+      owner.organization_id = organization.id;
+      // Registering a business is what makes an account an Organization Owner
+      // (docs/04:265, docs/11:456 "IsOrganizationOwner"). Only a plain customer
+      // is promoted: an admin who creates an organization keeps their role.
+      if (owner.role === "CUSTOMER") owner.role = "ORGANIZATION_OWNER";
+    }
   }
 
   return organization;

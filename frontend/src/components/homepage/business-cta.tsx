@@ -32,7 +32,7 @@ export function GrowBusinessCta() {
 
   return (
     <Button asChild size="lg">
-      <Link href={ROUTES.register}>
+      <Link href={ROUTES.businessRegister}>
         Grow Your Business
         <ArrowRightIcon aria-hidden="true" />
       </Link>
@@ -60,7 +60,7 @@ export function JoinBusinessCta() {
       variant="outline"
       className="!border-white/60 !bg-transparent !text-white shadow-none hover:!bg-white/10 hover:!text-white"
     >
-      <Link href={ROUTES.register}>Join as a Business</Link>
+      <Link href={ROUTES.businessRegister}>Join as a Business</Link>
     </Button>
   );
 }
