@@ -18,13 +18,12 @@ function canSee(item: { roles?: readonly UserRole[] }, role: UserRole | undefine
 }
 
 /**
- * Header for the signed-in application shell.
+ * Header for the application shell.
  *
- * There is deliberately no "Sign in / Get started" pair here. Every page using
- * this header is a protected route, so a visitor without a session is redirected
- * to `/login?next=…` before they ever see it — and even if one slipped through,
- * the proxy would bounce a click on "Sign in" straight back here. Signup and
- * sign-in live on the public homepage as modals instead.
+ * The customer-facing read surfaces (`/organizations`, `/search`, `/comparison`)
+ * are browsable without a session, so a visitor who has not signed in still sees
+ * this header — and gets a "Sign in / Get started" pair. A signed-in user gets
+ * the account menu instead.
  *
  * The session is cookie-derived, so it is unknowable during SSR: the server
  * renders no user and the client renders the account menu, which is exactly the
@@ -88,7 +87,9 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {session && (
+          {!hydrated || reservingSpace ? (
+            <div className="h-8 w-32 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+          ) : session ? (
             <>
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                 <Link href={ROUTES.profile}>
@@ -112,9 +113,15 @@ export function Header() {
                 <LogOutIcon />
               </Button>
             </>
-          )}
-          {reservingSpace && (
-            <div className="h-8 w-32 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+          ) : (
+            <>
+              <Button asChild variant="outline" size="sm">
+                <Link href={ROUTES.login}>Sign in</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href={ROUTES.register}>Get started</Link>
+              </Button>
+            </>
           )}
         </div>
       </div>

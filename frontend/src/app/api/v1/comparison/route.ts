@@ -6,7 +6,6 @@ import {
   failure,
   ok,
   readJson,
-  requireUser,
   str,
 } from "@/lib/dev-backend/http";
 import {
@@ -26,14 +25,13 @@ import { analyzeSentiment } from "@/lib/dev-backend/ai";
  * unspecified by every document, so the rows carry the full organization plus a
  * per-organization service catalogue, which is what a comparison matrix needs
  * to render. Encapsulated in the standard envelope.
+ *
+ * Public: comparing providers is part of the guest experience, so no session is
+ * required to build a matrix.
  */
 export async function POST(request: NextRequest) {
   const blocked = devBackendUnavailable();
   if (blocked) return blocked;
-
-  // A comparison is a customer action, so it requires a signed-in user.
-  const auth = requireUser(request);
-  if ("response" in auth) return auth.response;
 
   const body = await readJson(request);
   if (!body) {

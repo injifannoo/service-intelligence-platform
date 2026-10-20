@@ -10,7 +10,7 @@ import { ROUTES } from "@/config/site-config";
 import { routerMock, __resetNavigation } from "@/test/stubs/next-navigation";
 
 /**
- * Signed-in application shell header.
+ * Application shell header.
  *
  * The session lives in a cookie, so the server never sees one: it renders the
  * account pane empty and the client renders it populated. That asymmetry is the
@@ -179,6 +179,33 @@ describe("reserving space", () => {
 
     expect(container.querySelector(".animate-pulse")).toBeNull();
     expect(screen.queryByText("Ada Lovelace")).toBeNull();
+  });
+});
+
+describe("guest browsing", () => {
+  it("offers sign-in and sign-up to a visitor with no session", () => {
+    state.cookie = false;
+
+    render(<Header />);
+
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+      "href",
+      ROUTES.login,
+    );
+    expect(screen.getByRole("link", { name: "Get started" })).toHaveAttribute(
+      "href",
+      ROUTES.register,
+    );
+  });
+
+  it("does not offer the guest CTAs while a session is still unresolved", () => {
+    signIn("CUSTOMER");
+    state.user = undefined;
+    state.isFetching = true;
+
+    render(<Header />);
+
+    expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
   });
 });
 

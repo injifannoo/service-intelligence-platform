@@ -47,21 +47,50 @@ describe("proxy session guard", () => {
     expect(response.status).toBe(200);
   });
 
-  it("protects the workspace when there is no token", () => {
+  it("lets a signed-out visitor browse the directory", () => {
     const response = proxy(request("/organizations"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("lets a signed-out visitor search and compare", () => {
+    for (const pathname of ["/search", "/comparison", "/organizations/abc"]) {
+      const response = proxy(request(pathname));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    }
+  });
+
+  it("still protects the organization analytics subtree", () => {
+    // The profile is public, but its owner-only analytics are not — a prefix
+    // match on `/organizations` would have locked guests out of both.
+    const response = proxy(request("/organizations/abc/analytics"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/login?next=%2Forganizations",
+      "http://localhost:3000/login?next=%2Forganizations%2Fabc%2Fanalytics",
     );
   });
 
-  it("keeps an empty token shell out of the workspace too", () => {
-    const response = proxy(request("/organizations", { [AUTH_COOKIES.accessToken]: "" }));
+  it("still protects the account and admin areas without a token", () => {
+    for (const pathname of ["/profile", "/onboarding/organization", "/admin/users"]) {
+      const response = proxy(request(pathname));
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe(
+        `http://localhost:3000/login?next=${encodeURIComponent(pathname)}`,
+      );
+    }
+  });
+
+  it("keeps an empty token shell out of the protected areas too", () => {
+    const response = proxy(request("/profile", { [AUTH_COOKIES.accessToken]: "" }));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/login?next=%2Forganizations",
+      "http://localhost:3000/login?next=%2Fprofile",
     );
   });
 });

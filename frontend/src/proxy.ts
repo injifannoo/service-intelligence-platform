@@ -17,24 +17,36 @@ import { AUTH_COOKIES, ROUTES } from "@/config/site-config";
  * server-side, which is the layer that actually has to be right.
  */
 /**
- * Every page in the `(dashboard)` route group.
+ * Every page in the `(dashboard)` route group that still requires a session.
  *
  * Kept as an explicit list rather than matching the group, because a group is a
- * filesystem convention the proxy cannot see. `/search` and `/comparison` were
- * previously unguarded even though both call authenticated endpoints
- * (`POST /search/ai/`, `POST /comparison/`), which left those surfaces rendering
- * inline 401 errors instead of redirecting to login.
+ * filesystem convention the proxy cannot see. The customer-facing read surfaces
+ * (`/organizations`, `/organizations/{id}`, `/search`, `/comparison`) are
+ * deliberately absent: a visitor without an account may browse the directory,
+ * search, compare, and ask for AI recommendations — their endpoints are public
+ * too. What remains behind login is the account area (`/profile`,
+ * `/onboarding`), the legacy `/verification` redirect, and the admin workspace.
  */
 const PROTECTED_PREFIXES = [
-  "/organizations",
   "/services",
   "/analytics",
   "/verification",
-  "/search",
-  "/comparison",
   "/profile",
   "/onboarding",
   "/admin",
+];
+
+/**
+ * Sub-paths of otherwise-public routes that stay behind login.
+ *
+ * `/organizations/{id}/analytics` is owner-only business intelligence, but the
+ * profile around it is public — so a prefix match on `/organizations` cannot
+ * guard it without also locking guests out of the directory. The analytics
+ * segment is matched explicitly instead (and `/organizations/{id}` itself, with
+ * nothing after it, stays public).
+ */
+const PROTECTED_PATTERNS: readonly RegExp[] = [
+  /^\/organizations\/[^/]+\/analytics(?:\/|$)/,
 ];
 
 const AUTH_ROUTES: readonly string[] = [ROUTES.login, ROUTES.register];
@@ -50,9 +62,10 @@ export function proxy(request: NextRequest) {
    */
   const hasToken = Boolean(request.cookies.get(AUTH_COOKIES.accessToken)?.value);
 
-  const isProtected = PROTECTED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  const isProtected =
+    PROTECTED_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    ) || PROTECTED_PATTERNS.some((pattern) => pattern.test(pathname));
 
   if (isProtected && !hasToken) {
     const loginUrl = new URL(ROUTES.login, request.url);
