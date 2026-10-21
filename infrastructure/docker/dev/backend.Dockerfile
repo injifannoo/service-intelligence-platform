@@ -11,11 +11,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/ /app/requirements/
+# Build context is the repository root (see docker-compose.yml).
+COPY backend/requirements/ /app/requirements/
 RUN pip install --no-cache-dir -r requirements/local.txt
 
-COPY . /app/
+COPY backend/ /app/
+
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

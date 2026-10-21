@@ -28,3 +28,7 @@ htmlcov/
 
 # Environment files (loaded via docker-compose env_file instead)
 .env
+
+# Local SQLite database
+db.sqlite3
+*.sqlite3
