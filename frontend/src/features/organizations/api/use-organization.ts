@@ -61,11 +61,20 @@ function useInvalidateOrganizations() {
 }
 
 export function useCreateOrganization() {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateOrganizations();
 
   return useMutation({
     mutationFn: organizationsApi.create,
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      invalidate();
+      // Registering an organization also changes the caller: they become its
+      // owner and an ORGANIZATION_OWNER. The header, profile, and every
+      // role-gated surface read the auth cache, so it must be refetched rather
+      // than left showing the pre-registration role. The root key literal
+      // mirrors AUTH_QUERY_KEY in features/authentication/api/use-auth.ts.
+      void queryClient.invalidateQueries({ queryKey: ["auth"] });
+    },
   });
 }
 

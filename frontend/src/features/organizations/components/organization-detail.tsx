@@ -11,8 +11,10 @@ import { VerificationClaimForm } from "@/features/verification";
 import { AlertMessage } from "@/components/shared/alert-message";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useHydrated } from "@/lib/use-hydrated";
 import { VERIFICATION_STATUS_LABELS, type Service } from "@/types";
 
 import { ServiceList } from "@/features/services";
@@ -32,11 +34,22 @@ import { ReviewSummaryCard } from "./review-summary-card";
 export function OrganizationDetail({ organizationId }: { organizationId: string }) {
   const { data: organization, isPending, isError, error } =
     useOrganization(organizationId);
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isFetching: isUserFetching } = useCurrentUser();
+  const hydrated = useHydrated();
   const deleteService = useDeleteService(organizationId);
   const [isServiceFormOpen, setServiceFormOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | undefined>();
   const openEditForm = useOrganizationUiStore((state) => state.openEditForm);
+
+  /*
+   * The profile is browsable without a session, but writing a review and
+   * generating the AI summary both hit authenticated endpoints. `signedIn`
+   * gates those; `resolvingSession` covers the window where a session cookie
+   * exists but the profile request has not settled yet — rendering the sign-in
+   * prompt there would flash for a user who is already signed in.
+   */
+  const signedIn = Boolean(currentUser);
+  const resolvingSession = hydrated && !signedIn && isUserFetching;
 
   if (isPending) {
     return (
@@ -66,7 +79,9 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
 
   // Ownership is derived from the profile's organization link because
   // docs/04 declares no owner column on Organization — see src/types/index.ts
-  // contradiction 5.
+  // contradiction 5. The link, not the role, is the source of truth: creating an
+  // organization also promotes the account to ORGANIZATION_OWNER, but this gate
+  // stays on the link so it can never disagree with the tenant boundary.
   // Mirrors the BFF gate exactly: ownership via the profile link, or an admin
   // role. Ownership is the check, not the ORGANIZATION_OWNER role, because a
   // user who registered an organization while still a CUSTOMER owns it.
@@ -209,7 +224,15 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
       <Separator />
 
       <section className="space-y-4">
-        <ReviewSummaryCard organizationId={organizationId} />
+        {signedIn ? (
+          <ReviewSummaryCard organizationId={organizationId} />
+        ) : resolvingSession ? (
+          <Skeleton className="h-40" />
+        ) : (
+          <SignInPrompt organizationId={organizationId}>
+            Sign in to generate an AI summary of this organization&rsquo;s reviews.
+          </SignInPrompt>
+        )}
       </section>
 
       <section className="space-y-4">
@@ -221,7 +244,15 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
         </div>
 
         <ReviewList organizationId={organizationId} />
-        <ReviewForm organizationId={organizationId} />
+        {signedIn ? (
+          <ReviewForm organizationId={organizationId} />
+        ) : resolvingSession ? (
+          <Skeleton className="h-64" />
+        ) : (
+          <SignInPrompt organizationId={organizationId}>
+            Sign in to share your experience with other customers.
+          </SignInPrompt>
+        )}
       </section>
 
       {/* Mounted here as well as on the list page: the store drives the dialog,
@@ -246,5 +277,30 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Shown in place of an account-only action when the viewer is signed out.
+ *
+ * The profile itself stays readable; only the writes (reviews, AI summary)
+ * require a session, so the prompt points at `/login` and returns here.
+ */
+function SignInPrompt({
+  organizationId,
+  children,
+}: {
+  organizationId: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-start gap-3 py-6">
+        <p className="text-sm text-muted-foreground">{children}</p>
+        <Button asChild size="sm">
+          <Link href={`/login?next=/organizations/${organizationId}`}>Sign in</Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

@@ -8,6 +8,7 @@
 export { LoginForm } from "./components/login-form";
 export { ProfilePanel } from "./components/profile-panel";
 export { RegisterForm } from "./components/register-form";
+export { BusinessRegisterForm } from "./components/business-register-form";
 
 export { authApi } from "./api/auth";
 export {

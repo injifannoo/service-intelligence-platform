@@ -12,8 +12,8 @@ import { useHydrated } from "@/lib/use-hydrated";
  * Secondary hero call to action.
  *
  * "Register a business" is an acquisition prompt, so it only makes sense to a
- * signed-out visitor — sending an existing account back to `/register` is a dead
- * end now that registration signs you straight in. A signed-in visitor gets the
+ * signed-out visitor — sending an existing account back to signup is a dead end
+ * now that registration signs you straight in. A signed-in visitor gets the
  * organization directory instead, which is the action they can actually take.
  */
 export function HeroSecondaryCta({ label = "Register a business" }: { label?: string }) {
@@ -36,7 +36,7 @@ export function HeroSecondaryCta({ label = "Register a business" }: { label?: st
 
   return (
     <Button asChild size="lg" variant="outline">
-      <Link href={ROUTES.register}>{label}</Link>
+      <Link href={ROUTES.businessRegister}>{label}</Link>
     </Button>
   );
 }

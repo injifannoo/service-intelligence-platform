@@ -17,26 +17,30 @@ const PRIMARY_LINKS = [
   { label: "About", href: "#about", route: false },
 ] as const;
 
-const linkClass = "text-sm text-muted-foreground transition-colors hover:text-foreground";
+const linkClass = "text-sm text-navy-foreground/70 transition-all hover:text-navy-foreground hover:translate-x-0.5";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="on-dark bg-navy text-navy-foreground">
-      <div className="mx-auto w-full max-w-7xl px-6 py-14">
-        <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr]">
-          <div className="space-y-4">
-            <Link href={ROUTES.home} className="inline-block outline-offset-4">
+    <footer className="on-dark relative overflow-hidden bg-navy text-navy-foreground">
+      {/* Teal wash top-right, gold hint bottom-left */}
+      <div className="pointer-events-none absolute -top-32 -right-24 size-96 rounded-full bg-accent/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full bg-gold/8 blur-3xl" />
+      
+      <div className="relative mx-auto w-full max-w-7xl px-6 py-10">
+        <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr_1fr]">
+          <div className="space-y-3">
+            <Link href={ROUTES.home} className="inline-block outline-offset-4 transition-transform hover:scale-105">
               <BrandMark />
             </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-              {siteConfig.name} — {siteConfig.tagline}
+            <p className="max-w-xs text-sm leading-relaxed text-navy-foreground/80">
+              {siteConfig.tagline}
             </p>
           </div>
 
           <nav aria-label="Footer" className="space-y-3">
-            <p className="text-xs font-semibold tracking-wider text-navy-foreground/60 uppercase">
+            <p className="text-xs font-bold tracking-wider text-navy-foreground/50 uppercase">
               Explore
             </p>
             <ul className="space-y-2">
@@ -62,7 +66,7 @@ export function SiteFooter() {
           </nav>
 
           <nav aria-label="Legal" className="space-y-3">
-            <p className="text-xs font-semibold tracking-wider text-navy-foreground/60 uppercase">
+            <p className="text-xs font-bold tracking-wider text-navy-foreground/50 uppercase">
               Legal
             </p>
             <ul className="space-y-2">
@@ -73,18 +77,17 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link href={ROUTES.terms} className={linkClass}>
-                  Terms
+                  Terms of Service
                 </Link>
               </li>
             </ul>
           </nav>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t border-white/15 pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>
+        <div className="mt-8 flex flex-col gap-2 border-t border-white/10 pt-5 text-sm text-navy-foreground/60 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-medium">
             © {year} {siteConfig.shortName}. All rights reserved.
           </p>
-          <p>{siteConfig.tagline}</p>
         </div>
       </div>
     </footer>

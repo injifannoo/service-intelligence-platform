@@ -29,7 +29,7 @@ const LINKS: readonly NavLink[] = [
 ];
 
 const linkClass =
-  "relative rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary";
+  "relative rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:text-primary hover:bg-accent/50";
 
 /**
  * Marketing header for the public homepage.
@@ -57,8 +57,8 @@ export function HomeNav() {
       <span
         aria-hidden="true"
         className={cn(
-          "absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-primary transition-opacity",
-          active ? "opacity-100" : "opacity-0",
+          "absolute inset-x-4 -bottom-px h-0.5 rounded-full bg-gradient-to-r from-primary to-accent-foreground transition-all",
+          active ? "opacity-100 scale-100" : "opacity-0 scale-75",
         )}
       />
     );
@@ -83,37 +83,37 @@ export function HomeNav() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/85 shadow-xs backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-6">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/90 shadow-sm backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center px-6">
         <Link
           href={ROUTES.home}
-          className="rounded-lg outline-offset-4 transition-opacity hover:opacity-90"
+          className="rounded-xl outline-offset-4 transition-all hover:opacity-80"
         >
           <BrandMark />
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+        <nav aria-label="Primary" className="ml-8 hidden items-center gap-1 lg:flex">
           {LINKS.map((link) => renderLink(link))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
           <Button
             asChild
             variant="ghost"
             size="icon"
-            className="hidden size-9 sm:inline-flex"
+            className="hidden size-10 sm:inline-flex"
           >
             <Link href={ROUTES.search} aria-label="Search">
               <SearchIcon />
             </Link>
           </Button>
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className="hidden items-center gap-3 lg:flex">
             <HomeHeaderActions />
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 lg:hidden"
+            className="size-10 lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="home-mobile-menu"
@@ -125,7 +125,7 @@ export function HomeNav() {
       </div>
 
       {open && (
-        <div id="home-mobile-menu" className="border-t border-border bg-card lg:hidden">
+        <div id="home-mobile-menu" className="border-t border-border/60 bg-card/95 backdrop-blur-xl lg:hidden">
           <nav
             aria-label="Mobile"
             className="mx-auto flex w-full max-w-7xl flex-col gap-1 px-6 py-4"
@@ -139,7 +139,7 @@ export function HomeNav() {
               <SearchIcon className="size-4" aria-hidden="true" />
               Search
             </Link>
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+            <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-4">
               <HomeHeaderActions />
             </div>
           </nav>

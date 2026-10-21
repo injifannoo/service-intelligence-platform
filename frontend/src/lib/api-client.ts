@@ -89,20 +89,42 @@ function writeCookie(name: string, value: string) {
     `${name}=${encodeURIComponent(value)}`,
     `path=${path}`,
     `sameSite=${sameSite}`,
-    `maxAge=${maxAge}`,
+    // Capitalised. Browsers match cookie attribute names literally here, so
+    // `maxAge` is ignored and the session cookie would live until the browser
+    // closes rather than for AUTH_COOKIE_OPTIONS.maxAge.
+    `Max-Age=${maxAge}`,
   ];
   if (secure) parts.push("secure");
   document.cookie = parts.join("; ");
 }
 
+/**
+ * Removes a cookie — and must genuinely remove it, not just blank the value.
+ *
+ * `Max-Age=0` is capitalised for the same reason as in `writeCookie`, but here it
+ * is load-bearing: a lowercase `maxAge=0` is treated as an unknown attribute, so
+ * the write `name=; path=/` *sets* an empty cookie instead of deleting one.
+ *
+ * An empty shell is not harmless. `proxy.ts` tests cookie **presence**, so
+ * `asip_access_token=` still counts as signed in and the proxy 307-redirects
+ * every `/login` visit to `/organizations`. The visitor sees a working
+ * "Sign in" button that can never reach the sign-in form — which is exactly what
+ * a visitor is left with after logging out or after a session expires.
+ */
 function deleteCookie(name: string) {
   if (typeof document === "undefined") return;
-  document.cookie = `${name}=; path=${AUTH_COOKIE_OPTIONS.path}; maxAge=0`;
+  document.cookie = `${name}=; path=${AUTH_COOKIE_OPTIONS.path}; Max-Age=0`;
 }
 
 export const tokenStore = {
-  getAccessToken: () => readCookie(AUTH_COOKIES.accessToken),
-  getRefreshToken: () => readCookie(AUTH_COOKIES.refreshToken),
+  /**
+   * `|| null` collapses the empty cookie shell that a naive delete leaves behind
+   * (see `deleteCookie`) into "no token". A `Bearer ` header with nothing in it
+   * and an `enabled` query that fires a guaranteed 401 are both worse than not
+   * having a cookie at all, so every caller sees `null` instead of `""`.
+   */
+  getAccessToken: () => readCookie(AUTH_COOKIES.accessToken) || null,
+  getRefreshToken: () => readCookie(AUTH_COOKIES.refreshToken) || null,
 
   set(tokens: { access_token: string; refresh_token: string }) {
     writeCookie(AUTH_COOKIES.accessToken, tokens.access_token);

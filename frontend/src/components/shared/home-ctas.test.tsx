@@ -7,6 +7,8 @@ import { act, type ReactElement } from "react";
 import { ClosingCtaCopy, ClosingPrimaryCta } from "./closing-cta";
 import { HeroSecondaryCta } from "./hero-secondary-cta";
 import { HomeHeaderActions } from "./home-header-actions";
+import { GrowBusinessCta, JoinBusinessCta } from "@/components/homepage/business-cta";
+import { AUTH_COOKIES } from "@/config/site-config";
 
 /**
  * Homepage call-to-action rendering.
@@ -28,12 +30,14 @@ const state: {
   user: { name: string; email: string; role: string } | undefined;
   isPending: boolean;
   isFetching: boolean;
+  isError: boolean;
   logout: ReturnType<typeof vi.fn>;
 } = {
   cookie: false,
   user: undefined,
   isPending: false,
   isFetching: false,
+  isError: false,
   logout: vi.fn(),
 };
 
@@ -42,6 +46,7 @@ vi.mock("@/features/authentication/api/use-auth", () => ({
     data: state.cookie ? state.user : undefined,
     isPending: state.isPending,
     isFetching: state.isFetching,
+    isError: state.isError,
   }),
   useLogout: () => ({ mutateAsync: state.logout, isPending: false }),
 }));
@@ -62,7 +67,14 @@ beforeEach(() => {
   state.user = undefined;
   state.isPending = false;
   state.isFetching = false;
+  state.isError = false;
   state.logout = vi.fn().mockResolvedValue(undefined);
+  /*
+   * The mock above decides the profile result, but `HomeHeaderActions` reads the
+   * real `document.cookie` for the session-resent case, so it must not leak
+   * between tests.
+   */
+  document.cookie = `${AUTH_COOKIES.accessToken}=; path=/; Max-Age=0`;
 });
 
 describe("hydration safety", () => {
@@ -204,7 +216,7 @@ describe("hydration safety", () => {
 
     const heroHtml = renderToString(<HeroSecondaryCta />);
     expect(heroHtml).toContain("Register a business");
-    expect(heroHtml).toContain('href="/register"');
+    expect(heroHtml).toContain('href="/register/business"');
     expect(heroHtml).not.toContain("/organizations");
 
     const closingHtml = renderToString(<ClosingPrimaryCta />);
@@ -317,6 +329,36 @@ describe("HomeHeaderActions", () => {
     expect(container.querySelector(".animate-pulse")).toBeNull();
   });
 
+  it("reserves space instead of offering Sign in while a session is unresolved", () => {
+    /*
+     * Regression: with a session cookie present but the profile request still in
+     * flight, the header used to render "Sign in". Clicking it during that window
+     * bounced through the proxy to `/organizations` because the cookie was there —
+     * a "Sign in" button that could not reach the sign-in form.
+     */
+    document.cookie = `${AUTH_COOKIES.accessToken}=a-real-token; path=/`;
+    state.cookie = false;
+    state.isPending = true;
+    const { container } = renderCta(<HomeHeaderActions />);
+
+    expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
+    expect(container.querySelector(".animate-pulse")).not.toBeNull();
+  });
+
+  it("falls back to the CTAs when a stored session is confirmed dead", () => {
+    /*
+     * The cookie is still present while the dead session is being cleared. Parking
+     * on a skeleton forever would leave the visitor with no way back in, so a
+     * failed profile request must surface the CTAs.
+     */
+    document.cookie = `${AUTH_COOKIES.accessToken}=a-stale-token; path=/`;
+    state.cookie = false;
+    state.isError = true;
+    renderCta(<HomeHeaderActions />);
+
+    expect(screen.getByRole("link", { name: "Sign in" })).toBeDefined();
+  });
+
   it("exposes sign out as a labelled control", () => {
     signIn("CUSTOMER");
     renderCta(<HomeHeaderActions />);
@@ -326,12 +368,12 @@ describe("HomeHeaderActions", () => {
 });
 
 describe("HeroSecondaryCta", () => {
-  it("points a signed-out visitor at the dedicated register page", () => {
+  it("points a signed-out visitor at the business register page", () => {
     renderCta(<HeroSecondaryCta />);
 
     expect(screen.getByRole("link", { name: /Register a business/i })).toHaveAttribute(
       "href",
-      "/register",
+      "/register/business",
     );
   });
 
@@ -341,6 +383,42 @@ describe("HeroSecondaryCta", () => {
 
     expect(screen.queryByRole("link", { name: /Register a business/i })).toBeNull();
     expect(screen.getByRole("link", { name: /Your organizations/i })).toHaveAttribute(
+      "href",
+      "/organizations",
+    );
+  });
+});
+
+describe("business CTAs", () => {
+  /*
+   * Both acquisition prompts used to send a business to `/register`, the same
+   * entry as a customer. They now start the guided onboarding at
+   * `/register/business`, whose step 2 is the organization profile.
+   */
+  it("sends Grow Your Business to the business register page", () => {
+    renderCta(<GrowBusinessCta />);
+
+    expect(screen.getByRole("link", { name: /Grow Your Business/i })).toHaveAttribute(
+      "href",
+      "/register/business",
+    );
+  });
+
+  it("sends Join as a Business to the business register page", () => {
+    renderCta(<JoinBusinessCta />);
+
+    expect(screen.getByRole("link", { name: /Join as a Business/i })).toHaveAttribute(
+      "href",
+      "/register/business",
+    );
+  });
+
+  it("sends a signed-in visitor to their dashboard instead of signup", () => {
+    signIn("CUSTOMER");
+    renderCta(<GrowBusinessCta />);
+
+    expect(screen.queryByRole("link", { name: /Grow Your Business/i })).toBeNull();
+    expect(screen.getByRole("link", { name: /Open your dashboard/i })).toHaveAttribute(
       "href",
       "/organizations",
     );

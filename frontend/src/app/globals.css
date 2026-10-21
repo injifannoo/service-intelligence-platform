@@ -4,118 +4,193 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design tokens. Domain-agnostic only — per docs/07_Project_Structure.md:225,
- * business concepts are forbidden inside components/ui/.
+ * ASIP Design Tokens
+ * —————————————————
+ * Brand palette (docs/02_Product_Requirements):
+ *   Deep Blue  #123B66  — trust, authority, primary actions
+ *   Teal       #0D9488  — AI, innovation, accent actions
+ *   Warm Gold  #F4B942  — highlights, CTAs, star ratings
+ *   Light Gray #F5F7FA  — page & section backgrounds
  *
- * The neutral ramp is a clean white-and-blue and the brand accent is ASIP blue
- * (#0866F5), so primary actions and links read as intentional rather than as
- * "black buttons". Light/pale blue surfaces, a deep-navy ink and a light-blue
- * border come next; semantic success/warning tones are tokens because feature
- * components previously hardcoded emerald/amber classes.
- * Semantic success/warning tones are tokens because feature components were
- * previously hardcoding emerald/amber classes, which broke the moment the
- * palette shifted.
+ * Every colour below is the OKLCH equivalent of the hex spec so we stay
+ * inside the token system without hardcoding hex anywhere in components.
+ *
+ *   #123B66  →  oklch(0.30 0.09 252)
+ *   #0D9488  →  oklch(0.57 0.13 181)
+ *   #F4B942  →  oklch(0.80 0.14  80)
+ *   #F5F7FA  →  oklch(0.975 0.004 250)
  */
 :root {
-  --radius: 0.9rem;
+  --radius: 0.875rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.34 0.1 263);
+  /* ── Surfaces ──────────────────────────────────────────────────────────── */
+  /* Light Gray #F5F7FA */
+  --background:         oklch(0.975 0.004 250);
+  --foreground:         oklch(0.20  0.025 252);   /* near-black blue-gray    */
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.34 0.1 263);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.34 0.1 263);
+  /* White cards lift off the gray page */
+  --card:               oklch(1     0     0);
+  --card-foreground:    oklch(0.20  0.025 252);
+  --popover:            oklch(1     0     0);
+  --popover-foreground: oklch(0.20  0.025 252);
 
-  --primary: oklch(0.556 0.228 260.6);
-  --primary-foreground: oklch(1 0 0);
-  --primary-hover: oklch(0.5 0.21 260);
+  /* ── Brand ─────────────────────────────────────────────────────────────── */
+  /* Deep Blue #123B66 — primary actions & links */
+  --primary:            oklch(0.30  0.09  252);
+  --primary-foreground: oklch(1     0     0);
+  --primary-hover:      oklch(0.26  0.08  252);   /* 10 % darker             */
 
-  --secondary: oklch(0.975 0.015 240);
-  --secondary-foreground: oklch(0.34 0.1 263);
+  /* Teal #0D9488 — AI / accent */
+  --accent:             oklch(0.57  0.13  181);
+  --accent-foreground:  oklch(1     0     0);
 
-  --muted: oklch(0.985 0.008 240);
-  --muted-foreground: oklch(0.55 0.06 258);
+  /* Gold #F4B942 — highlights, ratings, featured badges */
+  --gold:               oklch(0.80  0.14   80);
+  --gold-foreground:    oklch(0.20  0.025 252);
+  --gold-subtle:        oklch(0.96  0.05   80);
 
-  --accent: oklch(0.975 0.015 240);
-  --accent-foreground: oklch(0.556 0.228 260.6);
+  /* ── Neutral ramp ──────────────────────────────────────────────────────── */
+  --secondary:          oklch(0.94  0.006 250);
+  --secondary-foreground: oklch(0.30 0.06 252);
 
-  --destructive: oklch(0.58 0.22 27);
-  --destructive-foreground: oklch(1 0 0);
+  --muted:              oklch(0.96  0.004 250);
+  --muted-foreground:   oklch(0.48  0.02  252);
 
-  --success: oklch(0.69 0.15 163);
-  --success-foreground: oklch(1 0 0);
-  --success-subtle: oklch(0.96 0.04 163);
+  /* ── Semantic ──────────────────────────────────────────────────────────── */
+  --destructive:        oklch(0.55  0.22   25);
+  --destructive-foreground: oklch(1 0    0);
 
-  --warning: oklch(0.8 0.15 85);
-  --warning-foreground: oklch(0.34 0.08 70);
-  --warning-subtle: oklch(0.97 0.04 90);
+  --success:            oklch(0.62  0.16  155);
+  --success-foreground: oklch(1     0     0);
+  --success-subtle:     oklch(0.95  0.05  155);
 
-  --border: oklch(0.92 0.03 245);
-  --input: oklch(0.9 0.035 245);
-  --ring: oklch(0.556 0.228 260.6);
+  /* Re-use gold as the warning token */
+  --warning:            oklch(0.80  0.14   80);
+  --warning-foreground: oklch(0.20  0.025 252);
+  --warning-subtle:     oklch(0.96  0.05   80);
 
-  /* Deep navy used by the footer and high-contrast panels. */
-  --navy: oklch(0.3 0.11 262);
-  --navy-foreground: oklch(0.97 0.012 250);
+  /* ── Chrome ────────────────────────────────────────────────────────────── */
+  --border:  oklch(0.88  0.008 250);
+  --input:   oklch(0.96  0.004 250);
+  --ring:    oklch(0.30  0.09  252);   /* focus ring = primary                */
 
-  /* Brand wash used behind heroes and section bands. */
-  --surface-gradient: radial-gradient(
-      60rem 32rem at 12% -10%,
-      oklch(0.93 0.05 258 / 0.75),
-      transparent 60%
+  /* Deep Blue footer / hero panels */
+  --navy:            oklch(0.20  0.07  252);
+  --navy-foreground: oklch(0.97  0.008 250);
+
+  /* ── Gradients ─────────────────────────────────────────────────────────── */
+  /* Subtle Deep-Blue + Teal wash behind the hero */
+  --surface-gradient:
+    radial-gradient(
+      ellipse 90rem 45rem at 55% -15%,
+      oklch(0.30 0.09 252 / 0.08),
+      transparent 55%
     ),
-    radial-gradient(48rem 28rem at 88% 0%, oklch(0.94 0.04 225 / 0.7), transparent 62%);
+    radial-gradient(
+      ellipse 65rem 40rem at 5% 25%,
+      oklch(0.57 0.13 181 / 0.07),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 65rem 40rem at 95% 30%,
+      oklch(0.80 0.14 80 / 0.05),
+      transparent 55%
+    );
+
+  --glass-gradient: linear-gradient(
+    135deg,
+    oklch(1 0 0 / 0.75),
+    oklch(0.975 0.004 250 / 0.55)
+  );
+
+  --shimmer-gradient: linear-gradient(
+    90deg,
+    transparent,
+    oklch(1 0 0 / 0.85),
+    transparent
+  );
 }
 
 .dark {
-  --background: oklch(0.17 0.015 265);
-  --foreground: oklch(0.97 0.003 265);
+  /* ── Surfaces ──────────────────────────────────────────────────────────── */
+  --background:         oklch(0.14  0.02  252);
+  --foreground:         oklch(0.96  0.006 250);
 
-  --card: oklch(0.21 0.018 265);
-  --card-foreground: oklch(0.97 0.003 265);
-  --popover: oklch(0.22 0.018 265);
-  --popover-foreground: oklch(0.97 0.003 265);
+  --card:               oklch(0.18  0.02  252);
+  --card-foreground:    oklch(0.96  0.006 250);
+  --popover:            oklch(0.19  0.02  252);
+  --popover-foreground: oklch(0.96  0.006 250);
 
-  --primary: oklch(0.7 0.17 260);
-  --primary-foreground: oklch(0.16 0.02 265);
-  --primary-hover: oklch(0.77 0.14 260);
+  /* ── Brand ─────────────────────────────────────────────────────────────── */
+  /* Lighter Deep Blue in dark mode for contrast */
+  --primary:            oklch(0.62  0.12  252);
+  --primary-foreground: oklch(0.12  0.04  252);
+  --primary-hover:      oklch(0.68  0.11  252);
 
-  --secondary: oklch(0.27 0.02 265);
-  --secondary-foreground: oklch(0.97 0.003 265);
+  /* Teal stays vivid */
+  --accent:             oklch(0.62  0.13  181);
+  --accent-foreground:  oklch(0.12  0.02  252);
 
-  --muted: oklch(0.26 0.02 265);
-  --muted-foreground: oklch(0.71 0.015 265);
+  /* Gold stays warm */
+  --gold:               oklch(0.78  0.14   80);
+  --gold-foreground:    oklch(0.14  0.02  252);
+  --gold-subtle:        oklch(0.28  0.06   80);
 
-  --accent: oklch(0.3 0.06 258);
-  --accent-foreground: oklch(0.92 0.04 258);
+  /* ── Neutral ───────────────────────────────────────────────────────────── */
+  --secondary:          oklch(0.23  0.02  252);
+  --secondary-foreground: oklch(0.90 0.006 250);
 
-  --destructive: oklch(0.66 0.19 25);
-  --destructive-foreground: oklch(0.99 0 0);
+  --muted:              oklch(0.22  0.016 252);
+  --muted-foreground:   oklch(0.66  0.012 252);
 
-  --success: oklch(0.68 0.14 155);
-  --success-foreground: oklch(0.16 0.02 265);
-  --success-subtle: oklch(0.28 0.06 155);
+  /* ── Semantic ──────────────────────────────────────────────────────────── */
+  --destructive:        oklch(0.62  0.20   25);
+  --destructive-foreground: oklch(0.98 0  0);
 
-  --warning: oklch(0.78 0.14 78);
-  --warning-foreground: oklch(0.2 0.03 70);
-  --warning-subtle: oklch(0.3 0.06 78);
+  --success:            oklch(0.60  0.15  155);
+  --success-foreground: oklch(0.10  0.02  252);
+  --success-subtle:     oklch(0.24  0.05  155);
 
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.17 260);
+  --warning:            oklch(0.76  0.13   80);
+  --warning-foreground: oklch(0.14  0.02  252);
+  --warning-subtle:     oklch(0.26  0.05   80);
 
-  --surface-gradient: radial-gradient(
-      60rem 32rem at 12% -10%,
-      oklch(0.35 0.09 258 / 0.5),
-      transparent 60%
+  /* ── Chrome ────────────────────────────────────────────────────────────── */
+  --border: oklch(1 0 0 / 0.10);
+  --input:  oklch(1 0 0 / 0.13);
+  --ring:   oklch(0.62 0.12 252);
+
+  --navy:            oklch(0.12  0.05  252);
+  --navy-foreground: oklch(0.96  0.008 250);
+
+  /* ── Gradients ─────────────────────────────────────────────────────────── */
+  --surface-gradient:
+    radial-gradient(
+      ellipse 90rem 45rem at 55% -15%,
+      oklch(0.30 0.09 252 / 0.25),
+      transparent 55%
     ),
-    radial-gradient(48rem 28rem at 88% 0%, oklch(0.33 0.07 225 / 0.45), transparent 62%);
+    radial-gradient(
+      ellipse 65rem 40rem at 5% 25%,
+      oklch(0.57 0.13 181 / 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 65rem 40rem at 95% 30%,
+      oklch(0.80 0.14 80 / 0.08),
+      transparent 55%
+    );
+
+  --glass-gradient: linear-gradient(
+    135deg,
+    oklch(0.20 0.02 252 / 0.80),
+    oklch(0.16 0.015 252 / 0.65)
+  );
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 10px);
@@ -135,6 +210,9 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-gold-subtle: var(--gold-subtle);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
@@ -149,14 +227,25 @@
   --color-navy: var(--navy);
   --color-navy-foreground: var(--navy-foreground);
 
-  /* Elevation ramp, tinted toward the brand navy rather than pure black. Cards
-   * sit one step above the page; interactive cards lift to two on hover, which
-   * is the main depth cue on a light background. */
-  --shadow-xs: 0 1px 2px oklch(0.34 0.1 263 / 0.05);
-  --shadow-sm: 0 1px 3px oklch(0.34 0.1 263 / 0.06), 0 1px 2px oklch(0.34 0.1 263 / 0.04);
-  --shadow-md: 0 4px 12px oklch(0.34 0.1 263 / 0.07), 0 2px 4px oklch(0.34 0.1 263 / 0.04);
-  --shadow-lg: 0 12px 32px oklch(0.34 0.1 263 / 0.1), 0 4px 8px oklch(0.34 0.1 263 / 0.04);
+  /* Deep-Blue–tinted elevation ramp */
+  --shadow-xs: 0 1px 2px oklch(0.20 0.07 252 / 0.05);
+  --shadow-sm:
+    0 1px 3px oklch(0.20 0.07 252 / 0.09),
+    0 1px 2px oklch(0.20 0.07 252 / 0.05);
+  --shadow-md:
+    0 4px 12px oklch(0.20 0.07 252 / 0.10),
+    0 2px 4px  oklch(0.20 0.07 252 / 0.06);
+  --shadow-lg:
+    0 10px 30px oklch(0.20 0.07 252 / 0.12),
+    0 4px  12px oklch(0.20 0.07 252 / 0.06);
+  --shadow-xl:
+    0 20px 50px oklch(0.20 0.07 252 / 0.14),
+    0 8px  20px oklch(0.20 0.07 252 / 0.08);
   --shadow-ring: 0 0 0 1px var(--color-border);
+  /* Teal glow for AI / action elements */
+  --shadow-glow-primary: 0 0 24px oklch(0.30 0.09 252 / 0.18);
+  --shadow-glow-teal:    0 0 24px oklch(0.57 0.13 181 / 0.22);
+  --shadow-glow-gold:    0 0 20px oklch(0.80 0.14  80 / 0.28);
 
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Display",
@@ -221,65 +310,94 @@
 }
 
 @layer components {
-  /* Ambient brand wash for hero and section bands. */
+  /* Ambient brand wash for hero and section bands with enhanced depth */
   .surface-gradient {
     background-image: var(--surface-gradient);
   }
 
-  /* Faint blueprint grid behind the hero. The radial mask fades it toward the
-   * edges so it reads as depth rather than as a visible table. */
+  /* Refined blueprint grid with better visual hierarchy */
   .hero-grid {
     background-image:
       linear-gradient(
         to right,
-        color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px,
+        color-mix(in oklab, var(--color-foreground) 5%, transparent) 1px,
         transparent 1px
       ),
       linear-gradient(
         to bottom,
-        color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px,
+        color-mix(in oklab, var(--color-foreground) 5%, transparent) 1px,
         transparent 1px
       );
-    background-size: 3.5rem 3.5rem;
-    -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 0%, black, transparent 78%);
-    mask-image: radial-gradient(ellipse 70% 70% at 50% 0%, black, transparent 78%);
+    background-size: 4rem 4rem;
+    -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 0%, black 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse 75% 70% at 50% 0%, black 30%, transparent 80%);
   }
 
-  /* Re-maps the ink tokens so shared components using `text-foreground` and
-   * `text-muted-foreground` stay legible on the deep-navy footer. */
+  /* Enhanced dark mode styling */
   .on-dark {
-    --color-foreground: oklch(0.99 0 0);
-    --color-muted-foreground: oklch(0.82 0.04 250);
-    --color-border: oklch(1 0 0 / 14%);
+    --color-foreground:        oklch(0.97 0.008 250);
+    --color-muted-foreground:  oklch(0.78 0.015 250);
+    --color-border:            oklch(1 0 0 / 0.12);
   }
 
-  /* Local remap so a default `Button` renders as a solid white action when it
-   * sits on the solid brand CTA band, without adding a one-off button variant. */
+  /* White primary on the Deep-Blue CTA band */
   .cta-inverse {
-    --color-primary: oklch(1 0 0);
-    --color-primary-foreground: oklch(0.34 0.16 261);
-    --color-primary-hover: oklch(0.93 0.02 260);
+    --color-primary:          oklch(1 0 0);
+    --color-primary-foreground: oklch(0.20 0.07 252);
+    --color-primary-hover:    oklch(0.94 0.006 250);
   }
 
-  /* Thin scrollbars so dense panels do not dominate the layout. */
+  /* Gradient text: Deep Blue → Teal */
+  .gradient-text {
+    background: linear-gradient(
+      125deg,
+      var(--color-primary) 20%,
+      var(--color-accent)  80%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Gold highlight text */
+  .gold-text {
+    color: var(--color-gold);
+  }
+
+  /* Glassmorphism */
+  .glass-card {
+    background: var(--glass-gradient);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent);
+  }
+
+  /* Shimmer loading animation */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--shimmer-gradient);
+    animation: shimmer 2s infinite;
+    transform: translateX(-100%);
+  }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+  /* Scrollbar */
   .scrollbar-slim {
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklab, var(--color-foreground) 22%, transparent) transparent;
+    scrollbar-color: color-mix(in oklab, var(--color-primary) 40%, transparent) transparent;
   }
-
-  .scrollbar-slim::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
+  .scrollbar-slim::-webkit-scrollbar { width: 8px; height: 8px; }
   .scrollbar-slim::-webkit-scrollbar-thumb {
-    background-color: color-mix(in oklab, var(--color-foreground) 20%, transparent);
+    background: color-mix(in oklab, var(--color-primary) 45%, transparent);
     border-radius: 9999px;
   }
-
-  .scrollbar-slim::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  .scrollbar-slim::-webkit-scrollbar-track { background: transparent; }
 }
 
 @media (prefers-reduced-motion: reduce) {

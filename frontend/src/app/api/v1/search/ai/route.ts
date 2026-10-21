@@ -5,7 +5,6 @@ import {
   failure,
   ok,
   readJson,
-  requireUser,
 } from "@/lib/dev-backend/http";
 import { listIndustries, listOrganizations, listServices } from "@/lib/dev-backend/store";
 import { matchTerms, organizationSearchDocument, semanticScore } from "@/lib/dev-backend/ai";
@@ -21,8 +20,8 @@ const MAX_RESULTS = 10;
  * MVP Version 2 (docs/08_Development_Roadmap.md:416-426). Returns
  * `{ results: SemanticSearchHit[] }` in descending relevance.
  *
- * Authenticated because it is a rate-limited, compute-heavy endpoint in the real
- * design; docs/05 does not mark it public.
+ * Public: AI recommendations are part of the signed-out guest experience, so a
+ * visitor can evaluate providers before creating an account.
  *
  * The ranking is lexical, not embedding-based: see `lib/dev-backend/ai.ts` for why
  * and what that means.
@@ -30,9 +29,6 @@ const MAX_RESULTS = 10;
 export async function POST(request: NextRequest) {
   const blocked = devBackendUnavailable();
   if (blocked) return blocked;
-
-  const auth = requireUser(request);
-  if ("response" in auth) return auth.response;
 
   const body = await readJson(request);
   if (!body) {

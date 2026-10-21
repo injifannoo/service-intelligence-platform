@@ -16,40 +16,44 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1fr_minmax(0,32rem)]">
-      {/* Brand panel. Hidden on small screens where the form should own the
-          full viewport, and marked aria-hidden because the same value is
-          already announced by the form. */}
+    <div className="min-h-screen lg:grid lg:grid-cols-[1fr_minmax(0,34rem)]">
+      {/* Left brand panel — hidden on mobile */}
       <aside
         aria-hidden="true"
-        className="surface-gradient relative hidden flex-col justify-between overflow-hidden border-r border-border bg-muted/40 p-12 lg:flex"
+        className="relative hidden flex-col justify-between overflow-hidden bg-primary p-12 lg:flex"
       >
-        <Link href={ROUTES.home} className="w-fit rounded-lg outline-offset-4">
-          <BrandMark />
+        {/* Teal orb */}
+        <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-accent/20 blur-3xl" />
+        {/* Gold orb */}
+        <div className="pointer-events-none absolute -bottom-24 -left-16 size-80 rounded-full bg-gold/15 blur-3xl" />
+
+        <Link href={ROUTES.home} className="relative w-fit rounded-lg outline-offset-4">
+          <BrandMark wordmarkLight />
         </Link>
 
-        <div className="max-w-md space-y-6">
-          <span className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-md">
+        <div className="relative max-w-md space-y-6">
+          <span className="grid size-12 place-items-center rounded-2xl bg-white/15 text-white shadow-md ring-1 ring-white/20">
             <SparklesIcon className="size-6" />
           </span>
-          <h2 className="text-3xl leading-tight font-semibold tracking-tight">
+          <h2 className="text-3xl leading-tight font-bold tracking-tight text-white">
             Make service decisions on evidence.
           </h2>
-          <ul className="space-y-2.5">
+          <ul className="space-y-3">
             {PROOF_POINTS.map((point) => (
-              <li key={point} className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span className="size-1.5 shrink-0 rounded-full bg-primary" />
+              <li key={point} className="flex items-center gap-3 text-sm text-white/75">
+                <span className="size-1.5 shrink-0 rounded-full bg-gold" />
                 {point}
               </li>
             ))}
           </ul>
         </div>
 
-        <p className="text-xs text-muted-foreground">{siteConfig.name}</p>
+        <p className="relative text-xs text-white/40">{siteConfig.name}</p>
       </aside>
 
-      <div className="flex flex-col">
-        <header className="p-6">
+      {/* Right form panel */}
+      <div className="flex min-h-screen flex-col bg-background lg:min-h-0">
+        <header className="flex items-center px-6 py-5">
           <Link
             href={ROUTES.home}
             className="inline-flex rounded-lg outline-offset-4 lg:invisible"
@@ -58,7 +62,7 @@ export default function AuthLayout({
           </Link>
         </header>
 
-        <main className="flex flex-1 items-center justify-center px-6 pb-16">
+        <main className="flex flex-1 items-center justify-center px-6 pb-12 pt-4">
           <div className="w-full max-w-sm">{children}</div>
         </main>
       </div>

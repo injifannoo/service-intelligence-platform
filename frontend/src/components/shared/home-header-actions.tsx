@@ -7,6 +7,7 @@ import { LayoutDashboardIcon, LogOutIcon, ShieldCheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ADMIN_ROLES, landingRouteForRole, ROUTES } from "@/config/site-config";
 import { useCurrentUser, useLogout } from "@/features/authentication";
+import { tokenStore } from "@/lib/api-client";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -23,8 +24,19 @@ import { useHydrated } from "@/lib/use-hydrated";
 export function HomeHeaderActions() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const { data: user, isPending, isFetching } = useCurrentUser();
+  const { data: user, isPending, isFetching, isError } = useCurrentUser();
   const logout = useLogout();
+
+  const publicCtas = (
+    <>
+      <Button asChild variant="outline" size="sm">
+        <Link href={ROUTES.login}>Sign in</Link>
+      </Button>
+      <Button asChild size="sm">
+        <Link href={ROUTES.register}>Get started</Link>
+      </Button>
+    </>
+  );
 
   /*
    * Session state cannot be known on the server: the access token lives in a
@@ -37,24 +49,32 @@ export function HomeHeaderActions() {
    * this returns identical markup for both and only afterwards is the real
    * session consulted.
    */
-  if (!hydrated || !user) {
-    return (
-      <>
-        <Button asChild variant="outline" size="sm">
-          <Link href={ROUTES.login}>Sign in</Link>
-        </Button>
-        <Button asChild size="sm">
-          <Link href={ROUTES.register}>Get started</Link>
-        </Button>
-      </>
-    );
+  if (!hydrated) {
+    return publicCtas;
   }
 
-  // `hydrated` and `user` are both settled from here on, so a pending profile
-  // here means the client-side query is still loading.
+  /*
+   * A cookie does not mean a signed-in visitor *yet*. Until the profile request
+   * settles the only honest answer is "working on it": offering "Sign in" here
+   * used to be the common case, because `!user` covered the whole in-flight
+   * window, and a click during that window lands on `/organizations` instead of
+   * the login form — the cookie makes the proxy bounce it.
+   *
+   * `isError` breaks the tie the other way: the session is dead and the cookie is
+   * being cleared, so fall through to the CTAs rather than parking on a skeleton.
+   */
+  const sessionCookie = tokenStore.getAccessToken() !== null;
+  if (sessionCookie && !isError && !user) {
+    return <div className="h-8 w-32 animate-pulse rounded-lg bg-muted" />;
+  }
+
+  if (!user) {
+    return publicCtas;
+  }
+
+  // Reserves the header's space rather than showing a CTA that would flicker
+  // into the signed-in menu a moment later.
   if (isPending || isFetching) {
-    // Reserves the header's space rather than showing a CTA that would flicker
-    // into the signed-in menu a moment later.
     return <div className="h-8 w-32 animate-pulse rounded-lg bg-muted" />;
   }
 

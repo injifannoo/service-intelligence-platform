@@ -3,10 +3,10 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Surface container.
+ * Surface container with refined elevation and smooth interactions.
  *
- * Sits one elevation step above the page. Interactive cards should add
- * `interactive` so hover lifts them and the whole card reads as clickable.
+ * Sits one elevation step above the page. Interactive cards use enhanced hover
+ * effects with smooth lift and glow for premium feel.
  */
 function Card({
   className,
@@ -17,10 +17,10 @@ function Card({
     <div
       data-slot="card"
       className={cn(
-        "rounded-xl border border-border bg-card text-card-foreground shadow-sm",
-        "transition-[box-shadow,border-color,transform] duration-200 ease-out",
+        "rounded-2xl border border-border bg-card text-card-foreground shadow-md",
+        "transition-all duration-300 ease-out",
         interactive &&
-          "cursor-pointer hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg focus-within:border-primary/30",
+          "cursor-pointer hover:-translate-y-1 hover:border-primary/35 hover:shadow-xl hover:shadow-primary/5 focus-within:border-primary/40 focus-within:shadow-xl",
         className,
       )}
       {...props}

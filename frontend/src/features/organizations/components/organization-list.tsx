@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { SearchXIcon, SearchIcon, XIcon } from "lucide-react";
 
 import { AlertMessage } from "@/components/shared/alert-message";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useCurrentUser } from "@/features/authentication";
+import { useHydrated } from "@/lib/use-hydrated";
 
 import { useOrganizations } from "../api/use-organization";
 import { useOrganizationUiStore } from "../store/organization-store";
@@ -20,8 +23,15 @@ export function OrganizationList() {
   const openCreateForm = useOrganizationUiStore(
     (state) => state.openCreateForm,
   );
+  const { data: currentUser } = useCurrentUser();
+  const hydrated = useHydrated();
 
   const { data, isPending, isError, error, refetch } = useOrganizations(filters);
+
+  // Registration is a signed-in action; browsing the directory is not. The
+  // create button only appears once the session is resolvable, and a guest gets
+  // a sign-in link instead of a form that would 401 on submit.
+  const canCreate = hydrated && Boolean(currentUser);
 
   if (isPending) {
     return (
@@ -111,9 +121,15 @@ export function OrganizationList() {
                   Clear filters
                 </Button>
               )}
-              <Button size="sm" onClick={openCreateForm}>
-                Register organization
-              </Button>
+              {canCreate ? (
+                <Button size="sm" onClick={openCreateForm}>
+                  Register organization
+                </Button>
+              ) : hydrated ? (
+                <Button size="sm" asChild>
+                  <Link href="/login?next=/organizations">Sign in to register</Link>
+                </Button>
+              ) : null}
             </>
           }
         />

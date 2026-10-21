@@ -11,6 +11,7 @@ export {
 } from "./components/organization-card";
 export { OrganizationDetail } from "./components/organization-detail";
 export { OrganizationForm } from "./components/organization-form";
+export { OrganizationOnboarding } from "./components/organization-onboarding";
 export { OrganizationList } from "./components/organization-list";
 export { OrganizationDashboardPanel } from "./components/organization-dashboard";
 export { DashboardExportButton } from "./components/dashboard-export";

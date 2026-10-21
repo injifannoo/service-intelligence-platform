@@ -6,7 +6,6 @@ import {
   failure,
   ok,
   readJson,
-  requireUser,
 } from "@/lib/dev-backend/http";
 import { listOrganizations, listServices, withRating } from "@/lib/dev-backend/store";
 import { recommendOrganizations } from "@/lib/dev-backend/ai";
@@ -21,6 +20,9 @@ const MAX_RESULTS = 10;
  * MVP Version 2 (docs/08_Development_Roadmap.md:416-426). Request
  * `{ category, budget, location }`, response `{ recommendations: [] }`.
  *
+ * Public: "receive AI recommendations" is explicitly part of the guest
+ * experience, so this stays open to visitors without an account.
+ *
  * `category` is required because with no category there is nothing to recommend
  * *on*. `budget` and `location` are optional filters; omitting one contributes
  * the midpoint weight rather than dropping the candidate.
@@ -28,9 +30,6 @@ const MAX_RESULTS = 10;
 export async function POST(request: NextRequest) {
   const blocked = devBackendUnavailable();
   if (blocked) return blocked;
-
-  const auth = requireUser(request);
-  if ("response" in auth) return auth.response;
 
   const body = await readJson(request);
   if (!body) {
