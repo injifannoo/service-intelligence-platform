@@ -1,0 +1,15 @@
+
+> service-intelligence-frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.8.115:3000
+- Environments: .env.local
+✓ Ready in 2.6s
+
+ GET /api/v1/organizations?page_size=2 200 in 3.2s (next.js: 3.1s, application-code: 110ms)
+ GET /organizations 200 in 3.6s (next.js: 1317ms, proxy.ts: 681ms, application-code: 1636ms)
+ GET /search 200 in 946ms (next.js: 379ms, proxy.ts: 23ms, application-code: 544ms)
+ GET /comparison 200 in 777ms (next.js: 321ms, proxy.ts: 11ms, application-code: 445ms)
+ GET /organizations/00000000-0000-4000-8000-000000000011 200 in 11.5s (next.js: 11.3s, proxy.ts: 14ms, application-code: 155ms)
