@@ -195,8 +195,10 @@ export function AdminModeration() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Reported reviews</h2>
+      <div className="space-y-1">
+        <h2 className="text-sm font-semibold text-muted-foreground">
+          Reported reviews
+        </h2>
         <p className="text-sm text-muted-foreground">
           Dismiss a report that is not actionable, or remove the review when it is
           spam, abusive, or fabricated.

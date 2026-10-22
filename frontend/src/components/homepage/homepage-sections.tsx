@@ -40,9 +40,9 @@ export function HomepageSections() {
   return (
     <>
       {sections.hero && <HeroSection />}
+      {sections.howItWorks && <HowItWorks />}
       {sections.metrics && <MetricsStrip />}
       {sections.categories && <ServiceCategories />}
-      {sections.howItWorks && <HowItWorks />}
       {sections.featuredProviders && <FeaturedProviders />}
       {sections.forBusinesses && <ForBusinesses />}
       {sections.whyChoose && <WhyChoose />}

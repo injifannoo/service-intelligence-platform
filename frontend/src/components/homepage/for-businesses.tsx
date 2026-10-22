@@ -18,7 +18,7 @@ export function ForBusinesses() {
       id="for-businesses"
       className="scroll-mt-20 border-y border-border bg-secondary"
     >
-      <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-6 py-14 sm:py-16 lg:grid-cols-2 lg:gap-14">
+      <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-6 py-12 sm:py-14 lg:grid-cols-2 lg:gap-12">
         <div className="relative order-2 lg:order-1">
           <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border-2 border-border/60 bg-card shadow-xl ring-1 ring-black/5">
             <Image
@@ -39,14 +39,14 @@ export function ForBusinesses() {
               For Businesses
             </p>
           </div>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Grow with Better Insights
           </h2>
-          <p className="mt-4 max-w-lg text-lg leading-relaxed text-muted-foreground">
+          <p className="mt-3 max-w-lg text-base leading-relaxed text-muted-foreground">
             Increase visibility and build stronger customer relationships.
           </p>
 
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
             {BENEFITS.map((benefit) => (
               <li key={benefit} className="flex items-center gap-2.5">
                 <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent/15 text-accent">

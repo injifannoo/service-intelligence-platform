@@ -29,7 +29,7 @@ export function FeaturedProviders() {
   const organizations = data?.data ?? [];
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-6 py-12 sm:py-14">
+    <section className="mx-auto w-full max-w-7xl px-6 py-10 sm:py-12">
       <SectionHeading
         eyebrow="Featured Providers"
         title="Top-Rated Services"
@@ -45,7 +45,7 @@ export function FeaturedProviders() {
       />
 
       {isPending && (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <OrganizationCardSkeleton />
           <OrganizationCardSkeleton />
           <OrganizationCardSkeleton />
@@ -74,7 +74,7 @@ export function FeaturedProviders() {
       )}
 
       {organizations.length > 0 && (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {organizations.map((organization) => (
             <OrganizationCard key={organization.id} organization={organization} />
           ))}

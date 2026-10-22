@@ -32,10 +32,10 @@ export function HeroSection() {
         className="hero-grid pointer-events-none absolute inset-0 opacity-50"
       />
 
-      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-10 px-6 py-14 sm:py-16 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-20">
+      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-10 px-6 py-12 sm:py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:py-16">
         {/* Left: message, search, capabilities, actions. */}
         <div className="max-w-xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 ring-1 ring-primary/20">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1.5 ring-1 ring-primary/20">
             <span className="relative flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex size-2 rounded-full bg-primary"></span>
@@ -45,30 +45,30 @@ export function HeroSection() {
             </p>
           </div>
 
-          <h1 className="mt-6 text-5xl leading-[1.08] font-bold tracking-tight text-foreground sm:text-6xl lg:text-[4rem]">
+          <h1 className="mt-5 text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]">
             Find, Compare &amp; Choose
             <br />
             <span className="gradient-text">the Best Services</span>
           </h1>
 
-          <p className="mt-6 max-w-lg text-xl leading-relaxed text-muted-foreground">
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground">
             Trusted information. Real customer feedback. AI-powered recommendations.
           </p>
 
-          <div className="mt-10 max-w-xl">
+          <div className="mt-8 max-w-xl">
             <HeroSearch />
           </div>
 
           <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {FEATURES.map((feature) => (
-              <li key={feature.label} className="flex flex-col items-start gap-2.5">
+              <li key={feature.label} className="flex flex-col items-start gap-2">
                 <span
                   className={cn(
-                    "grid size-10 place-items-center rounded-xl transition-transform hover:scale-110",
+                    "grid size-9 place-items-center rounded-lg transition-transform hover:scale-105",
                     feature.tone,
                   )}
                 >
-                  <feature.icon className="size-5" aria-hidden="true" />
+                  <feature.icon className="size-4" aria-hidden="true" />
                 </span>
                 <span className="text-xs leading-snug font-semibold text-foreground">
                   {feature.label}
@@ -77,7 +77,7 @@ export function HeroSection() {
             ))}
           </ul>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg" className="group">
               <Link href={ROUTES.organizations}>
                 Explore Services
@@ -99,7 +99,7 @@ export function HeroSection() {
 
         {/* Right: professional photo with enhanced frame */}
         <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border-2 border-border/60 bg-card shadow-2xl ring-1 ring-black/5">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border/60 bg-card shadow-lg ring-1 ring-black/5">
             <Image
               src="/assets/hero.png"
               alt="Professional Ethiopian woman working on a laptop in a bright modern office."

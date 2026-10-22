@@ -53,7 +53,7 @@ export default function AuthLayout({
 
       {/* Right form panel */}
       <div className="flex min-h-screen flex-col bg-background lg:min-h-0">
-        <header className="flex items-center px-6 py-5">
+        <header className="flex items-center justify-between px-6 py-5">
           <Link
             href={ROUTES.home}
             className="inline-flex rounded-lg outline-offset-4 lg:invisible"
@@ -62,9 +62,15 @@ export default function AuthLayout({
           </Link>
         </header>
 
-        <main className="flex flex-1 items-center justify-center px-6 pb-12 pt-4">
+        <main className="flex flex-1 items-center justify-center px-6 pb-16 pt-4">
           <div className="w-full max-w-sm">{children}</div>
         </main>
+
+        <footer className="px-6 py-5 text-center">
+          <p className="text-xs text-muted-foreground">
+            &copy; {new Date().getFullYear()} {siteConfig.name}
+          </p>
+        </footer>
       </div>
     </div>
   );

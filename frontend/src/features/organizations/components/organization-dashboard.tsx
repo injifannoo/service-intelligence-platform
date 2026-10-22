@@ -51,6 +51,39 @@ export function OrganizationDashboardPanel({ organization }: { organization: Org
   return (
     <div className="space-y-6">
       {/*
+        AI customer sentiment is the platform's flagship signal, so it leads the
+        dashboard rather than sitting beside the rating trend.
+      */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Customer sentiment</CardTitle>
+          <CardDescription>
+            Lexicon classification of review text, split by polarity.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {sentiment ? (
+            <SplitBar
+              positive={sentiment.positive}
+              negative={sentiment.negative}
+              positiveLabel="Positive"
+              negativeLabel="Negative"
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">No sentiment data yet.</p>
+          )}
+
+          <AlertMessage tone="info">
+            <span className="flex items-start gap-2">
+              <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              Sentiment is keyword-based and does not interpret sarcasm or non-English
+              text. Treat it as a signal, not a verdict.
+            </span>
+          </AlertMessage>
+        </CardContent>
+      </Card>
+
+      {/*
         `profile_views` has no analytics pipeline behind it in this environment,
         so it is a stable synthetic figure. Labelled as an estimate rather than
         presented as measured traffic.
@@ -75,53 +108,22 @@ export function OrganizationDashboardPanel({ organization }: { organization: Org
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Rating trend</CardTitle>
-            <CardDescription>Average rating per calendar month.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BarChart
-              title="Average rating per month"
-              caption="Derived from review timestamps."
-              data={trends.map((trend) => ({ label: trend.period, value: trend.average }))}
-              min={1}
-              max={5}
-              formatValue={(value) => `${value.toFixed(1)}/5`}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer sentiment</CardTitle>
-            <CardDescription>
-              Lexicon classification of review text, split by polarity.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {sentiment ? (
-              <SplitBar
-                positive={sentiment.positive}
-                negative={sentiment.negative}
-                positiveLabel="Positive"
-                negativeLabel="Negative"
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">No sentiment data yet.</p>
-            )}
-
-            <AlertMessage tone="info">
-              <span className="flex items-start gap-2">
-                <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                Sentiment is keyword-based and does not interpret sarcasm or non-English
-                text. Treat it as a signal, not a verdict.
-              </span>
-            </AlertMessage>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Rating trend</CardTitle>
+          <CardDescription>Average rating per calendar month.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BarChart
+            title="Average rating per month"
+            caption="Derived from review timestamps."
+            data={trends.map((trend) => ({ label: trend.period, value: trend.average }))}
+            min={1}
+            max={5}
+            formatValue={(value) => `${value.toFixed(1)}/5`}
+          />
+        </CardContent>
+      </Card>
 
       {competitorIds.length > 0 && (
         <Card>
@@ -178,12 +180,12 @@ function StatTile({
   return (
     <Card>
       <CardContent className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-semibold tabular-nums">{value}</p>
+        <div className="space-y-0.5">
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="text-xl font-semibold tabular-nums">{value}</p>
           {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
-        <span className="rounded-md bg-primary/10 p-2 text-primary">
+        <span className="rounded-md bg-primary/10 p-1.5 text-primary">
           <Icon className="size-4" aria-hidden="true" />
         </span>
       </CardContent>

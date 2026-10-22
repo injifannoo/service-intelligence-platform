@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import { RegisterForm } from "@/features/authentication";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ROUTES } from "@/config/site-config";
 
 export const metadata: Metadata = {
   title: "Create account",
@@ -25,6 +27,16 @@ export default function RegisterPage() {
       <Suspense fallback={<Skeleton className="h-96 w-full" />}>
         <RegisterForm />
       </Suspense>
+
+      <p className="border-t border-border pt-5 text-center text-sm text-muted-foreground">
+        Own a business?{" "}
+        <Link
+          href={ROUTES.businessRegister}
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Register your business
+        </Link>
+      </p>
     </div>
   );
 }

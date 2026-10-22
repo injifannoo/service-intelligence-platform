@@ -1,4 +1,4 @@
-import { ScanSearchIcon } from "lucide-react";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site-config";
@@ -6,8 +6,10 @@ import { siteConfig } from "@/config/site-config";
 /**
  * Brand lockup.
  *
- * `wordmarkLight` renders the text in white for use on dark/primary-colour
- * backgrounds (e.g. the auth layout's Deep Blue panel).
+ * The mark is the real `logo.png` from `public/assets`, so every place that
+ * renders the brand — header, footer, homepage nav, auth layout, admin sidebar —
+ * shows the same artwork. `wordmarkLight` renders the text in white for use on
+ * dark/primary-colour backgrounds (e.g. the auth layout's Deep Blue panel).
  */
 export function BrandMark({
   className,
@@ -20,18 +22,25 @@ export function BrandMark({
   wordmarkLight?: boolean;
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-3", className)}>
+    <span className={cn("inline-flex items-center gap-2.5", className)}>
       <span
         aria-hidden="true"
         className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-xl text-white",
+          "grid size-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-white ring-1",
           wordmarkLight
-            ? "bg-white/20 ring-2 ring-white/30 ring-offset-2 ring-offset-primary"
-            : "bg-gradient-to-br from-primary to-accent shadow-md ring-2 ring-primary/25 ring-offset-2 ring-offset-background",
+            ? "ring-white/30"
+            : "ring-primary/15 shadow-sm",
           "transition-transform hover:scale-105",
         )}
       >
-        <ScanSearchIcon className="size-4.5" />
+        <Image
+          src="/assets/logo.png"
+          alt=""
+          width={36}
+          height={36}
+          className="size-9 object-contain"
+          priority
+        />
       </span>
 
       {showWordmark && (

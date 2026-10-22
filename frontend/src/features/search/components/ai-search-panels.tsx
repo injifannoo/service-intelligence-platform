@@ -98,7 +98,7 @@ export function AiSearchPanels() {
             <EmptyState
               icon={SparklesIcon}
               title="No semantic matches"
-              description="Try rephrasing, or use the keyword filters above."
+              description="Try rephrasing, or use the keyword filters below."
             />
           )}
 
