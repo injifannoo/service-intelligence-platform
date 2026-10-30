@@ -163,6 +163,20 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
       <Separator />
 
       <section className="space-y-4">
+        {signedIn ? (
+          <ReviewSummaryCard organizationId={organizationId} />
+        ) : resolvingSession ? (
+          <Skeleton className="h-40" />
+        ) : (
+          <SignInPrompt organizationId={organizationId}>
+            Sign in to generate an AI summary of this organization&rsquo;s reviews.
+          </SignInPrompt>
+        )}
+      </section>
+
+      <Separator />
+
+      <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Services</h2>
@@ -222,18 +236,6 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
       </section>
 
       <Separator />
-
-      <section className="space-y-4">
-        {signedIn ? (
-          <ReviewSummaryCard organizationId={organizationId} />
-        ) : resolvingSession ? (
-          <Skeleton className="h-40" />
-        ) : (
-          <SignInPrompt organizationId={organizationId}>
-            Sign in to generate an AI summary of this organization&rsquo;s reviews.
-          </SignInPrompt>
-        )}
-      </section>
 
       <section className="space-y-4">
         <div>

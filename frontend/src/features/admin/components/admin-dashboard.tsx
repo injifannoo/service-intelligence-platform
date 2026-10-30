@@ -143,25 +143,29 @@ export function AdminDashboard() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Queues</CardTitle>
-          <CardDescription>Work waiting on an administrator.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <QueueLink
-            href={ROUTES.adminVerification}
-            label="Verification requests"
-            count={data.verifications.pending}
-          />
-          <QueueLink
-            href={ROUTES.adminOrganizations}
-            label="Organizations"
-            count={data.organizations.total}
-          />
-          <QueueLink href={ROUTES.adminAuditLogs} label="Audit log" />
-        </CardContent>
-      </Card>
+      <section aria-labelledby="queues-heading" className="space-y-3">
+        <h2 id="queues-heading" className="text-sm font-semibold text-muted-foreground">
+          Queues
+        </h2>
+        <Card>
+          <CardHeader>
+            <CardDescription>Work waiting on an administrator.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <QueueLink
+              href={ROUTES.adminVerification}
+              label="Verification requests"
+              count={data.verifications.pending}
+            />
+            <QueueLink
+              href={ROUTES.adminOrganizations}
+              label="Organizations"
+              count={data.organizations.total}
+            />
+            <QueueLink href={ROUTES.adminAuditLogs} label="Audit log" />
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
@@ -182,16 +186,16 @@ function StatTile({
   return (
     <Card>
       <CardContent className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-semibold tabular-nums">{value}</p>
+        <div className="space-y-0.5">
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="text-xl font-semibold tabular-nums">{value}</p>
           {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
         <span
           className={
             emphasis
-              ? "rounded-md bg-destructive/10 p-2 text-destructive"
-              : "rounded-md bg-primary/10 p-2 text-primary"
+              ? "rounded-md bg-destructive/10 p-1.5 text-destructive"
+              : "rounded-md bg-primary/10 p-1.5 text-primary"
           }
         >
           <Icon className="size-4" aria-hidden="true" />

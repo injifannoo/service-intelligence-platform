@@ -52,6 +52,9 @@ export function AdminOrganizations() {
 
   const organizations = data?.data ?? [];
   const count = data?.pagination?.count ?? organizations.length;
+  const verified = organizations.filter(
+    (organization) => organization.verification_status === "VERIFIED",
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -59,6 +62,32 @@ export function AdminOrganizations() {
         title="Organizations"
         description="Every organization on the platform, including tenants you do not own."
       />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardContent className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <p className="text-xs font-medium text-muted-foreground">Total organizations</p>
+              <p className="text-xl font-semibold tabular-nums">{count}</p>
+            </div>
+            <span className="rounded-md bg-primary/10 p-1.5 text-primary">
+              <BuildingIcon className="size-4" aria-hidden="true" />
+            </span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <p className="text-xs font-medium text-muted-foreground">Verified</p>
+              <p className="text-xl font-semibold tabular-nums">{verified}</p>
+              <p className="text-xs text-muted-foreground">of {count} total</p>
+            </div>
+            <span className="rounded-md bg-primary/10 p-1.5 text-primary">
+              <StarIcon className="size-4" aria-hidden="true" />
+            </span>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

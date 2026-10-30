@@ -46,18 +46,21 @@ export function MetricsStrip() {
 
   return (
     <section className="border-b border-border bg-secondary">
-      <div className="mx-auto w-full max-w-7xl px-6 py-7">
-        <dl className="grid grid-cols-2 gap-6 sm:flex sm:items-center sm:justify-center sm:gap-10 lg:gap-14">
+      <div className="mx-auto w-full max-w-7xl px-6 py-6">
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
           {metrics.map((metric) => (
-            <div key={metric.label} className="flex items-center gap-4">
-              <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent shadow-sm ring-1 ring-accent/25">
-                <metric.icon className="size-5" aria-hidden="true" />
+            <div
+              key={metric.label}
+              className="flex items-center justify-center gap-3 text-center sm:justify-start sm:text-left"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent ring-1 ring-accent/20">
+                <metric.icon className="size-4" aria-hidden="true" />
               </span>
-              <div>
-                <dt className="text-2xl leading-none font-bold text-foreground">
+              <div className="min-w-0">
+                <dt className="text-lg leading-none font-bold tabular-nums text-foreground">
                   {metric.value}
                 </dt>
-                <dd className="mt-1 text-xs font-medium text-muted-foreground">{metric.label}</dd>
+                <dd className="mt-0.5 text-xs font-medium text-muted-foreground">{metric.label}</dd>
               </div>
             </div>
           ))}

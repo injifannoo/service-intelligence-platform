@@ -8,13 +8,13 @@
  * the form and then render as a bare, unlabelled key.
  */
 export const COMPARISON_CRITERIA = [
+  { value: "sentiment", label: "AI score" },
   { value: "rating", label: "Customer rating" },
   { value: "reviews", label: "Reviews" },
   { value: "price", label: "Price" },
   { value: "services", label: "Services offered" },
   { value: "location", label: "Location" },
   { value: "verification", label: "Verification status" },
-  { value: "sentiment", label: "AI score" },
 ] as const;
 
 export type ComparisonCriterion = (typeof COMPARISON_CRITERIA)[number]["value"];

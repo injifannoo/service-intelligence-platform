@@ -28,15 +28,15 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
       className={cn(
         // Stretched link on the title makes the whole card clickable without
         // nesting interactive elements, so the compare checkbox stays usable.
-        "group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm",
-        "transition-[box-shadow,border-color,transform] duration-200 ease-out",
-        "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg",
+        "group relative flex flex-col gap-2 rounded-lg border border-border bg-card p-4 text-card-foreground",
+        "transition-colors duration-200 ease-out",
+        "hover:border-primary/40 hover:bg-muted/40",
         isSelected && "border-primary/50 ring-2 ring-ring/40",
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <h3 className="text-base leading-tight font-semibold">
+        <div className="min-w-0 space-y-0.5">
+          <h3 className="text-sm leading-tight font-semibold">
             <Link
               href={`/organizations/${organization.id}`}
               className="rounded outline-offset-4 after:absolute after:inset-0 after:content-[''] group-hover:text-primary"
@@ -45,34 +45,34 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
             </Link>
           </h3>
           {organization.location && (
-            <p className="flex items-center gap-1 text-sm text-muted-foreground">
-              <MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPinIcon className="size-3 shrink-0" aria-hidden="true" />
               <span className="truncate">{organization.location}</span>
             </p>
           )}
         </div>
 
-        <Badge variant={VERIFICATION_BADGE_VARIANT[organization.verification_status]}>
+        <Badge variant={VERIFICATION_BADGE_VARIANT[organization.verification_status]} className="text-xs">
           {isVerified && <BadgeCheckIcon aria-hidden="true" />}
           {VERIFICATION_LABELS[organization.verification_status]}
         </Badge>
       </div>
 
       {organization.description ? (
-        <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
           {organization.description}
         </p>
       ) : (
-        <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground/70 italic">
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/70 italic">
           No description yet.
         </p>
       )}
 
-      <div className="mt-auto flex items-center justify-between gap-3 pt-2">
-        <span className="flex items-center gap-1.5 text-sm font-medium tabular-nums">
+      <div className="mt-auto flex items-center justify-between gap-3 pt-1.5">
+        <span className="flex items-center gap-1.5 text-xs font-medium tabular-nums">
           <StarIcon
             className={cn(
-              "size-4",
+              "size-3.5",
               hasRating ? "fill-warning text-warning" : "text-muted-foreground/50",
             )}
             aria-hidden="true"
@@ -96,7 +96,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
 
 export function OrganizationCardSkeleton() {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="w-2/3 space-y-2">
           <div className="h-4 w-full rounded bg-muted" />

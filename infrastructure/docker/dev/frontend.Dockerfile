@@ -1,13 +1,13 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-# Limit npm concurrency to max 2 sockets to prevent RAM/WSL crash
-RUN npm config set maxsockets 2 && \
-    npm install --legacy-peer-deps --prefer-offline
+# Build context is the repository root (see docker-compose.yml).
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm config set maxsockets 2 \
+    && npm install --legacy-peer-deps --prefer-offline
 
-COPY . .
+COPY frontend/ .
 
 EXPOSE 3000
 

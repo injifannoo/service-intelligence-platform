@@ -31,7 +31,7 @@ export function ComparisonBuilder() {
   const compare = useCompare();
 
   const [selected, setSelected] = useState<string[]>([]);
-  const [criteria, setCriteria] = useState<string[]>(["rating", "services"]);
+  const [criteria, setCriteria] = useState<string[]>(["sentiment", "rating"]);
   const [formError, setFormError] = useState<string | null>(null);
 
   const organizations = organizationsQuery.data?.data ?? [];

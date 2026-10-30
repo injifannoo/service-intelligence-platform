@@ -1,11 +1,16 @@
 FROM python:3.12-slim
 
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
 WORKDIR /app
 
-COPY requirements.txt .
-
+# Build context is the repository root (see docker-compose.yml).
+COPY ai-engine/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY ai-engine/ .
 
-CMD ["python", "main.py"]
+EXPOSE 8001
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]

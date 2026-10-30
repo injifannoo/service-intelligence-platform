@@ -1,7 +1,31 @@
+# Repo-root build context excludes (all Dockerfiles use the root as context).
+
+# Version control & env
+.git
+.gitignore
+.env
+.env.*
+
+# Node
 node_modules
 .next
-.git
+npm-debug.log*
+frontend/node_modules
+frontend/.next
+
+# Python
 __pycache__
 *.pyc
-.env
+*.pyo
+.venv
+backend/.venv
+.pytest_cache
+backend/.pytest_cache
+backend/db.sqlite3
+*.sqlite3
+
+# Logs & OS/IDE
 *.log
+.DS_Store
+.idea
+.vscode

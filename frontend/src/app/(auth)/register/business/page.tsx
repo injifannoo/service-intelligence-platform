@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 
 export default function BusinessRegisterPage() {
   return (
-    <div className="space-y-7">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
+    <div className="space-y-6">
+      <div className="space-y-1.5">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Register your business
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground">

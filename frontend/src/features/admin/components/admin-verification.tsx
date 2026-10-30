@@ -17,8 +17,10 @@ export function AdminVerification() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Verification requests</h2>
+      <div className="space-y-1">
+        <h2 className="text-sm font-semibold text-muted-foreground">
+          Pending requests
+        </h2>
         <p className="text-sm text-muted-foreground">
           Review the business documents organizations have submitted.
         </p>
@@ -34,8 +36,10 @@ export function AdminAuditLogs() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Audit log</h2>
+      <div className="space-y-1">
+        <h2 className="text-sm font-semibold text-muted-foreground">
+          Activity
+        </h2>
         <p className="text-sm text-muted-foreground">
           A record of privileged and content-changing actions.
         </p>

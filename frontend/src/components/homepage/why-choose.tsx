@@ -29,7 +29,7 @@ const BENEFITS = [
 export function WhyChoose() {
   return (
     <section id="about" className="scroll-mt-20 border-y border-border bg-secondary">
-      <div className="mx-auto w-full max-w-7xl px-6 py-14 sm:py-16">
+      <div className="mx-auto w-full max-w-7xl px-6 py-10 sm:py-12">
         <SectionHeading
           align="center"
           eyebrow="Why Choose Us"
@@ -37,21 +37,19 @@ export function WhyChoose() {
           description="Reliable information and transparent comparisons for better service choices."
         />
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {BENEFITS.map((benefit) => (
             <div
               key={benefit.title}
-              className="group relative rounded-3xl border border-border bg-card p-6 text-center shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10"
+              className="group relative rounded-xl border border-border bg-card p-5 shadow-sm transition-colors duration-200 hover:border-accent/40"
             >
-              <div className="mx-auto mb-5 grid size-14 place-items-center rounded-2xl bg-accent/10 text-accent shadow-sm ring-1 ring-accent/25 transition-transform group-hover:scale-110">
-                <benefit.icon className="size-7" aria-hidden="true" />
+              <div className="mb-3 grid size-10 place-items-center rounded-lg bg-accent/10 text-accent ring-1 ring-accent/20 transition-transform group-hover:scale-105">
+                <benefit.icon className="size-5" aria-hidden="true" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">{benefit.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              <h3 className="text-sm font-semibold text-foreground">{benefit.title}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                 {benefit.body}
               </p>
-              {/* Subtle teal top-edge glow on hover */}
-              <div className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-b from-accent/8 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
             </div>
           ))}
         </div>

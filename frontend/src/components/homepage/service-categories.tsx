@@ -127,7 +127,7 @@ export function ServiceCategories() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-6 py-12 sm:py-14">
+    <section className="mx-auto w-full max-w-7xl px-6 py-10 sm:py-12">
       <SectionHeading
         eyebrow="Categories"
         title="Explore Services"
@@ -142,13 +142,13 @@ export function ServiceCategories() {
         }
       />
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {CATEGORIES.map((category) => {
           const cardContent = (
             <>
               {category.image ? (
-                <div className="relative -mx-5 -mt-5 mb-4">
-                  <div className="relative h-40 overflow-hidden">
+                <div className="relative -mx-4 -mt-4 mb-3">
+                  <div className="relative h-28 overflow-hidden">
                     <Image
                       src={category.image.src}
                       alt={category.image.alt}
@@ -163,53 +163,53 @@ export function ServiceCategories() {
                   />
                   <span
                     className={cn(
-                      "absolute bottom-3 left-3.5 grid size-11 place-items-center rounded-xl shadow-lg backdrop-blur-sm transition-transform group-hover:scale-110",
+                      "absolute bottom-2.5 left-3 grid size-9 place-items-center rounded-lg shadow-sm backdrop-blur-sm transition-transform group-hover:scale-105",
                       category.tone,
                     )}
                   >
-                    <category.icon className="size-5" aria-hidden="true" />
+                    <category.icon className="size-4" aria-hidden="true" />
                   </span>
                   {!category.industry && category.title !== "Other Services" && (
                     <Badge
                       variant="muted"
-                      className="absolute top-3 right-3 border-white/40 bg-white/90 backdrop-blur-sm shadow-sm"
+                      className="absolute top-2.5 right-2.5 border-white/40 bg-white/90 backdrop-blur-sm text-xs"
                     >
                       Coming soon
                     </Badge>
                   )}
                 </div>
               ) : (
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <span
                     className={cn(
-                      "grid size-14 place-items-center rounded-2xl transition-transform group-hover:scale-110",
+                      "grid size-10 place-items-center rounded-lg transition-transform group-hover:scale-105",
                       category.tone,
                     )}
                   >
-                    <category.icon className="size-7" aria-hidden="true" />
+                    <category.icon className="size-5" aria-hidden="true" />
                   </span>
                   {!category.industry && category.title !== "Other Services" && (
-                    <Badge variant="muted">Coming soon</Badge>
+                    <Badge variant="muted" className="text-xs">Coming soon</Badge>
                   )}
                 </div>
               )}
-              <h3 className="font-bold text-foreground text-lg">{category.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              <h3 className="text-sm font-semibold text-foreground">{category.title}</h3>
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                 {category.description}
               </p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+              <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
                 {category.industry
                   ? "Explore"
                   : category.title === "Other Services"
                     ? "Browse all"
                     : "Notify me"}
-                <ArrowRightIcon className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                <ArrowRightIcon className="size-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </span>
             </>
           );
 
           const baseClass =
-            "group flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 text-left shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/8";
+            "group flex flex-col overflow-hidden rounded-xl border border-border bg-card p-4 text-left transition-colors duration-200 hover:border-primary/40 hover:bg-muted/40";
 
           if (category.industry) {
             return (
