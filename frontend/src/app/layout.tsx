@@ -8,6 +8,17 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata = {
   title: 'IntelligentService Platform',
   description: 'Ethiopian Service Intelligence Engine',
+import type { Metadata } from "next";
+import "./globals.css";
+import Providers from "./providers";
+import { siteConfig } from "@/config/site-config";
+
+export const metadata: Metadata = {
+  title: {
+    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    template: `%s · ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
 };
 
 export default function RootLayout({

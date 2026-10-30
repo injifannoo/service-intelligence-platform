@@ -1,99 +1,184 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ServiceProvider } from '@/types/service';
+import { Badge } from "@/components/ui/badge";
+import {
+  VERIFICATION_BADGE_VARIANT,
+  VERIFICATION_LABELS,
+} from "@/features/organizations";
+import { StarRating } from "@/features/reviews";
+import type { ComparisonRow } from "@/types";
 
-interface ComparisonTableProps {
-  providers: ServiceProvider[];
-  onRemove: (id: string) => void;
-  onClear: () => void;
-}
+import { criterionLabel } from "../comparison-criteria";
 
-export const ComparisonTable: React.FC<ComparisonTableProps> = ({ providers, onRemove, onClear }) => {
-  if (providers.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-2xl mx-auto my-8">
-        <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
-          ⚖️
-        </div>
-        <h3 className="text-lg font-bold text-slate-900">No Providers Selected for Comparison</h3>
-        <p className="text-sm text-slate-500 mt-2">
-          Select 2 to 3 service providers from the search results to evaluate side-by-side metrics.
-        </p>
-      </div>
-    );
-  }
-
+/**
+ * Side-by-side comparison matrix.
+ *
+ * A CSS grid rather than a `<table>`: each cell is a short value or a nested
+ * service list, so rows do not align across columns the way table semantics
+ * would require, and `role="row"/"cell"` on the wrappers keeps it announceable.
+ */
+export function ComparisonTable({
+  organizations,
+  criteria,
+}: {
+  organizations: ComparisonRow[];
+  criteria: string[];
+}) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden my-6">
-      <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-bold">Provider Comparison Matrix</h3>
-          <p className="text-xs text-slate-400 mt-0.5">Evaluating {providers.length} selected providers</p>
-        </div>
-        <button
-          onClick={onClear}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-        >
-          Clear All
-        </button>
+    <div className="space-y-6">
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: `repeat(${organizations.length}, minmax(0, 1fr))` }}
+      >
+        {organizations.map((organization) => (
+          <div key={organization.id} className="rounded-lg border border-border p-4">
+            <h3 className="font-semibold leading-tight">{organization.name}</h3>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <StarRating rating={organization.rating} />
+              {organization.rating !== null && (
+                <span className="text-sm text-muted-foreground">
+                  {organization.rating.toFixed(1)}
+                </span>
+              )}
+            </div>
+            {organization.verification_status === "VERIFIED" && (
+              <Badge variant="success" className="mt-2">
+                Verified
+              </Badge>
+            )}
+            {organization.location && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {organization.location}
+              </p>
+            )}
+          </div>
+        ))}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-slate-100 bg-slate-50">
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase w-48">Metric</th>
-              {providers.map((p) => (
-                <th key={p.id} className="p-4 min-w-[220px]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 text-sm">{p.name}</span>
-                    <button onClick={() => onRemove(p.id)} className="text-slate-400 hover:text-rose-500 text-xs">✕</button>
-                  </div>
-                </th>
+      <div className="space-y-3">
+        {criteria.map((criterion) => (
+          <div key={criterion} className="rounded-lg border border-border">
+            <p className="border-b border-border bg-muted/40 px-4 py-2 text-sm font-medium">
+              {criterionLabel(criterion)}
+            </p>
+            <div
+              className="grid gap-px bg-border"
+              style={{
+                gridTemplateColumns: `repeat(${organizations.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {organizations.map((organization) => (
+                <div key={organization.id} className="bg-background px-4 py-3 text-sm">
+                  <CriterionValue
+                    criterion={criterion}
+                    organization={organization}
+                  />
+                </div>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
-            <tr>
-              <td className="p-4 font-semibold text-slate-500 text-xs uppercase bg-slate-50/50">Category</td>
-              {providers.map((p) => (
-                <td key={p.id} className="p-4 font-medium text-slate-800">{p.category}</td>
-              ))}
-            </tr>
-            <tr>
-              <td className="p-4 font-semibold text-slate-500 text-xs uppercase bg-slate-50/50">Rating & Reviews</td>
-              {providers.map((p) => (
-                <td key={p.id} className="p-4 font-bold text-amber-500">
-                  ★ {p.rating} <span className="text-xs font-normal text-slate-400">({p.reviewCount} reviews)</span>
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td className="p-4 font-semibold text-slate-500 text-xs uppercase bg-slate-50/50">Price & Rates</td>
-              {providers.map((p) => (
-                <td key={p.id} className="p-4 text-slate-800">
-                  <span className="font-bold">{p.priceLevel}</span> <span className="text-xs text-slate-500">({p.hourlyRate})</span>
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td className="p-4 font-semibold text-slate-500 text-xs uppercase bg-slate-50/50">Location</td>
-              {providers.map((p) => (
-                <td key={p.id} className="p-4 text-slate-700 text-xs">{p.location}</td>
-              ))}
-            </tr>
-            <tr>
-              <td className="p-4 font-semibold text-slate-500 text-xs uppercase bg-slate-50/50">Team & History</td>
-              {providers.map((p) => (
-                <td key={p.id} className="p-4 text-slate-700 text-xs">
-                  Established {p.yearEstablished} ({p.teamSize})
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
-};
+}
+
+function CriterionValue({
+  criterion,
+  organization,
+}: {
+  criterion: string;
+  organization: ComparisonRow;
+}) {
+  switch (criterion.trim().toLowerCase()) {
+    case "rating":
+      return organization.rating === null ? (
+        <span className="text-muted-foreground">No reviews</span>
+      ) : (
+        <span>{organization.rating.toFixed(1)} / 5</span>
+      );
+
+    case "reviews": {
+      const count = organization.review_count ?? 0;
+      return count === 0 ? (
+        <span className="text-muted-foreground">No reviews</span>
+      ) : (
+        <span className="tabular-nums">
+          {count} {count === 1 ? "review" : "reviews"}
+        </span>
+      );
+    }
+
+    case "price":
+      return <PriceRange services={organization.services} />;
+
+    case "location":
+      return organization.location ?? <span className="text-muted-foreground">—</span>;
+
+    case "verification":
+      return (
+        <Badge variant={VERIFICATION_BADGE_VARIANT[organization.verification_status]}>
+          {VERIFICATION_LABELS[organization.verification_status]}
+        </Badge>
+      );
+
+    case "sentiment": {
+      const score = organization.sentiment_score;
+      if (score === null || score === undefined) {
+        return <span className="text-muted-foreground">Nothing to score</span>;
+      }
+      return <span className="tabular-nums">{Math.round(score * 100)} / 100</span>;
+    }
+
+    case "services":
+      return organization.services.length === 0 ? (
+        <span className="text-muted-foreground">None listed</span>
+      ) : (
+        <ul className="space-y-1">
+          {organization.services.map((service) => (
+            <li key={service.id}>
+              {service.name}
+              {service.price !== undefined && service.price !== null && (
+                // contradiction 8: docs/04 defines no currency column, so the
+                // price is drawn bare rather than with an assumed symbol.
+                <span className="text-muted-foreground"> — {service.price}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      );
+
+    default:
+      // An unknown criterion must not render as a false blank, so it says so.
+      return (
+        <span className="text-muted-foreground">
+          Not available for this criterion.
+        </span>
+      );
+  }
+}
+
+/**
+ * Spread of listed prices for the "Price" criterion.
+ *
+ * docs/02:189-199 asks for price without defining an aggregate, and a single
+ * organization has no meaningful average of one service, so the range answers
+ * "what does this cost?" without inventing a figure.
+ */
+function PriceRange({ services }: { services: ComparisonRow["services"] }) {
+  const prices = services
+    .map((service) => service.price)
+    .filter((price): price is number => typeof price === "number");
+
+  if (prices.length === 0) {
+    return <span className="text-muted-foreground">Not listed</span>;
+  }
+
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+
+  // contradiction 8: no currency column exists, so no symbol is drawn.
+  return (
+    <span className="tabular-nums">{low === high ? low : `${low} – ${high}`}</span>
+  );
+}
