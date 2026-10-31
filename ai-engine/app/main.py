@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import health, recommendations, sentiment, summarization
+from app.features.health import router
 from app.core.config import settings
 from app.core.exceptions import (
     AIServiceException,
@@ -12,6 +12,10 @@ from app.core.exceptions import (
     PromptTemplateNotFoundError,
     PromptVariableInterpolationError,
 )
+from app.features.health.router import router as health_router
+from app.features.recommendations.router import router as recommendations_router
+from app.features.sentiment.router import router as sentiment_router
+from app.features.summarization.router import router as summarization_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -91,8 +95,8 @@ async def prompt_exception_handler(request: Request, exc: AIServiceException):
 
 
 # Include routes under /api/v1 as well as root for health probes
-app.include_router(health.router, prefix="/api/v1", tags=["Health"])
-app.include_router(health.router, tags=["Health Probe Root"])
-app.include_router(recommendations.router, prefix="/api/v1", tags=["Recommendations"])
-app.include_router(sentiment.router, prefix="/api/v1/sentiment", tags=["Sentiment"])
-app.include_router(summarization.router, prefix="/api/v1/summary", tags=["Summarization"])
+app.include_router(health_router, tags=["Health"])
+app.include_router(health_router, prefix="/api/v1", tags=["Health"])
+app.include_router(recommendations_router, prefix="/api/v1", tags=["Recommendations"])
+app.include_router(sentiment_router, prefix="/api/v1/sentiment", tags=["Sentiment"])
+app.include_router(summarization_router, prefix="/api/v1/summary", tags=["Summarization"])

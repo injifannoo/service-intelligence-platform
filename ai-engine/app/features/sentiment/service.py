@@ -3,13 +3,13 @@ from typing import Any, Dict
 
 from app.core.exceptions import AIServiceException
 from app.core.logging import logger
-from app.prompts.loader import load_prompt
-from app.schemas.sentiment import (
+from app.core.prompt_loader import load_prompt
+from app.features.sentiment.schemas import (
     SentimentAnalysisRequest,
     SentimentAnalysisResponse,
     SentimentLabel,
 )
-from app.services.gemini_service import query_gemini
+from app.core.gemini_service import query_gemini
 from app.utils.response_parser import extract_json_payload
 
 

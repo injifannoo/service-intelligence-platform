@@ -1,14 +1,15 @@
 from app.core.exceptions import AIServiceException
 from app.core.logging import logger
-from app.prompts.recommendation import build_recommendation_prompt
-from app.schemas.recommendation import RecommendationRequest, RecommendationResponse
-from app.services.gemini_service import query_gemini
+from app.features.recommendations.recommendation import build_recommendation_prompt
+from app.features.recommendations.schemas import RecommendationRequest, RecommendationResponse
+from app.core.gemini_service import query_gemini
 from app.utils.response_parser import parse_and_validate_gemini_response
 
 
 def get_recommendation(payload: RecommendationRequest) -> RecommendationResponse:
     """Coordinates prompt construction, Gemini inference, and response parsing."""
-    prompt = build_recommendation_prompt(payload.requirement, payload.providers)
+    requirement_text = getattr(payload, "requirement", None) or getattr(payload, "query", "")
+    prompt = build_recommendation_prompt(requirement_text, payload.providers)
     fallback_provider = payload.providers[0] if payload.providers else None
 
     try:

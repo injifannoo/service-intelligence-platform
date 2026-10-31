@@ -1,10 +1,10 @@
 from fastapi import APIRouter, status
 
-from app.schemas.summarization import (
+from app.features.summarization.schemas import (
     SummarizationRequest,
     SummarizationResponse,
 )
-from app.services.summarization_service import summarize_reviews
+from app.features.summarization.service import summarize_reviews
 
 router = APIRouter()
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.prompts.loader import get_prompt_path
+from app.core.prompt_loader import get_prompt_path
 
 router = APIRouter()
 
@@ -27,15 +27,16 @@ def readiness_check():
         errors.append("GEMINI_API_KEY is not configured or empty")
 
     # Verify critical prompt template files are accessible on disk
-    required_templates = [
-        "recommendation.txt",
-        "summarization.txt",
-        "sentiment.txt",
-    ]
-    for template_name in required_templates:
-        template_path = get_prompt_path(template_name)
-        if not template_path.is_file():
-            errors.append(f"Prompt template missing: {template_name}")
+    REQUIRED_FEATURES = [
+        "recommendations", 
+        "sentiment", 
+        "summarization"
+        ]
+
+    for feature in REQUIRED_FEATURES:
+        prompt_file = get_prompt_path(feature)
+        if not prompt_file.is_file():
+            errors.append(f"Prompt features missing: {feature} prompt file not found at {prompt_file}")
 
     if errors:
         return JSONResponse(

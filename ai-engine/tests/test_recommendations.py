@@ -47,7 +47,7 @@ def test_recommendation_short_query_validation_error():
     assert response.status_code == 422
 
 
-@patch("app.services.recommendation_service.query_gemini")
+@patch("app.features.recommendations.service.query_gemini")
 def test_recommendation_success_flow(mock_query_gemini):
     """End-to-end recommendation flow with valid structured JSON response from Gemini."""
     mock_llm_output = {
@@ -86,7 +86,7 @@ def test_recommendation_success_flow(mock_query_gemini):
     assert data["keyDecisionFactors"][0]["factor"] == "Security Specialization"
 
 
-@patch("app.services.recommendation_service.query_gemini")
+@patch("app.features.recommendations.service.query_gemini")
 def test_recommendation_handles_markdown_wrapped_json(mock_query_gemini):
     """Parser must sanitize markdown fences (```json ... ```) returned by LLM."""
     mock_payload = {
@@ -116,7 +116,7 @@ def test_recommendation_handles_markdown_wrapped_json(mock_query_gemini):
     assert data["recommendedProvider"]["id"] == "prov-2"
 
 
-@patch("app.services.recommendation_service.query_gemini")
+@patch("app.features.recommendations.service.query_gemini")
 def test_recommendation_fallback_on_gemini_error(mock_query_gemini):
     """Graceful degradation when Gemini raises an API exception."""
     mock_query_gemini.side_effect = GeminiRateLimitError(

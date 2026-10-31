@@ -1,10 +1,10 @@
 from fastapi import APIRouter, status
 
-from app.schemas.sentiment import (
+from app.features.sentiment.schemas import (
     SentimentAnalysisRequest,
     SentimentAnalysisResponse,
 )
-from app.services.sentiment_service import analyze_sentiment
+from app.features.sentiment.service import analyze_sentiment
 
 router = APIRouter()
 

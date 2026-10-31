@@ -3,7 +3,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from app.core.logging import logger
-from app.schemas.recommendation import (
+from app.features.recommendations.schemas import (
     KeyDecisionFactor,
     ProviderInput,
     RecommendationResponse,
