@@ -1,18 +1,18 @@
 import string
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from app.core.exceptions import (
     PromptTemplateNotFoundError,
     PromptVariableInterpolationError,
 )
 
-PROMPTS_DIR = Path(__file__).resolve().parent
+FEATURES_DIR = Path(__file__).resolve().parent.parent / "features"
 
 
-def get_prompt_path(template_name: str) -> Path:
-    clean_name = template_name if template_name.endswith(".txt") else f"{template_name}.txt"
-    return PROMPTS_DIR / clean_name
+def get_prompt_path(feature_name: str) -> Path:
+    clean_name = feature_name.replace(".txt", "").strip()
+    return FEATURES_DIR / clean_name / "prompt.txt"
 
 
 def load_prompt(template_name: str, **variables: Any) -> str:

@@ -17,7 +17,7 @@ def test_sentiment_short_text_validation_error():
     assert response.status_code == 422
 
 
-@patch("app.services.sentiment_service.query_gemini")
+@patch("app.features.sentiment.service.query_gemini")
 def test_sentiment_analysis_success_flow(mock_query_gemini):
     """End-to-end sentiment analysis with valid structured JSON response from Gemini."""
     mock_llm_output = {
@@ -44,7 +44,7 @@ def test_sentiment_analysis_success_flow(mock_query_gemini):
     assert data["negativeAspects"] == []
 
 
-@patch("app.services.sentiment_service.query_gemini")
+@patch("app.features.sentiment.service.query_gemini")
 def test_sentiment_handles_markdown_wrapped_json(mock_query_gemini):
     """Parser must sanitize markdown fences (```json ... ```) returned by LLM."""
     mock_payload = {
@@ -68,7 +68,7 @@ def test_sentiment_handles_markdown_wrapped_json(mock_query_gemini):
     assert "Delayed delivery schedule" in data["negativeAspects"]
 
 
-@patch("app.services.sentiment_service.query_gemini")
+@patch("app.features.sentiment.service.query_gemini")
 def test_sentiment_fallback_on_gemini_error(mock_query_gemini):
     """Graceful degradation when Gemini raises an API exception."""
     mock_query_gemini.side_effect = GeminiRateLimitError(

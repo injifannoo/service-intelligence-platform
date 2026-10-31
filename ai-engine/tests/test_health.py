@@ -26,7 +26,8 @@ def test_readiness_probe_healthy(client):
     assert "model" in data
 
 
-@patch("app.api.routes.health.get_prompt_path")
+
+@patch("app.features.health.router.get_prompt_path")
 def test_readiness_probe_missing_file_failure(mock_get_prompt_path, client):
     # Simulate a missing prompt template file
     mock_get_prompt_path.return_value = Path("/non/existent/path/template.txt")

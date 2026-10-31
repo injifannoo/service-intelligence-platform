@@ -3,13 +3,13 @@ from typing import Any, Dict, List
 
 from app.core.exceptions import AIServiceException
 from app.core.logging import logger
-from app.prompts.loader import load_prompt
-from app.schemas.summarization import (
+from app.core.prompt_loader import load_prompt
+from app.features.summarization.schemas import (
     ConsensusLabel,
     SummarizationRequest,
     SummarizationResponse,
 )
-from app.services.gemini_service import query_gemini
+from app.core.gemini_service import query_gemini
 from app.utils.response_parser import extract_json_payload
 
 

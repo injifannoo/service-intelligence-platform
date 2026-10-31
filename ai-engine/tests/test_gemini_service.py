@@ -7,10 +7,10 @@ from app.core.exceptions import (
     GeminiRateLimitError,
     GeminiTimeoutError,
 )
-from app.services.gemini_service import GeminiService
+from app.core.gemini_service import GeminiService
 
 
-@patch("app.services.gemini_service.genai.Client")
+@patch("app.core.gemini_service.genai.Client")
 def test_gemini_service_generate_content_success(mock_client_class):
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -25,7 +25,7 @@ def test_gemini_service_generate_content_success(mock_client_class):
     mock_client.models.generate_content.assert_called_once()
 
 
-@patch("app.services.gemini_service.genai.Client")
+@patch("app.core.gemini_service.genai.Client")
 def test_gemini_service_rate_limit_mapping(mock_client_class):
     mock_client = MagicMock()
     mock_error = APIError(429, {"error": {"message": "Quota exceeded", "code": 429}})
@@ -37,7 +37,7 @@ def test_gemini_service_rate_limit_mapping(mock_client_class):
         service.generate_content(prompt="Test prompt")
 
 
-@patch("app.services.gemini_service.genai.Client")
+@patch("app.core.gemini_service.genai.Client")
 def test_gemini_service_timeout_mapping(mock_client_class):
     mock_client = MagicMock()
     mock_error = APIError(504, {"error": {"message": "Deadline exceeded", "code": 504}})
@@ -49,7 +49,7 @@ def test_gemini_service_timeout_mapping(mock_client_class):
         service.generate_content(prompt="Test prompt")
 
 
-@patch("app.services.gemini_service.genai.Client")
+@patch("app.core.gemini_service.genai.Client")
 def test_gemini_service_generic_api_error_mapping(mock_client_class):
     mock_client = MagicMock()
     mock_error = APIError(500, {"error": {"message": "Internal server error", "code": 500}})

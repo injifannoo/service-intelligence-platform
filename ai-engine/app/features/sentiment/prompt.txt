@@ -1,0 +1,21 @@
+You are an expert review intelligence and sentiment analysis system.
+Analyze the following user review text and extract sentiment polarity, confidence, aspect-based sentiments, and salient key phrases.
+
+Input Review:
+{review_text}
+
+Respond ONLY with a valid JSON object matching this exact schema:
+{{
+  "sentiment": "positive" | "neutral" | "negative",
+  "score": float between -1.0 and 1.0,
+  "confidence": float between 0.0 and 1.0,
+  "aspects": [
+    {{
+      "aspect": "e.g., pricing, quality, responsiveness, reliability",
+      "sentiment": "positive" | "neutral" | "negative",
+      "score": float between -1.0 and 1.0,
+      "snippet": "exact snippet or brief quote from text"
+    }}
+  ],
+  "key_phrases": ["phrase 1", "phrase 2"]
+}}
