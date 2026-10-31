@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import health, recommendations, sentiment
+from app.api.routes import health, recommendations, sentiment, summarization
 from app.core.config import settings
 from app.core.exceptions import (
     AIServiceException,
@@ -95,3 +95,4 @@ app.include_router(health.router, prefix="/api/v1", tags=["Health"])
 app.include_router(health.router, tags=["Health Probe Root"])
 app.include_router(recommendations.router, prefix="/api/v1", tags=["Recommendations"])
 app.include_router(sentiment.router, prefix="/api/v1/sentiment", tags=["Sentiment"])
+app.include_router(summarization.router, prefix="/api/v1/summary", tags=["Summarization"])
