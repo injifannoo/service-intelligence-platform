@@ -1,32 +1,24 @@
 from fastapi import APIRouter, HTTPException, status
+
 from app.schemas.recommendation import RecommendationRequest, RecommendationResponse
+from app.services.recommendation_service import get_recommendation
 
 router = APIRouter()
 
-# Note: Do NOT add prefix="/recommend" to APIRouter() if the decorator uses "/recommend"
+
 @router.post(
     "/recommend",
     response_model=RecommendationResponse,
-    response_model_by_alias=True # Guarantees JSON outputs camelCase (matchScore, etc.)
+    response_model_by_alias=True,
+    status_code=status.HTTP_200_OK,
+    summary="Generate ranked provider recommendations",
+    description="Evaluates user requirements against candidate providers using Gemini structured matching.",
 )
-async def get_recommendation(payload: RecommendationRequest):
+def create_recommendation(payload: RecommendationRequest) -> RecommendationResponse:
     if not payload.providers:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provider list cannot be empty"
+            detail="Provider list cannot be empty",
         )
 
-    # Example response matching your RecommendationResponse schema
-    return RecommendationResponse(
-        matchScore=85,
-        recommendedProvider=payload.providers[0],
-        alternativeProviders=payload.providers[1:] if len(payload.providers) > 1 else [],
-        reasoning=["Strong match based on query requirements."],
-        keyDecisionFactors=[
-            {
-                "factor": "Service Relevance",
-                "score": 0.9,
-                "description": "Direct match with offered services"
-            }
-        ]
-    )
+    return get_recommendation(payload)
