@@ -17,7 +17,7 @@ import {
   recordAudit,
   toPublicUser,
 } from "@/lib/dev-backend/store";
-import type { UserRole } from "@/types";
+import { USER_ROLES, type UserRole } from "@/types";
 
 /**
  * GET /api/v1/admin/users/ — list accounts.
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   const page = readPageParams(params);
 
   const roleFilter = params.get("role");
-  if (roleFilter !== null && !["CUSTOMER", "ORGANIZATION_OWNER", "ADMIN", "SUPER_ADMIN"].includes(roleFilter)) {
+  if (roleFilter !== null && !USER_ROLES.includes(roleFilter as UserRole)) {
     return failure(400, "VALIDATION_ERROR", "Please correct the highlighted fields.", {
       role: ["Unknown role."],
     });
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
   // Rejecting rather than defaulting matters: silently coercing an unrecognised
   // role would let a caller believe they created an Admin when they did not.
   if (!isAssignableAdminRole(role)) {
-    details.role = ["Choose ADMIN or SUPER_ADMIN."];
+    details.role = ["Choose MODERATOR, ADMIN, or SUPER_ADMIN."];
   }
 
   if (Object.keys(details).length > 0) {

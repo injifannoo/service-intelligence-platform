@@ -27,6 +27,10 @@ interface OrganizationUiState {
   openCreateForm: () => void;
   openEditForm: (id: string) => void;
   closeForm: () => void;
+
+  isUpgradeModalOpen: boolean;
+  openUpgradeModal: () => void;
+  closeUpgradeModal: () => void;
 }
 
 export const useOrganizationUiStore = create<OrganizationUiState>()((set) => ({
@@ -48,4 +52,8 @@ export const useOrganizationUiStore = create<OrganizationUiState>()((set) => ({
   openCreateForm: () => set({ isFormOpen: true, editingId: null }),
   openEditForm: (id) => set({ isFormOpen: true, editingId: id }),
   closeForm: () => set({ isFormOpen: false, editingId: null }),
+
+  isUpgradeModalOpen: false,
+  openUpgradeModal: () => set({ isUpgradeModalOpen: true }),
+  closeUpgradeModal: () => set({ isUpgradeModalOpen: false }),
 }));

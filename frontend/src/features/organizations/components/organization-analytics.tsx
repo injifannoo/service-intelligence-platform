@@ -1,7 +1,6 @@
 "use client";
 
 import { useOrganization } from "@/features/organizations";
-import { DashboardExportButton } from "@/features/organizations";
 import { OrganizationDashboardPanel } from "@/features/organizations";
 import { useCurrentUser } from "@/features/authentication";
 import { AlertMessage } from "@/components/shared/alert-message";
@@ -32,7 +31,10 @@ export function OrganizationAnalytics({ organizationId }: { organizationId: stri
   }
 
   const isOwner = currentUser.organization_id === organizationId;
-  const isAdmin = currentUser.role === "ADMIN" || currentUser.role === "SUPER_ADMIN";
+  const isAdmin =
+    currentUser.role === "ADMIN" ||
+    currentUser.role === "SUPER_ADMIN" ||
+    currentUser.role === "MODERATOR";
 
   if (!isOwner && !isAdmin) {
     return (
@@ -57,7 +59,6 @@ export function OrganizationAnalytics({ organizationId }: { organizationId: stri
             ? `Performance for ${organization.name}.`
             : "Performance for your organization."
         }
-        actions={organization ? <DashboardExportButton organization={organization} /> : undefined}
       />
 
       {organization ? (

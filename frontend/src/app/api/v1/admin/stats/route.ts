@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const blocked = devBackendUnavailable();
   if (blocked) return blocked;
 
-  const auth = requireRole(request, ["ADMIN", "SUPER_ADMIN"]);
+  const auth = requireRole(request, ["MODERATOR", "ADMIN", "SUPER_ADMIN"]);
   if ("response" in auth) return auth.response;
 
   return ok(platformStats());

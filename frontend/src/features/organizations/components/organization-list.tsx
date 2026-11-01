@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/features/authentication";
 import { useHydrated } from "@/lib/use-hydrated";
 
+import { CompareFloatingBar } from "@/features/comparison";
 import { useOrganizations } from "../api/use-organization";
 import { useOrganizationUiStore } from "../store/organization-store";
 import { OrganizationCard, OrganizationCardSkeleton } from "./organization-card";
@@ -140,6 +141,8 @@ export function OrganizationList() {
           ))}
         </div>
       )}
+
+      <CompareFloatingBar />
     </div>
   );
 }

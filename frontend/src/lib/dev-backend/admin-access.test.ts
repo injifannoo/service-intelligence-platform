@@ -53,8 +53,8 @@ function actorWithRole(email: string, role: StoredUser["role"]): StoredUser {
 }
 
 describe("assignable admin roles", () => {
-  it("permits exactly the two admin tiers", () => {
-    expect([...ASSIGNABLE_ADMIN_ROLES]).toEqual(["ADMIN", "SUPER_ADMIN"]);
+  it("permits exactly the three admin tiers", () => {
+    expect([...ASSIGNABLE_ADMIN_ROLES]).toEqual(["MODERATOR", "ADMIN", "SUPER_ADMIN"]);
   });
 
   it("refuses customer and owner roles", () => {

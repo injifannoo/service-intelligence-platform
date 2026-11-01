@@ -6,12 +6,21 @@ from django.db import models
 
 
 class UserRole(models.TextChoices):
-    """docs/04_Database_Design.md:260-270."""
+    """docs/04_Database_Design.md:260-270 & Blueprint §5."""
 
     CUSTOMER = "CUSTOMER", "Customer"
     ORGANIZATION_OWNER = "ORGANIZATION_OWNER", "Organization Owner"
+    MODERATOR = "MODERATOR", "Moderator"
     ADMIN = "ADMIN", "Admin"
     SUPER_ADMIN = "SUPER_ADMIN", "Super Admin"
+
+
+class CustomerTier(models.TextChoices):
+    """Blueprint §5: 4 customer tiers (Guest is anonymous/unauthenticated)."""
+
+    CUSTOMER = "CUSTOMER", "Customer"
+    VERIFIED_CUSTOMER = "VERIFIED_CUSTOMER", "Verified Customer"
+    PREMIUM_CUSTOMER = "PREMIUM_CUSTOMER", "Premium Customer"
 
 
 class UserManager(BaseUserManager):
@@ -60,20 +69,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=UserRole.choices,
         default=UserRole.CUSTOMER,
     )
+    customer_tier = models.CharField(
+        max_length=32,
+        choices=CustomerTier.choices,
+        default=CustomerTier.CUSTOMER,
+    )
     # `status` on the wire; Django and simplejwt both look for `is_active`.
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    # docs/04 gives Organization no owner column, so the backend owns the
-    # user -> organization association and uses it as the tenant boundary.
-    organization = models.ForeignKey(
-        "organizations.Organization",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="owners",
-        db_column="organization_id",
-    )
 
     objects = UserManager()
 

@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   if (body.role !== undefined) {
     if (!isAssignableAdminRole(body.role)) {
-      details.role = ["Only ADMIN and SUPER_ADMIN can be assigned from the admin area."];
+      details.role = ["Only MODERATOR, ADMIN, and SUPER_ADMIN can be assigned from the admin area."];
     } else {
       patch.role = body.role;
     }

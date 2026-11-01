@@ -43,12 +43,6 @@ class InvalidPayload(APIException):
     default_code = "INVALID_PAYLOAD"
 
 
-class AlreadyReported(APIException):
-    status_code = status.HTTP_409_CONFLICT
-    default_detail = "You have already reported this review."
-    default_code = "ALREADY_REPORTED"
-
-
 def _messages(value):
     if isinstance(value, list):
         return [str(item) for item in value]

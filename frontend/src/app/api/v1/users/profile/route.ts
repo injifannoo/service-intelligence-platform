@@ -24,6 +24,7 @@ function toProfile(user: NonNullable<ReturnType<typeof updateUser>>) {
     name: user.name,
     email: user.email,
     role: user.role,
+    customer_tier: user.customer_tier ?? (user.role === "CUSTOMER" ? "CUSTOMER" : undefined),
     status: user.status,
     created_at: user.created_at,
     organization_id: user.organization_id,
@@ -56,6 +57,7 @@ export async function PUT(request: NextRequest) {
 
   const name = str(body.name)?.trim();
   const email = str(body.email)?.trim();
+  const customerTier = str(body.customer_tier)?.trim().toUpperCase();
 
   const errors = new FieldErrors();
   if (!name) {
@@ -73,7 +75,13 @@ export async function PUT(request: NextRequest) {
   }
   if (!errors.isEmpty) return errors.toResponse();
 
-  const user = updateUser(auth.user.id, { name, email });
+  const validTiers = ["CUSTOMER", "VERIFIED_CUSTOMER", "PREMIUM_CUSTOMER"];
+  const patch: { name?: string; email?: string; customer_tier?: any } = { name, email };
+  if (customerTier && validTiers.includes(customerTier)) {
+    patch.customer_tier = customerTier;
+  }
+
+  const user = updateUser(auth.user.id, patch);
   if (!user) {
     return failure(404, "NOT_FOUND", "User not found.");
   }

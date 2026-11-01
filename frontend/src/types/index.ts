@@ -73,20 +73,78 @@ export type UUID = string;
 /* Enums                                                                      */
 /* -------------------------------------------------------------------------- */
 
-/** Role enum, docs/04_Database_Design.md:260-270 (see contradiction 2). */
+/** Role enum, docs/04_Database_Design.md:260-270 & Blueprint §5. */
 export const USER_ROLES = [
   "CUSTOMER",
   "ORGANIZATION_OWNER",
+  "MODERATOR",
   "ADMIN",
   "SUPER_ADMIN",
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 
-/** Display labels, keyed by API value. Source: docs/04:260-270. */
+/** Display labels, keyed by API value. Source: docs/04:260-270 & Blueprint §5. */
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
   CUSTOMER: "Customer",
   ORGANIZATION_OWNER: "Organization Owner",
+  MODERATOR: "Moderator",
+  ADMIN: "Admin",
+  SUPER_ADMIN: "Super Admin",
+};
+
+/**
+ * 4 Customer Tiers: Guest, Customer, Verified Customer, Premium Customer
+ * Blueprint §5 — User Personas & Permissions (different visible permissions).
+ */
+export const CUSTOMER_TIERS = [
+  "GUEST",
+  "CUSTOMER",
+  "VERIFIED_CUSTOMER",
+  "PREMIUM_CUSTOMER",
+] as const;
+
+export type CustomerTier = (typeof CUSTOMER_TIERS)[number];
+
+export const CUSTOMER_TIER_LABELS: Record<CustomerTier, string> = {
+  GUEST: "Guest",
+  CUSTOMER: "Customer",
+  VERIFIED_CUSTOMER: "Verified Customer",
+  PREMIUM_CUSTOMER: "Premium Customer",
+};
+
+/**
+ * 3 Org Tiers: Registered, Verified, Premium
+ * Blueprint §5 — User Personas & Permissions (different dashboard features).
+ */
+export const ORGANIZATION_TIERS = [
+  "REGISTERED",
+  "VERIFIED",
+  "PREMIUM",
+] as const;
+
+export type OrganizationTier = (typeof ORGANIZATION_TIERS)[number];
+
+export const ORGANIZATION_TIER_LABELS: Record<OrganizationTier, string> = {
+  REGISTERED: "Registered",
+  VERIFIED: "Verified",
+  PREMIUM: "Premium",
+};
+
+/**
+ * 3 Admin Tiers: Moderator, Admin, Super Admin
+ * Blueprint §5 — User Personas & Permissions (different visible actions).
+ */
+export const ADMIN_TIERS = [
+  "MODERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+] as const;
+
+export type AdminTier = (typeof ADMIN_TIERS)[number];
+
+export const ADMIN_TIER_LABELS: Record<AdminTier, string> = {
+  MODERATOR: "Moderator",
   ADMIN: "Admin",
   SUPER_ADMIN: "Super Admin",
 };
@@ -158,6 +216,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  customer_tier?: CustomerTier;
   status: boolean;
   created_at: string;
 }
@@ -193,8 +252,8 @@ export interface AuthTokens {
  */
 export type AdminUser = UserProfile;
 
-/** Roles an admin may assign. Ownership is never assignable. */
-export const ASSIGNABLE_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"] as const;
+/** Roles an admin may assign. Ownership is never assignable. Blueprint §5 has 3 admin tiers. */
+export const ASSIGNABLE_ADMIN_ROLES = ["MODERATOR", "ADMIN", "SUPER_ADMIN"] as const;
 export type AssignableAdminRole = (typeof ASSIGNABLE_ADMIN_ROLES)[number];
 
 /** Request of `POST /api/v1/admin/users/` — Super Admin only. */
@@ -315,6 +374,8 @@ export interface Organization {
   phone: string | null;
   website: string | null;
   verification_status: VerificationStatus;
+  /** Blueprint §5: 3 org tiers (Registered, Verified, Premium) */
+  tier?: OrganizationTier;
   /**
    * Backend-computed aggregate. Not a column in docs/04 — see contradiction 6.
    * Always `null` when the organisation has no reviews.
@@ -423,6 +484,8 @@ export interface Review {
   created_at: string;
   /** Convenience field for rendering; not a `reviews` column. */
   author_name?: string;
+  /** Blueprint §5: Customer tier of review author */
+  author_tier?: CustomerTier;
 }
 
 /** Request of `POST /api/v1/reviews/` (docs/05:409-421). */

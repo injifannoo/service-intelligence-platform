@@ -75,13 +75,20 @@ export async function PUT(
   const phone = str(body.phone)?.trim();
   const website = str(body.website)?.trim();
 
-  const organization = updateOrganization(id, {
+  const tier = str(body.tier)?.trim().toUpperCase();
+  const validOrgTiers = ["REGISTERED", "VERIFIED", "PREMIUM"];
+  const patch: Record<string, unknown> = {
     name: name as string,
     description: description ?? null,
     location: location ?? null,
     phone: phone ?? null,
     website: website ?? null,
-  });
+  };
+  if (tier && validOrgTiers.includes(tier)) {
+    patch.tier = tier;
+  }
+
+  const organization = updateOrganization(id, patch);
 
   return ok(organization ? withRating(organization) : null);
 }

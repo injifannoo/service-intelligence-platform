@@ -4,6 +4,8 @@
  * Features are consumed exclusively through this barrel
  * (docs/07_Project_Structure.md:219).
  */
+export { CompareFloatingBar } from "./components/compare-floating-bar";
+export { ComparisonUpgradeModal } from "./components/comparison-upgrade-modal";
 export { ComparisonBuilder } from "./components/comparison-builder";
 export { ComparisonTable } from "./components/comparison-table";
 

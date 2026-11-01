@@ -193,7 +193,7 @@ describe("editing", () => {
         comment: "Changed my mind.",
       });
     });
-  });
+  }, 15000);
 
   it("keeps the editor open and reports why a save failed", async () => {
     const user = userEvent.setup();

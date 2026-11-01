@@ -1,17 +1,20 @@
 "use client";
 
+import { useContext } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOutIcon } from "lucide-react";
+import { ChevronDownIcon, LogOutIcon, ShieldCheckIcon } from "lucide-react";
+import { QueryClientContext } from "@tanstack/react-query";
 
 import { BrandMark } from "@/components/shared/brand-mark";
 import { AlertMessage } from "@/components/shared/alert-message";
 import { Button } from "@/components/ui/button";
 import { DASHBOARD_NAV, ROUTES } from "@/config/site-config";
-import { useCurrentUser, useLogout } from "@/features/authentication";
+import { getCustomerTier, useCurrentUser, useLogout } from "@/features/authentication";
+import { apiClient } from "@/lib/api-client";
 import { useHydrated } from "@/lib/use-hydrated";
 import { cn } from "@/lib/utils";
-import type { UserRole } from "@/types";
+import { CUSTOMER_TIERS, CUSTOMER_TIER_LABELS, type CustomerTier, type UserProfile, type UserRole } from "@/types";
 
 function canSee(item: { roles?: readonly UserRole[] }, role: UserRole | undefined) {
   return !item.roles || (role !== undefined && item.roles.includes(role));
@@ -102,6 +105,7 @@ export function Header() {
                   {session.name}
                 </Link>
               </Button>
+              <DemoTierDropdown user={session} />
               <Button
                 variant="ghost"
                 size="icon"
@@ -138,3 +142,48 @@ export function Header() {
     </header>
   );
 }
+
+function DemoTierDropdown({ user }: { user: UserProfile }) {
+  const queryClient = useContext(QueryClientContext);
+  const currentTier = getCustomerTier(user);
+
+  async function handleTierChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const newTier = event.target.value as CustomerTier;
+    try {
+      await apiClient.put<UserProfile>("/users/profile/", {
+        name: user.name,
+        email: user.email,
+        customer_tier: newTier,
+      });
+      if (queryClient) {
+        void queryClient.invalidateQueries({ queryKey: ["auth"] });
+      }
+    } catch {
+      // Ignore in demo switcher
+    }
+  }
+
+  // Only render for customer role
+  if (user.role !== "CUSTOMER") return null;
+
+  return (
+    <div className="relative hidden items-center sm:inline-flex">
+      <div className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground shadow-xs hover:bg-muted/60">
+        <ShieldCheckIcon className="size-3.5 text-primary" aria-hidden="true" />
+        <span>Demo: {CUSTOMER_TIER_LABELS[currentTier]}</span>
+        <ChevronDownIcon className="size-3 text-muted-foreground" aria-hidden="true" />
+      </div>
+      <select
+        aria-label="Demo Customer Tier Switcher"
+        value={currentTier}
+        onChange={handleTierChange}
+        className="absolute inset-0 cursor-pointer opacity-0"
+      >
+        <option value="CUSTOMER">Demo: Customer (Max 2)</option>
+        <option value="VERIFIED_CUSTOMER">Demo: Verified Customer (Max 4)</option>
+        <option value="PREMIUM_CUSTOMER">Demo: Premium Customer (Max 10 + Export)</option>
+      </select>
+    </div>
+  );
+}
+

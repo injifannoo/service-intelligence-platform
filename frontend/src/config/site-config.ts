@@ -1,4 +1,4 @@
-﻿import type { UserRole } from "@/types";
+import type { UserRole } from "@/types";
 
 /**
  * Application constants and environment maps.
@@ -82,12 +82,12 @@ export const ADMIN_NAV: readonly NavItem[] = [
   { label: "Homepage", href: "/admin/homepage", roles: ["SUPER_ADMIN"] },
   { label: "Organizations", href: "/admin/organizations" },
   { label: "Moderation", href: "/admin/moderation" },
-  { label: "Verification queue", href: "/admin/verification" },
-  { label: "Audit log", href: "/admin/audit-logs" },
+  { label: "Verification queue", href: "/admin/verification", roles: ["ADMIN", "SUPER_ADMIN"] },
+  { label: "Audit log", href: "/admin/audit-logs", roles: ["ADMIN", "SUPER_ADMIN"] },
 ] as const;
 
-/** Roles that may enter the `/admin` area at all. */
-export const ADMIN_ROLES: readonly UserRole[] = ["ADMIN", "SUPER_ADMIN"];
+/** Blueprint §5: 3 admin tiers that may enter the `/admin` area. */
+export const ADMIN_ROLES: readonly UserRole[] = ["MODERATOR", "ADMIN", "SUPER_ADMIN"];
 
 /**
  * Phase 1 rollout is deliberately limited to Technology Services
@@ -130,6 +130,8 @@ export const ROUTES = {
   adminModeration: "/admin/moderation",
   adminVerification: "/admin/verification",
   adminAuditLogs: "/admin/audit-logs",
+  /** Customer tier upgrade & pricing page. */
+  upgrade: "/upgrade",
 } as const;
 
 /**
