@@ -1,11 +1,36 @@
-__pycache__/
-*.py[cod]
+# Virtual environments
 .venv/
 venv/
-.env
+env/
+ENV/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Logs and runtime artifacts
+*.log
+
+# Testing, typing, and coverage caches
 .pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Git and IDE metadata
 .git/
 .gitignore
 .idea/
 .vscode/
-*.log
+
+# Secrets and local configurations
+.env
+.env.*
+!.env.example
+
+# OS artifacts
+.DS_Store
+Thumbs.db
