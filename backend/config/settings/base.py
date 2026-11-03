@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Domain Applications (Modular Monolith) - Sprint 1 and Sprint 2 only
     "features.users",
+    "features.organizations",
 ]
 
 AUTH_USER_MODEL = "users.User"
