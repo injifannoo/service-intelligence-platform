@@ -11,7 +11,7 @@ from app.core.exceptions import (
     GeminiTimeoutError,
 )
 from app.core.logging import logger
-
+from app.core.exceptions import AIServiceException
 
 class GeminiService:
     """Encapsulates the Google GenAI SDK client lifecycle and inference operations."""
@@ -89,3 +89,38 @@ def query_gemini(prompt: str) -> str:
     """
     service = get_gemini_service()
     return service.generate_content(prompt=prompt)
+
+def generate_text_embedding(
+    text: str,
+    task_type: str = "SEMANTIC_SIMILARITY",
+    model: str = "models/text-embedding-004",
+) -> list[float]:
+    """Generates an embedding vector for a single text string."""
+    try:
+        result = genai.embed_content(
+            model=model,
+            content=text,
+            task_type=task_type,
+        )
+        return result["embedding"]
+    except Exception as e:
+        logger.error(f"Error generating embedding: {e}")
+        raise AIServiceException(f"Failed to generate embedding: {str(e)}") from e
+
+
+def generate_batch_embeddings(
+    texts: list[str],
+    task_type: str = "SEMANTIC_SIMILARITY",
+    model: str = "models/text-embedding-004",
+) -> list[list[float]]:
+    """Generates embedding vectors for a list of text strings."""
+    try:
+        result = genai.embed_content(
+            model=model,
+            content=texts,
+            task_type=task_type,
+        )
+        return result["embedding"]
+    except Exception as e:
+        logger.error(f"Error generating batch embeddings: {e}")
+        raise AIServiceException(f"Failed to generate batch embeddings: {str(e)}") from e

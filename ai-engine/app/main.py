@@ -16,6 +16,7 @@ from app.features.health.router import router as health_router
 from app.features.recommendations.router import router as recommendations_router
 from app.features.sentiment.router import router as sentiment_router
 from app.features.summarization.router import router as summarization_router
+from app.features.embeddings.router import router as embeddings_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -100,3 +101,4 @@ app.include_router(health_router, prefix="/api/v1", tags=["Health"])
 app.include_router(recommendations_router, prefix="/api/v1", tags=["Recommendations"])
 app.include_router(sentiment_router, prefix="/api/v1/sentiment", tags=["Sentiment"])
 app.include_router(summarization_router, prefix="/api/v1/summary", tags=["Summarization"])
+app.include_router(embeddings_router, prefix="/api/v1/embeddings", tags=["Embeddings"])
