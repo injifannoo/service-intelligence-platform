@@ -52,7 +52,16 @@ def test_profile_returns_the_documented_shape(client):
 
     assert response.status_code == 200
     data = response.json()["data"]
-    assert set(data) == {"id", "name", "email", "role", "status", "created_at", "organization_id"}
+    assert set(data) == {
+        "id",
+        "name",
+        "email",
+        "role",
+        "customer_tier",
+        "status",
+        "created_at",
+        "organization_id",
+    }
     assert data["status"] is True
     assert data["organization_id"] is None
     assert "password" not in data

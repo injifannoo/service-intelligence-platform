@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api-client";
 import { useCurrentUser } from "@/features/authentication";
 import {
+  CUSTOMER_TIER_LABELS,
   RATING_DIMENSIONS,
   RATING_DIMENSION_LABELS,
   REVIEW_REPORT_REASONS,
@@ -360,7 +361,15 @@ export function ReviewList({ organizationId }: { organizationId: string }) {
             <div className="flex flex-wrap items-center gap-3">
               <StarRating rating={review.rating} />
               <span className="text-sm font-medium">{review.author_name}</span>
-              {review.verified && <Badge variant="success">Verified customer</Badge>}
+              {review.author_tier === "PREMIUM_CUSTOMER" && (
+                <Badge variant="accent">{CUSTOMER_TIER_LABELS["PREMIUM_CUSTOMER"]}</Badge>
+              )}
+              {review.author_tier === "VERIFIED_CUSTOMER" && (
+                <Badge variant="success">{CUSTOMER_TIER_LABELS["VERIFIED_CUSTOMER"]}</Badge>
+              )}
+              {!review.author_tier && review.verified && (
+                <Badge variant="success">Verified customer</Badge>
+              )}
               <span className="ml-auto text-xs text-muted-foreground">
                 {formatDate(review.created_at)}
               </span>

@@ -26,12 +26,14 @@
 import type {
   AssignableAdminRole,
   AuditLog,
+  CustomerTier,
   HomepageSectionKey,
   HomepageSettings,
   HomepageSettingsUpdate,
   Industry,
   ModerationReport,
   Organization,
+  OrganizationTier,
   RatingDimension,
   ReportedReview,
   Review,
@@ -145,6 +147,7 @@ function seed(): DevDatabase {
       phone: "+251 11 555 0101",
       website: "https://example.com/addis-software",
       verification_status: "VERIFIED",
+      tier: "PREMIUM",
       rating: null,
       created_at: now,
     },
@@ -157,6 +160,7 @@ function seed(): DevDatabase {
       phone: "+251 11 555 0102",
       website: "https://example.com/bluenile",
       verification_status: "VERIFIED",
+      tier: "VERIFIED",
       rating: null,
       created_at: now,
     },
@@ -169,6 +173,7 @@ function seed(): DevDatabase {
       phone: "+251 22 555 0103",
       website: "https://example.com/habesha-cloud",
       verification_status: "PENDING",
+      tier: "REGISTERED",
       rating: null,
       created_at: now,
     },
@@ -181,6 +186,7 @@ function seed(): DevDatabase {
       phone: "+251 46 555 0104",
       website: "https://example.com/sidama-data",
       verification_status: "VERIFIED",
+      tier: "VERIFIED",
       rating: null,
       created_at: now,
     },
@@ -193,6 +199,7 @@ function seed(): DevDatabase {
       phone: "+251 22 555 0105",
       website: "https://example.com/rift-security",
       verification_status: "REJECTED",
+      tier: "REGISTERED",
       rating: null,
       created_at: now,
     },
@@ -205,6 +212,7 @@ function seed(): DevDatabase {
       phone: "+251 22 555 0106",
       website: "https://example.com/amhara-it",
       verification_status: "PENDING",
+      tier: "REGISTERED",
       rating: null,
       created_at: now,
     },
@@ -284,6 +292,7 @@ function seed(): DevDatabase {
     rating: number,
     comment: string,
     author: string,
+    author_tier?: CustomerTier,
   ): Review => ({
     id: id(40 + n),
     user_id: userId,
@@ -294,6 +303,7 @@ function seed(): DevDatabase {
     verified: true,
     created_at: new Date(Date.parse(now) - n * 86_400_000).toISOString(),
     author_name: author,
+    author_tier: author_tier ?? "CUSTOMER",
   });
 
   const users: StoredUser[] = [
@@ -303,6 +313,29 @@ function seed(): DevDatabase {
       email: "customer@asip.dev",
       password: DEMO_PASSWORD,
       role: "CUSTOMER",
+      customer_tier: "CUSTOMER",
+      status: true,
+      created_at: now,
+      organization_id: null,
+    },
+    {
+      id: id(5),
+      name: "Demo Verified Customer",
+      email: "verified@asip.dev",
+      password: DEMO_PASSWORD,
+      role: "CUSTOMER",
+      customer_tier: "VERIFIED_CUSTOMER",
+      status: true,
+      created_at: now,
+      organization_id: null,
+    },
+    {
+      id: id(6),
+      name: "Demo Premium Customer",
+      email: "premium@asip.dev",
+      password: DEMO_PASSWORD,
+      role: "CUSTOMER",
+      customer_tier: "PREMIUM_CUSTOMER",
       status: true,
       created_at: now,
       organization_id: null,
@@ -315,9 +348,17 @@ function seed(): DevDatabase {
       role: "ORGANIZATION_OWNER",
       status: true,
       created_at: now,
-      // The seeded owner manages the first organization, so the owner-only
-      // surfaces (service management, verification claim) have data to show.
       organization_id: id(11),
+    },
+    {
+      id: id(7),
+      name: "Demo Moderator",
+      email: "moderator@asip.dev",
+      password: DEMO_PASSWORD,
+      role: "MODERATOR",
+      status: true,
+      created_at: now,
+      organization_id: null,
     },
     {
       id: id(3),
@@ -330,10 +371,6 @@ function seed(): DevDatabase {
       organization_id: null,
     },
     {
-      // Seeded rather than registrable. Admin-tier accounts are provisioned out
-      // of band — the public register endpoint can only ever create CUSTOMER — so
-      // the only way this account exists is a seed or another Super Admin
-      // creating it through POST /admin/users/.
       id: id(4),
       name: "Demo Super Admin",
       email: "superadmin@asip.dev",
@@ -346,13 +383,13 @@ function seed(): DevDatabase {
   ];
 
   const reviews: Review[] = [
-    review(1, id(1), id(11), 5, "Delivered a complex billing system on time and communicated well throughout.", "Demo Customer"),
-    review(2, id(2), id(11), 4, "Strong engineering team. A few late handoffs during discovery.", "Demo Owner"),
-    review(3, id(1), id(12), 4, "Good creative output, though the reporting was slow to arrive.", "Demo Customer"),
-    review(4, id(1), id(13), 3, "Hosting is reliable but support response times are slow at peak.", "Demo Customer"),
-    review(5, id(1), id(14), 5, "Rebuilt our reporting stack and the dashboards are dramatically faster.", "Demo Customer"),
-    review(6, id(1), id(15), 2, "Report was generic and missed two findings we already knew about.", "Demo Customer"),
-    review(7, id(2), id(12), 5, "Excellent brand work, delivered exactly to the agreed brief.", "Demo Owner"),
+    review(1, id(1), id(11), 5, "Delivered a complex billing system on time and communicated well throughout.", "Demo Customer", "CUSTOMER"),
+    review(2, id(5), id(11), 4, "Strong engineering team. A few late handoffs during discovery.", "Demo Verified Customer", "VERIFIED_CUSTOMER"),
+    review(3, id(6), id(12), 5, "Good creative output, exceptional strategy and fast execution.", "Demo Premium Customer", "PREMIUM_CUSTOMER"),
+    review(4, id(1), id(13), 3, "Hosting is reliable but support response times are slow at peak.", "Demo Customer", "CUSTOMER"),
+    review(5, id(5), id(14), 5, "Rebuilt our reporting stack and the dashboards are dramatically faster.", "Demo Verified Customer", "VERIFIED_CUSTOMER"),
+    review(6, id(1), id(15), 2, "Report was generic and missed two findings we already knew about.", "Demo Customer", "CUSTOMER"),
+    review(7, id(2), id(12), 5, "Excellent brand work, delivered exactly to the agreed brief.", "Demo Owner", "CUSTOMER"),
   ];
 
   return {
@@ -413,11 +450,15 @@ export function createUser(input: {
   return user;
 }
 
-export function updateUser(userId: string, patch: { name?: string; email?: string }): StoredUser | undefined {
+export function updateUser(
+  userId: string,
+  patch: { name?: string; email?: string; customer_tier?: CustomerTier },
+): StoredUser | undefined {
   const user = findUserById(userId);
   if (!user) return undefined;
   if (patch.name !== undefined) user.name = patch.name;
   if (patch.email !== undefined) user.email = patch.email.trim().toLowerCase();
+  if (patch.customer_tier !== undefined) user.customer_tier = patch.customer_tier;
   return user;
 }
 
@@ -498,6 +539,7 @@ export function toPublicUser(user: StoredUser) {
     name: user.name,
     email: user.email,
     role: user.role,
+    customer_tier: user.customer_tier ?? (user.role === "CUSTOMER" ? "CUSTOMER" : undefined),
     status: user.status,
     created_at: user.created_at,
     organization_id: user.organization_id,
@@ -594,6 +636,7 @@ export function createOrganization(input: {
     website: input.website ?? null,
     // New registrations are never pre-verified; an admin must approve them.
     verification_status: "PENDING",
+    tier: "REGISTERED",
     rating: null,
     created_at: new Date().toISOString(),
   };

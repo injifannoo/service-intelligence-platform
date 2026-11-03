@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BadgeCheckIcon, MapPinIcon, StarIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ROUTES } from "@/config/site-config";
+import {
+  getCustomerPermissions,
+  getCustomerTier,
+  useCurrentUser,
+} from "@/features/authentication";
 import { cn } from "@/lib/utils";
 import type { Organization } from "@/types";
 
@@ -13,13 +20,27 @@ import { VERIFICATION_BADGE_VARIANT, VERIFICATION_LABELS } from "../types";
 
 interface OrganizationCardProps {
   organization: Organization;
+  showCompare?: boolean;
 }
 
-export function OrganizationCard({ organization }: OrganizationCardProps) {
+export function OrganizationCard({
+  organization,
+  showCompare = true,
+}: OrganizationCardProps) {
+  const router = useRouter();
+  const { data: user } = useCurrentUser();
   const selectedIds = useOrganizationUiStore((state) => state.selectedIds);
   const toggleSelected = useOrganizationUiStore((state) => state.toggleSelected);
 
+  const customerTier = getCustomerTier(user);
+  const permissions = getCustomerPermissions(customerTier);
+  // Guest can freely select cards — the floating bar shows "Sign in to compare".
+  // Logged-in users are blocked once they reach their tier's maxComparisonCount.
+  const isGuest = customerTier === "GUEST";
+  const maxAllowed = permissions.maxComparisonCount;
+
   const isSelected = selectedIds.includes(organization.id);
+  const isLimitReached = !isGuest && !isSelected && selectedIds.length >= maxAllowed;
   const isVerified = organization.verification_status === "VERIFIED";
   const hasRating = organization.rating !== null;
 
@@ -82,13 +103,31 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
         </span>
 
         {/* `relative z-10` lifts the control above the stretched link overlay. */}
-        <label className="relative z-10 flex cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
-          <Checkbox
-            checked={isSelected}
-            onChange={() => toggleSelected(organization.id)}
-          />
-          Compare
-        </label>
+        {showCompare && (
+          isLimitReached ? (
+            // Limit reached: clicking redirects to the upgrade/pricing page.
+            <button
+              type="button"
+              className="relative z-10 flex cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-xs text-muted-foreground opacity-50 transition-colors hover:text-foreground hover:opacity-75"
+              title={`Tier limit reached (${maxAllowed} max for ${permissions.badgeLabel}) — click to upgrade`}
+              onClick={() => router.push(ROUTES.upgrade)}
+            >
+              <Checkbox checked={false} disabled aria-hidden="true" onChange={() => {}} />
+              Compare
+            </button>
+          ) : (
+            <label
+              className="relative z-10 flex cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              title="Compare this organization"
+            >
+              <Checkbox
+                checked={isSelected}
+                onChange={() => toggleSelected(organization.id)}
+              />
+              Compare
+            </label>
+          )
+        )}
       </div>
     </article>
   );

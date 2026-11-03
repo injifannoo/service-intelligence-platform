@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { ScaleIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { DownloadIcon, ScaleIcon } from "lucide-react";
 
 import { AlertMessage } from "@/components/shared/alert-message";
 import { useOrganizations } from "@/features/organizations";
+import { useOrganizationUiStore } from "@/features/organizations/store/organization-store";
+import { getCustomerPermissions, getCustomerTier, useCurrentUser } from "@/features/authentication";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,19 +30,44 @@ const MAX_ORGANIZATIONS = 4;
  * duplicating it.
  */
 export function ComparisonBuilder() {
+  const { data: currentUser } = useCurrentUser();
   const organizationsQuery = useOrganizations({ page_size: 50 });
   const compare = useCompare();
 
-  const [selected, setSelected] = useState<string[]>([]);
+  const customerTier = getCustomerTier(currentUser);
+  const permissions = getCustomerPermissions(customerTier);
+  const maxOrganizations = permissions.canCompare ? permissions.maxComparisonCount : 0;
+  const searchParams = useSearchParams();
+  const storeSelected = useOrganizationUiStore((state) => state.selectedIds);
+  const orgsParam = searchParams.get("orgs");
+  const autoComparedRef = useRef(false);
+
+  const [selected, setSelected] = useState<string[]>(() => {
+    if (orgsParam) return orgsParam.split(",").filter(Boolean);
+    return storeSelected;
+  });
   const [criteria, setCriteria] = useState<string[]>(["sentiment", "rating"]);
   const [formError, setFormError] = useState<string | null>(null);
 
   const organizations = organizationsQuery.data?.data ?? [];
 
+  useEffect(() => {
+    const list = orgsParam ? orgsParam.split(",").filter(Boolean) : storeSelected;
+    if (list.length > 0) {
+      const allowed = maxOrganizations > 0 ? list.slice(0, maxOrganizations) : list.slice(0, 2);
+      setSelected(allowed);
+      if (permissions.canCompare && allowed.length >= 2 && !autoComparedRef.current) {
+        autoComparedRef.current = true;
+        void compare.mutateAsync({ organizations: allowed, criteria });
+      }
+    }
+  }, [orgsParam, maxOrganizations, permissions.canCompare]);
+
   function toggleOrganization(id: string) {
+    if (!permissions.canCompare) return;
     setSelected((current) => {
       if (current.includes(id)) return current.filter((value) => value !== id);
-      if (current.length >= MAX_ORGANIZATIONS) return current;
+      if (current.length >= maxOrganizations) return current;
       return [...current, id];
     });
   }
@@ -53,6 +81,10 @@ export function ComparisonBuilder() {
   }
 
   async function handleCompare() {
+    if (!permissions.canCompare) {
+      setFormError("Please sign in with a registered account to run comparisons.");
+      return;
+    }
     setFormError(null);
     try {
       await compare.mutateAsync({ organizations: selected, criteria });
@@ -63,13 +95,50 @@ export function ComparisonBuilder() {
     }
   }
 
+  function handleExportCsv() {
+    if (!compare.data) return;
+    const headers = ["Organization", "Rating", "Review Count", "Location", "Verification Status"];
+    const rows = compare.data.organizations.map((org) => [
+      `"${org.name.replace(/"/g, '""')}"`,
+      org.rating ?? "N/A",
+      org.review_count ?? 0,
+      `"${(org.location || "").replace(/"/g, '""')}"`,
+      org.verification_status,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `comparison-report-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="space-y-6">
+      {!permissions.canCompare && (
+        <AlertMessage tone="info" title="Guest Access">
+          You are browsing as a Guest. Sign in with a registered account to run comparisons
+          (Standard: 2 providers, Verified: 4 providers, Premium: up to 10 providers with export).
+        </AlertMessage>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="space-y-3">
-          <h2 className="text-sm font-medium">
-            Organizations ({selected.length}/{MAX_ORGANIZATIONS})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium">
+              Organizations ({selected.length}/{maxOrganizations})
+            </h2>
+            <Badge variant={permissions.badgeVariant}>{permissions.badgeLabel}</Badge>
+          </div>
+
+          {selected.length >= maxOrganizations && permissions.canCompare && customerTier !== "PREMIUM_CUSTOMER" && (
+            <p className="text-xs text-muted-foreground">
+              Reached maximum limit of {maxOrganizations} organizations for {permissions.badgeLabel} tier.
+            </p>
+          )}
 
           {organizationsQuery.isPending ? (
             <div className="space-y-2">
@@ -82,7 +151,8 @@ export function ComparisonBuilder() {
               {organizations.map((organization) => {
                 const checked = selected.includes(organization.id);
                 const disabled =
-                  !checked && selected.length >= MAX_ORGANIZATIONS;
+                  !permissions.canCompare ||
+                  (!checked && selected.length >= maxOrganizations);
 
                 return (
                   <li
@@ -136,14 +206,26 @@ export function ComparisonBuilder() {
 
           {formError && <AlertMessage tone="error">{formError}</AlertMessage>}
 
-          <Button
-            onClick={handleCompare}
-            loading={compare.isPending}
-            disabled={selected.length < 2 || criteria.length === 0}
-          >
-            <ScaleIcon />
-            {compare.isPending ? "Comparing" : "Compare"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              onClick={handleCompare}
+              loading={compare.isPending}
+              disabled={!permissions.canCompare || selected.length < 2 || criteria.length === 0}
+            >
+              <ScaleIcon />
+              {compare.isPending ? "Comparing" : "Compare"}
+            </Button>
+
+            {compare.data && permissions.canExportComparison && (
+              <Button
+                variant="outline"
+                onClick={handleExportCsv}
+              >
+                <DownloadIcon />
+                Export CSV (Premium)
+              </Button>
+            )}
+          </div>
         </section>
       </div>
 

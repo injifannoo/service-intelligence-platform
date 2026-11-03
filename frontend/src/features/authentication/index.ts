@@ -25,3 +25,17 @@ export type {
   RegisterResponse,
   Session,
 } from "./types";
+
+export {
+  getCustomerTier,
+  getCustomerPermissions,
+  getOrgTier,
+  getOrgDashboardPermissions,
+  getAdminTier,
+  getAdminActions,
+} from "./permissions";
+export type {
+  CustomerPermissions,
+  OrgDashboardPermissions,
+  AdminActionPermissions,
+} from "./permissions";

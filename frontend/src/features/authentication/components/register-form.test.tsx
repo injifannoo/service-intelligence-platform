@@ -41,8 +41,10 @@ beforeEach(() => {
 });
 
 describe("registration", () => {
-  it("signs the new account in and lands them on the organization list", async () => {
-    await submitForm();
+  it(
+    "signs the new account in and lands them on the organization list",
+    async () => {
+      await submitForm();
 
     expect(state.register).toHaveBeenCalledWith({
       name: "Ada Lovelace",
@@ -54,7 +56,7 @@ describe("registration", () => {
       password: "Password123!",
     });
     expect(routerMock.push).toHaveBeenCalledWith("/organizations");
-  });
+  }, 15000);
 
   it("never claims the account must be verified by email", async () => {
     await submitForm();

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRightIcon, Building2Icon } from "lucide-react";
+import { ArrowRightIcon, Building2Icon, ScaleIcon } from "lucide-react";
 
 import { AlertMessage } from "@/components/shared/alert-message";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -35,12 +35,20 @@ export function FeaturedProviders() {
         title="Top-Rated Services"
         description="Discover trusted and verified service providers."
         action={
-          <Button asChild variant="outline">
-            <Link href={ROUTES.organizations}>
-              View All
-              <ArrowRightIcon aria-hidden="true" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild>
+              <Link href={ROUTES.upgrade}>
+                <ScaleIcon className="size-4" aria-hidden="true" />
+                Compare Now
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={ROUTES.organizations}>
+                View All
+                <ArrowRightIcon aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -76,7 +84,11 @@ export function FeaturedProviders() {
       {organizations.length > 0 && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {organizations.map((organization) => (
-            <OrganizationCard key={organization.id} organization={organization} />
+            <OrganizationCard
+              key={organization.id}
+              organization={organization}
+              showCompare={false}
+            />
           ))}
         </div>
       )}

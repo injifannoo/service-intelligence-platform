@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,8 +18,9 @@ import { BrandMark } from "@/components/shared/brand-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ADMIN_NAV, ROUTES } from "@/config/site-config";
-import { useCurrentUser, useLogout } from "@/features/authentication";
+import { getAdminTier, useCurrentUser, useLogout } from "@/features/authentication";
 import { cn } from "@/lib/utils";
+import { ADMIN_TIER_LABELS } from "@/types";
 import type { UserRole } from "@/types";
 
 /**
@@ -66,6 +67,10 @@ export function AdminSidebar() {
   const logout = useLogout();
 
   const role = user?.role;
+  const adminTier = getAdminTier(user);
+  const tierLabel = adminTier ? ADMIN_TIER_LABELS[adminTier] : "Admin";
+  const tierVariant =
+    adminTier === "SUPER_ADMIN" ? "accent" : adminTier === "ADMIN" ? "secondary" : "outline";
   const visible = ADMIN_NAV.filter((item) => canSee(item, role));
 
   async function handleLogout() {
@@ -79,8 +84,8 @@ export function AdminSidebar() {
         <Link href={ROUTES.admin} className="rounded-lg outline-offset-4 hover:opacity-85">
           <BrandMark />
         </Link>
-        <Badge variant="accent" className="shrink-0">
-          Admin
+        <Badge variant={tierVariant} className="shrink-0">
+          {tierLabel}
         </Badge>
       </div>
 

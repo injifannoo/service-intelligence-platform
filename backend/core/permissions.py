@@ -1,19 +1,30 @@
-"""Cross-slice permission classes."""
+"""Cross-slice permission classes (Sprint 1 & Sprint 2 scope)."""
 
 from rest_framework.permissions import BasePermission
 
 from features.users.models import UserRole
 
-ADMIN_ROLES = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
+ADMIN_ROLES = {UserRole.MODERATOR, UserRole.ADMIN, UserRole.SUPER_ADMIN}
+FULL_ADMIN_ROLES = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
+SUPER_ADMIN_ROLES = {UserRole.SUPER_ADMIN}
 
 
-class IsOrganizationOwnerOrAdmin(BasePermission):
-    """Only the organization's owner, an admin, or a super admin may write."""
+class IsPlatformModerator(BasePermission):
+    """Moderator, Admin, or Super Admin."""
 
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        if not user or not user.is_authenticated:
-            return False
-        if user.role in ADMIN_ROLES:
-            return True
-        return user.organization_id is not None and str(user.organization_id) == str(obj.pk)
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.role in ADMIN_ROLES)
+
+
+class IsPlatformAdmin(BasePermission):
+    """Admin or Super Admin (can approve verifications)."""
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.role in FULL_ADMIN_ROLES)
+
+
+class IsPlatformSuperAdmin(BasePermission):
+    """Super Admin only."""
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.role in SUPER_ADMIN_ROLES)

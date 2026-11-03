@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SparklesIcon } from "lucide-react";
 
 import { BrandMark } from "@/components/shared/brand-mark";
+import { AuthBackButton } from "@/components/shared/auth-back-button";
 import { ROUTES, siteConfig } from "@/config/site-config";
 
 const PROOF_POINTS = [
@@ -60,6 +61,7 @@ export default function AuthLayout({
           >
             <BrandMark />
           </Link>
+          <AuthBackButton />
         </header>
 
         <main className="flex flex-1 items-center justify-center px-6 pb-16 pt-4">

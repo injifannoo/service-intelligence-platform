@@ -318,6 +318,7 @@ function CreateAdminForm({ onDone }: { onDone: () => void }) {
                 value={role}
                 onChange={(event) => setRole(event.target.value as AssignableAdminRole)}
               >
+                <option value="MODERATOR">Moderator — content moderation queue only</option>
                 <option value="ADMIN">Admin — moderation and content</option>
                 <option value="SUPER_ADMIN">Super Admin — plus accounts and roles</option>
               </Select>
