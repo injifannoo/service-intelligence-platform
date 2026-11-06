@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "features.services",
     "features.search",
     "features.reviews",
+    "features.bookings",
 ]
 
 AUTH_USER_MODEL = "users.User"
