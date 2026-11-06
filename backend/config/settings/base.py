@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "features.search",
     "features.reviews",
     "features.bookings",
+    "features.notifications",
 ]
 
 AUTH_USER_MODEL = "users.User"
