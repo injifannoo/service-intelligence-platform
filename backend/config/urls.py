@@ -21,4 +21,5 @@ urlpatterns = [
     path("api/v1/", include("features.search.urls", namespace="search")),
     path("api/v1/", include("features.reviews.urls", namespace="reviews")),
     path("api/v1/", include("features.bookings.urls", namespace="bookings")),
+    path("api/v1/", include("features.notifications.urls", namespace="notifications")),
 ]
