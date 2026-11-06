@@ -6,12 +6,19 @@ import {
   FieldErrors,
   failure,
   num,
-  ok,
+  paginate,
   readJson,
+  readPageParams,
   requireUser,
   str,
 } from "@/lib/dev-backend/http";
-import { createService, findOrganization, listServices, recordAudit } from "@/lib/dev-backend/store";
+import {
+  createService,
+  findCategoryById,
+  findOrganization,
+  listServices,
+  recordAudit,
+} from "@/lib/dev-backend/store";
 
 /**
  * GET /api/v1/organizations/{id}/services/ — docs/05_API_Design.md:358-361.
@@ -29,7 +36,8 @@ export async function GET(
     return failure(404, "NOT_FOUND", "Organization not found.");
   }
 
-  return ok(listServices(id));
+  const page = readPageParams(request.nextUrl.searchParams);
+  return paginate(listServices(id), page, { organization_id: id });
 }
 
 /**
@@ -74,11 +82,15 @@ export async function POST(
   const name = str(body.name)?.trim();
   const price = num(body.price);
   const description = str(body.description)?.trim();
+  const categoryId = str(body.category_id) ?? null;
 
   const errors = new FieldErrors();
   if (!name) errors.add("name", "This field is required.");
   if (price !== undefined && price < 0) {
     errors.add("price", "Must be a positive number.");
+  }
+  if (categoryId && !findCategoryById(categoryId)) {
+    errors.add("category_id", "Category does not exist.");
   }
   if (!errors.isEmpty) return errors.toResponse();
 
@@ -87,6 +99,8 @@ export async function POST(
     name: name as string,
     description,
     price,
+    category_id: categoryId,
+    status: typeof body.status === "boolean" ? body.status : true,
   });
 
   recordAudit({

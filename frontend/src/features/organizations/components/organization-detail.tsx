@@ -215,7 +215,7 @@ export function OrganizationDetail({ organizationId }: { organizationId: string 
         </div>
 
         <ServiceList
-          organizationId={organizationId}
+          filters={{ organization_id: organizationId }}
           canManage={isOwner}
           onDelete={(id) => deleteService.mutate(id)}
           onEdit={(service) => {

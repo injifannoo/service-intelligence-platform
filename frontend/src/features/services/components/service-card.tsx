@@ -1,8 +1,9 @@
 "use client";
 
-import { PencilIcon, Trash2Icon } from "lucide-react";
-import { AlertMessage } from "@/components/shared/alert-message";
+import Link from "next/link";
+import { PencilIcon, StarIcon, Trash2Icon } from "lucide-react";
 
+import { AlertMessage } from "@/components/shared/alert-message";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,8 @@ interface ServiceCardProps {
   service: Service;
   /** When present, the viewer manages the parent organization and may edit. */
   canManage?: boolean;
+  /** Show the parent organization in a flat catalogue (e.g. `/services`). */
+  showOrganization?: boolean;
   onDelete?: (id: string) => void;
   onEdit?: (service: Service) => void;
   isDeleting?: boolean;
@@ -21,6 +24,7 @@ interface ServiceCardProps {
 export function ServiceCard({
   service,
   canManage = false,
+  showOrganization = false,
   onDelete,
   onEdit,
   isDeleting = false,
@@ -36,6 +40,29 @@ export function ServiceCard({
         )}
       </CardHeader>
       <CardContent className="space-y-3 p-4 pt-2">
+        {showOrganization && service.organization_name && (
+          <Link
+            href={`/organizations/${service.organization_id}`}
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {service.organization_name}
+          </Link>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {service.category_name && (
+            <Badge variant="outline">{service.category_name}</Badge>
+          )}
+          {!service.status && <Badge variant="warning">Inactive</Badge>}
+          {service.organization_rating !== undefined &&
+            service.organization_rating !== null && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground tabular-nums">
+                <StarIcon className="size-3.5 fill-current text-amber-500" aria-hidden="true" />
+                {service.organization_rating.toFixed(1)}
+              </span>
+            )}
+        </div>
+
         {service.description ? (
           <p className="text-sm leading-relaxed text-muted-foreground">
             {service.description}

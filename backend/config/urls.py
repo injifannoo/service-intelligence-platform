@@ -17,4 +17,5 @@ urlpatterns = [
     path("health/", HealthView.as_view(), name="health"),
     path("api/v1/", include("features.users.urls", namespace="users")),
     path("api/v1/", include("features.organizations.urls", namespace="organizations")),
+    path("api/v1/", include("features.services.urls", namespace="services")),
 ]

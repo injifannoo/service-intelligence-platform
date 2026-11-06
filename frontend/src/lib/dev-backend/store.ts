@@ -26,6 +26,7 @@
 import type {
   AssignableAdminRole,
   AuditLog,
+  Category,
   CustomerTier,
   HomepageSectionKey,
   HomepageSettings,
@@ -33,7 +34,6 @@ import type {
   Industry,
   ModerationReport,
   Organization,
-  OrganizationTier,
   RatingDimension,
   ReportedReview,
   Review,
@@ -71,6 +71,7 @@ export interface DevDatabase {
   industries: Industry[];
   organizations: Organization[];
   services: Service[];
+  categories: Category[];
   reviews: Review[];
   verifications: VerificationClaim[];
   reports: ReportedReview[];
@@ -226,6 +227,7 @@ function seed(): DevDatabase {
       description: "End-to-end web application build with a 12-week delivery cycle.",
       price: 85000,
       status: true,
+      category_id: id(53),
     },
     {
       id: id(32),
@@ -234,6 +236,7 @@ function seed(): DevDatabase {
       description: "Cross-platform mobile applications for iOS and Android.",
       price: 60000,
       status: true,
+      category_id: id(53),
     },
     {
       id: id(33),
@@ -242,6 +245,7 @@ function seed(): DevDatabase {
       description: "Incremental migration of legacy backends to current frameworks.",
       price: 120000,
       status: true,
+      category_id: id(52),
     },
     {
       id: id(34),
@@ -250,6 +254,7 @@ function seed(): DevDatabase {
       description: "Logo, palette, typography, and brand guidelines.",
       price: 25000,
       status: true,
+      category_id: id(55),
     },
     {
       id: id(35),
@@ -258,6 +263,7 @@ function seed(): DevDatabase {
       description: "Monthly paid acquisition management and reporting.",
       price: 18000,
       status: true,
+      category_id: id(56),
     },
     {
       id: id(36),
@@ -266,6 +272,7 @@ function seed(): DevDatabase {
       description: "Managed VPS hosting with 99.9% uptime commitment.",
       price: 9000,
       status: true,
+      category_id: id(52),
     },
     {
       id: id(37),
@@ -274,6 +281,7 @@ function seed(): DevDatabase {
       description: "Warehouse modelling, ETL pipelines, and dashboards.",
       price: 140000,
       status: true,
+      category_id: id(54),
     },
     {
       id: id(38),
@@ -282,6 +290,7 @@ function seed(): DevDatabase {
       description: "Authenticated penetration test with a remediation report.",
       price: 45000,
       status: true,
+      category_id: id(52),
     },
   ];
 
@@ -392,11 +401,24 @@ function seed(): DevDatabase {
     review(7, id(2), id(12), 5, "Excellent brand work, delivered exactly to the agreed brief.", "Demo Owner", "CUSTOMER"),
   ];
 
+  // Sprint 4 categories — mirrors the Django migration 0002_seed_categories.py
+  const categories: Category[] = [
+    { id: id(51), name: "Consulting", description: "Advisory, strategy, and specialist consulting engagements." },
+    { id: id(52), name: "Cloud & Infrastructure", description: "Hosting, migration, DevOps, and managed infrastructure." },
+    { id: id(53), name: "Custom Development", description: "Bespoke software, web, mobile, and integration work." },
+    { id: id(54), name: "Data & AI", description: "Analytics, machine learning, and data platform services." },
+    { id: id(55), name: "Design & Brand", description: "Product design, brand identity, and creative production." },
+    { id: id(56), name: "Marketing & Growth", description: "Campaigns, SEO, content, and customer acquisition." },
+    { id: id(57), name: "Support & Maintenance", description: "Ongoing support, monitoring, and maintenance plans." },
+    { id: id(58), name: "Training", description: "Workshops, technical training, and capability building." },
+  ];
+
   return {
     users,
     industries,
     organizations,
     services,
+    categories,
     reviews,
     verifications: [],
     reports: [],
@@ -693,18 +715,63 @@ export function withRating(organization: Organization): Organization {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Categories (Sprint 4 — docs/09:284-306)                                    */
+/* -------------------------------------------------------------------------- */
+
+export function listCategories(): Category[] {
+  return [...db().categories].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function findCategoryById(id: string): Category | undefined {
+  return db().categories.find((c) => c.id === id);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Services (docs/04_Database_Design.md:318-333)                               */
 /* -------------------------------------------------------------------------- */
 
-export function listServices(organizationId?: string): Service[] {
-  const all = db().services;
-  return organizationId
-    ? all.filter((service) => service.organization_id === organizationId)
-    : all;
+/** Decorates a service row with its parent org name/rating and category name. */
+function decorateService(service: Service): Service {
+  const organization = db().organizations.find((o) => o.id === service.organization_id);
+  const category = service.category_id
+    ? db().categories.find((c) => c.id === service.category_id)
+    : undefined;
+  return {
+    ...service,
+    organization_name: organization?.name ?? null,
+    organization_rating: organization ? withRating(organization).rating : null,
+    category_name: category?.name ?? null,
+  };
+}
+
+export function listServices(
+  organizationId?: string,
+  filters: { category_id?: string; search?: string; status?: boolean } = {},
+): Service[] {
+  let all = db().services;
+  if (organizationId) {
+    all = all.filter((s) => s.organization_id === organizationId);
+  }
+  if (filters.category_id) {
+    all = all.filter((s) => s.category_id === filters.category_id);
+  }
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    all = all.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (s.description ?? "").toLowerCase().includes(q),
+    );
+  }
+  if (filters.status !== undefined) {
+    all = all.filter((s) => s.status === filters.status);
+  }
+  return all.map(decorateService);
 }
 
 export function findService(id: string): Service | undefined {
-  return db().services.find((service) => service.id === id);
+  const service = db().services.find((s) => s.id === id);
+  return service ? decorateService(service) : undefined;
 }
 
 export function createService(input: {
@@ -712,6 +779,8 @@ export function createService(input: {
   name: string;
   description?: string;
   price?: number;
+  category_id?: string | null;
+  status?: boolean;
 }): Service {
   const service: Service = {
     id: crypto.randomUUID(),
@@ -719,10 +788,11 @@ export function createService(input: {
     name: input.name,
     description: input.description ?? null,
     price: input.price ?? null,
-    status: true,
+    status: input.status ?? true,
+    category_id: input.category_id ?? null,
   };
   db().services.push(service);
-  return service;
+  return decorateService(service);
 }
 
 export function updateService(
@@ -732,25 +802,25 @@ export function updateService(
     description?: string | null;
     price?: number | null;
     status?: boolean;
+    category_id?: string | null;
   },
 ): Service | undefined {
-  const service = findService(id);
+  const service = db().services.find((s) => s.id === id);
   if (!service) return undefined;
 
-  // Only the keys present in the payload are touched, so a partial update cannot
-  // silently blank a field the caller did not send.
   if (input.name !== undefined) service.name = input.name;
   if (input.description !== undefined) service.description = input.description;
   if (input.price !== undefined) service.price = input.price;
   if (input.status !== undefined) service.status = input.status;
+  if ("category_id" in input) service.category_id = input.category_id ?? null;
 
-  return service;
+  return decorateService(service);
 }
 
 export function deleteService(id: string): boolean {
   const database = db();
   const before = database.services.length;
-  database.services = database.services.filter((service) => service.id !== id);
+  database.services = database.services.filter((s) => s.id !== id);
   return database.services.length < before;
 }
 

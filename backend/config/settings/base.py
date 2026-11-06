@@ -34,9 +34,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    # Domain Applications (Modular Monolith) - Sprint 1 and Sprint 2 only
+    # Domain Applications (Modular Monolith)
     "features.users",
     "features.organizations",
+    "features.services",
 ]
 
 AUTH_USER_MODEL = "users.User"
