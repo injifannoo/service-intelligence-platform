@@ -19,4 +19,5 @@ urlpatterns = [
     path("api/v1/", include("features.organizations.urls", namespace="organizations")),
     path("api/v1/", include("features.services.urls", namespace="services")),
     path("api/v1/", include("features.search.urls", namespace="search")),
+    path("api/v1/", include("features.reviews.urls", namespace="reviews")),
 ]
