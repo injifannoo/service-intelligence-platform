@@ -1,5 +1,5 @@
 import { apiClient, apiPaginated } from "@/lib/api-client";
-import type { Pagination, Service, ServiceInput } from "@/types";
+import type { Pagination, Service, ServiceFilters, ServiceInput } from "@/types";
 
 /** A service row decorated by the backend with its parent organization. */
 export type ServiceWithOrganization = Service & {
@@ -15,24 +15,32 @@ export type ServiceWithOrganization = Service & {
  */
 export const servicesApi = {
   async list(
-    organizationId?: string,
-    page?: number,
+    filters: ServiceFilters = {},
   ): Promise<{ data: ServiceWithOrganization[]; pagination: Pagination | null }> {
     return apiPaginated<ServiceWithOrganization>("/services/", {
-      query: { organization_id: organizationId, page, page_size: 50 },
+      query: {
+        organization_id: filters.organization_id,
+        category_id: filters.category_id,
+        status: filters.status,
+        search: filters.search,
+        page: filters.page,
+        page_size: filters.page_size ?? 50,
+      },
     });
   },
 
-  detail(id: string): Promise<Service> {
-    return apiClient.get<Service>(`/services/${id}/`);
+  detail(id: string): Promise<ServiceWithOrganization> {
+    return apiClient.get<ServiceWithOrganization>(`/services/${id}/`);
   },
 
-  create(payload: ServiceInput & { organization_id: string }): Promise<Service> {
-    return apiClient.post<Service>("/services/", payload);
+  create(
+    payload: ServiceInput & { organization_id: string },
+  ): Promise<ServiceWithOrganization> {
+    return apiClient.post<ServiceWithOrganization>("/services/", payload);
   },
 
-  update(id: string, payload: ServiceInput): Promise<Service> {
-    return apiClient.put<Service>(`/services/${id}/`, payload);
+  update(id: string, payload: ServiceInput): Promise<ServiceWithOrganization> {
+    return apiClient.put<ServiceWithOrganization>(`/services/${id}/`, payload);
   },
 
   remove(id: string): Promise<{ message: string }> {

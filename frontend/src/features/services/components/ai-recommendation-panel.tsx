@@ -29,8 +29,12 @@ export const AIRecommendationPanel: React.FC<AIRecommendationPanelProps> = ({
     try {
       const data = await fetchAIRecommendation({ requirement, providers });
       setResult(data);
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred while fetching recommendation.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred while fetching recommendation.",
+      );
     } finally {
       setLoading(false);
     }

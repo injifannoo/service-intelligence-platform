@@ -61,6 +61,7 @@ export interface NavItem {
 
 export const DASHBOARD_NAV: readonly NavItem[] = [
   { label: "Organizations", href: "/organizations" },
+  { label: "Services", href: "/services" },
   { label: "Search", href: "/search" },
   { label: "Compare", href: "/comparison" },
 ] as const;

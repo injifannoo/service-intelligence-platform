@@ -62,9 +62,16 @@
  *    not hardcode a currency symbol.
  *
  * 9. NOT IN THE SCHEMA, SO NOT TYPED HERE.
- *    `Bookmarks`, `Notifications`, `Category` and `Transactions` are referenced
- *    narratively (docs/02:123, docs/04:130, docs/03:252) but have no table, no
- *    fields, and no API. No types are invented for them.
+ *    `Bookmarks`, `Notifications` and `Transactions` are referenced narratively
+ *    (docs/02:123, docs/04:130, docs/03:252) but have no table, no fields, and
+ *    no API. No types are invented for them.
+ *
+ * 10. `Category` IS AN ADDITIVE SPRINT 4 EXTENSION.
+ *    docs/04:130 lists Category as an entity but defines no columns. Sprint 4
+ *    (docs/09:284-306) makes categories part of Service Management, so the
+ *    backend owns a small `Category` table and `Service.category` is an
+ *    optional foreign key. The column is nullable so services that predate the
+ *    taxonomy remain publishable.
  */
 
 export type UUID = string;
@@ -416,25 +423,62 @@ export interface OrganizationFilters {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Category (Sprint 4 extension; see contradiction 10)                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A shared service-catalogue vocabulary.
+ *
+ * docs/04:130 names Category without defining it, so these are the only fields
+ * Sprint 4 needs. `GET /api/v1/categories/` returns them paginated.
+ */
+export interface Category {
+  id: UUID;
+  name: string;
+  description: string;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Service (docs/04_Database_Design.md:318-333)                                */
 /* -------------------------------------------------------------------------- */
 
 export interface Service {
   id: UUID;
   organization_id: UUID;
+  /** Hydrated by the API so a flat catalogue stays readable. */
+  organization_name?: string | null;
+  /** Backend-computed aggregate, or null while the reviews slice is pending. */
+  organization_rating?: number | null;
+  /** Optional taxonomy link; null when a service is uncategorised. */
+  category_id?: UUID | null;
+  category_name?: string | null;
   name: string;
   description: string | null;
   /** Bare number; docs/04 defines no currency. See contradiction 8. */
   price: number | null;
   status: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /** Request of `POST /api/v1/services/` (docs/05:369-381). */
 export interface ServiceInput {
   name: string;
   description?: string;
-  price?: number;
+  price?: number | null;
+  category_id?: UUID | null;
+  status?: boolean;
   organization_id?: UUID;
+}
+
+/** List filters accepted by `GET /api/v1/services/`. */
+export interface ServiceFilters {
+  organization_id?: UUID;
+  category_id?: UUID;
+  status?: boolean;
+  search?: string;
+  page?: number;
+  page_size?: number;
 }
 
 /* -------------------------------------------------------------------------- */

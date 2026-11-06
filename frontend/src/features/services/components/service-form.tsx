@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { AlertMessage } from "@/components/shared/alert-message";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -14,11 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api-client";
-import type { Service } from "@/types";
+import type { Service, ServiceInput } from "@/types";
 
-import { useCreateService, useUpdateService } from "../api/use-service";
+import { useCategories, useCreateService, useUpdateService } from "../api/use-service";
 
 /**
  * Kept separate from the dialog shell so Radix unmounting `DialogContent` on
@@ -40,6 +43,7 @@ function ServiceFormFields({
 }) {
   const createService = useCreateService(organizationId);
   const updateService = useUpdateService(organizationId);
+  const { data: categories = [], isPending: categoriesPending } = useCategories();
 
   const isEditing = service !== undefined;
   const mutation = isEditing ? updateService : createService;
@@ -49,6 +53,8 @@ function ServiceFormFields({
   const [price, setPrice] = useState(
     service?.price !== null && service?.price !== undefined ? String(service.price) : "",
   );
+  const [categoryId, setCategoryId] = useState(service?.category_id ?? "");
+  const [status, setStatus] = useState(service?.status ?? true);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
@@ -57,16 +63,20 @@ function ServiceFormFields({
     setFormError(null);
     setFieldErrors({});
 
-    const parsedPrice = price.trim() === "" ? undefined : Number(price);
-    if (parsedPrice !== undefined && Number.isNaN(parsedPrice)) {
+    const parsedPrice = price.trim() === "" ? null : Number(price);
+    if (parsedPrice !== null && Number.isNaN(parsedPrice)) {
       setFieldErrors({ price: ["Enter a number."] });
       return;
     }
 
-    const payload = {
+    const payload: ServiceInput = {
       name,
-      description: description || undefined,
+      description,
+      // `null` clears an existing price; omitting the key would leave it as-is
+      // in the backend's partial update.
       price: parsedPrice,
+      category_id: categoryId || null,
+      status,
     };
 
     try {
@@ -100,6 +110,27 @@ function ServiceFormFields({
         />
       </Field>
 
+      <Field
+        id="service-category"
+        label="Category"
+        errors={fieldErrors.category_id}
+        hint="Optional. Groups the service in the catalogue filters."
+      >
+        <Select
+          id="service-category"
+          value={categoryId}
+          onChange={(event) => setCategoryId(event.target.value)}
+          disabled={categoriesPending}
+        >
+          <option value="">No category</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </Select>
+      </Field>
+
       <Field id="service-description" label="Description" errors={fieldErrors.description}>
         <Textarea
           id="service-description"
@@ -129,6 +160,15 @@ function ServiceFormFields({
           placeholder="Optional"
         />
       </Field>
+
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="service-status"
+          checked={status}
+          onChange={(event) => setStatus(event.target.checked)}
+        />
+        <Label htmlFor="service-status">Active (visible to customers)</Label>
+      </div>
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>

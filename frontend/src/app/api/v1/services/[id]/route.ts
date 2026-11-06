@@ -70,12 +70,18 @@ export async function PUT(
     return failure(400, "INVALID_PAYLOAD", "A JSON body is required.");
   }
 
-  const errors = new FieldErrors();
   const name = str(body.name);
   const description = body.description === null ? null : str(body.description);
   const price = body.price === null ? null : num(body.price);
   const status = typeof body.status === "boolean" ? body.status : undefined;
+  const categoryId =
+    "category_id" in body
+      ? body.category_id === null
+        ? null
+        : str(body.category_id) ?? null
+      : undefined;
 
+  const errors = new FieldErrors();
   if (name !== undefined && name.trim() === "") {
     errors.add("name", "Service name cannot be empty.");
   }
@@ -89,7 +95,7 @@ export async function PUT(
     return errors.toResponse();
   }
 
-  const updated = updateService(id, { name, description, price, status });
+  const updated = updateService(id, { name, description, price, status, category_id: categoryId });
   if (!updated) {
     return failure(404, "NOT_FOUND", "Service not found.");
   }
