@@ -136,3 +136,7 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="memory://")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="cache+memory://")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+
+# AI Engine Microservice Configuration
+AI_ENGINE_BASE_URL = os.getenv("AI_ENGINE_BASE_URL", "http://ai-engine:8001")
+AI_ENGINE_TIMEOUT = float(os.getenv("AI_ENGINE_TIMEOUT", "5.0"))
