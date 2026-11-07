@@ -49,7 +49,7 @@ if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
   python manage.py migrate --noinput
 
   if [ "${SEED_DEMO:-false}" = "true" ]; then
-    python manage.py seed_demo
+    python manage.py seed_users
   fi
 fi
 
