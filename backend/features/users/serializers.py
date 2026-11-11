@@ -7,12 +7,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """Response of GET/PUT `/users/profile/` (docs/05_API_Design.md:250-268)."""
 
     status = serializers.BooleanField(source="is_active", read_only=True)
-    organization_id = serializers.UUIDField(read_only=True, allow_null=True)
+    organization_id = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ("id", "name", "email", "role", "customer_tier", "status", "created_at", "organization_id")
         read_only_fields = ("id", "role", "created_at", "organization_id")
+
+    def get_organization_id(self, user):
+        """The organization this account owns, if any.
+
+        docs/04 has no `User.organization_id`; ownership lives on
+        Organization.owner. Returning the relationship here keeps the frontend's
+        tenant context working without adding a redundant column.
+        """
+        return user.owned_organizations.values_list("id", flat=True).first()
 
 
 class RegisterSerializer(serializers.Serializer):

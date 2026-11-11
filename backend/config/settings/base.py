@@ -34,8 +34,16 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    # Domain Applications (Modular Monolith) - Sprint 1 and Sprint 2 only
+    # Domain Applications (Modular Monolith)
     "features.users",
+    "features.organizations",
+    "features.services",
+    "features.search",
+    "features.reviews",
+    "features.bookings",
+    "features.notifications",
+    "features.analytics",
+    "features.comparison",
 ]
 
 AUTH_USER_MODEL = "users.User"
@@ -128,3 +136,7 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="memory://")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="cache+memory://")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+
+# AI Engine Microservice Configuration
+AI_ENGINE_BASE_URL = os.getenv("AI_ENGINE_BASE_URL", "http://ai_engine:8001")
+AI_ENGINE_TIMEOUT = float(os.getenv("AI_ENGINE_TIMEOUT", "5.0"))
