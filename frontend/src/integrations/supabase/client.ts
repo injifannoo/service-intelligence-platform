@@ -7,6 +7,10 @@ function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
 }
 
+function isPlaceholderSupabaseUrl(url: string): boolean {
+  return !url || url.includes("your-project-ref");
+}
+
 // The public URL can be reachable only from the browser, so server requests go to the runtime URL of the same backend.
 function serverSupabaseUrl(publicUrl: string, supabaseKey: string): string | undefined {
   if (typeof window !== "undefined" || typeof process === "undefined") return undefined;
@@ -23,7 +27,19 @@ function serverSupabaseUrl(publicUrl: string, supabaseKey: string): string | und
 function createSupabaseFetch(supabaseUrl: string, supabaseKey: string): typeof fetch {
   const publicUrl = supabaseUrl.replace(/\/+$/, "");
   const serverUrl = serverSupabaseUrl(publicUrl, supabaseKey);
+  const offline = isPlaceholderSupabaseUrl(publicUrl);
+
   return (input, init) => {
+    // Short-circuit any lingering Supabase network requests in offline mode so pages never hang
+    if (offline) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: null, error: { message: "Supabase offline mode" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+
     const headers = new Headers(
       typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
@@ -50,13 +66,30 @@ function createSupabaseFetch(supabaseUrl: string, supabaseKey: string): typeof f
         return fetch(request, { ...init, headers });
       }
     }
+    // Short-circuit any lingering Supabase network requests in offline mode so pages never hang
+    if (offline) {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes("/auth/v1/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ session: null, user: null }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: null, error: { message: "Supabase offline mode" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
     return fetch(input, { ...init, headers });
   };
+  
 }
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
   const SUPABASE_URL =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
@@ -69,6 +102,7 @@ function createSupabaseClient() {
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
     "";
+
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
       ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
@@ -79,14 +113,17 @@ function createSupabaseClient() {
     throw new Error(message);
   }
 
+  const offline = isPlaceholderSupabaseUrl(SUPABASE_URL);
+
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
       fetch: createSupabaseFetch(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
       storage: brokeredPreviewStorage(),
-      persistSession: true,
-      autoRefreshToken: true,
+      persistSession: !offline,
+      autoRefreshToken: !offline,
+      detectSessionInUrl: !offline,
     },
   });
 }

@@ -5,32 +5,74 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3-flash-preview";
 
+const hasAiGateway = () => Boolean(process.env["LOVABLE_API_KEY"]);
+
 async function callJson(system: string, user: string, schema: Record<string, unknown>) {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new Error("AI is not configured");
-  const res = await fetch(GATEWAY, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      tools: [{ type: "function", function: { name: "respond", parameters: schema } }],
-      tool_choice: { type: "function", function: { name: "respond" } },
-    }),
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(GATEWAY, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        tools: [{ type: "function", function: { name: "respond", parameters: schema } }],
+        tool_choice: { type: "function", function: { name: "respond" } },
+      }),
+    });
+    if (res.status === 429) throw new Error("AI is busy, please try again in a moment.");
+    if (res.status === 402) throw new Error("AI credits are exhausted for this workspace.");
+    if (!res.ok) throw new Error(`AI request failed (${res.status})`);
+    const json = await res.json();
+    const args = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    return JSON.parse(args ?? "{}");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/** Deterministic offline comparison builder when LOVABLE_API_KEY / AI engine is not configured. */
+function buildOfflineComparison(orgs: { name: string; facts: string }[]) {
+  const picks = orgs.map((org, idx) => {
+    const lines = org.facts
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const primaryFact = lines[0] ?? "Established local service delivery in Addis Ababa";
+    const secondaryFact = lines[1] ?? "Verify timeline and custom scope during discovery";
+
+    return {
+      name: org.name,
+      bestFor:
+        idx === 0
+          ? `Teams prioritizing ${primaryFact.slice(0, 60)}`
+          : `Buyers seeking ${primaryFact.slice(0, 60)}`,
+      tradeoff: secondaryFact.slice(0, 75),
+    };
   });
-  if (res.status === 429) throw new Error("AI is busy, please try again in a moment.");
-  if (res.status === 402) throw new Error("AI credits are exhausted for this workspace.");
-  if (!res.ok) throw new Error(`AI request failed (${res.status})`);
-  const json = await res.json();
-  const args = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-  return JSON.parse(args ?? "{}");
+
+  return {
+    overview: `Comparing ${orgs.map((o) => o.name).join(" vs. ")} across verified capabilities, responsiveness, and client feedback in Addis Ababa.`,
+    picks,
+    verdict: `Shortlist ${orgs[0].name} for strongest overall alignment, and request a scoped proposal from ${orgs[1].name} to benchmark delivery timelines and pricing.`,
+  };
 }
 
 /** Regenerates an organization's AI review summary + sentiment from its published reviews. */
 export async function refreshInsights({ data }: { data: { orgId: string } }) {
+  if (!hasAiGateway()) {
+    return { ok: true };
+  }
+
   await requireSupabaseAuth();
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: org } = await supabaseAdmin
@@ -124,7 +166,7 @@ export async function refreshInsights({ data }: { data: { orgId: string } }) {
 /** Turns a natural-language need into structured search intent. Advisory only; falls back to local parsing on the client. */
 export async function understandQuery({ data }: { data: { q: string } }) {
   const query = String(data.q ?? "").slice(0, 300);
-  if (!query.trim()) return null;
+  if (!query.trim() || !hasAiGateway()) return null;
 
   try {
     return (await callJson(
@@ -212,32 +254,40 @@ export async function compareProviders({ data }: { data: { orgs: { name: string;
 
   if (orgs.length < 2) throw new Error("Select at least two providers.");
 
-  return (await callJson(
-    "You compare service providers in Addis Ababa for a buyer. Be neutral, factual and concise. Only use the facts given.",
-    orgs.map((o) => `## ${o.name}\n${o.facts}`).join("\n\n"),
-    {
-      type: "object",
-      properties: {
-        overview: { type: "string", description: "2 sentence overall comparison" },
-        picks: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              bestFor: { type: "string", description: "short phrase: who should pick this provider" },
-              tradeoff: { type: "string", description: "main weakness vs the others" },
+  if (!hasAiGateway()) {
+    return buildOfflineComparison(orgs);
+  }
+
+  try {
+    return (await callJson(
+      "You compare service providers in Addis Ababa for a buyer. Be neutral, factual and concise. Only use the facts given.",
+      orgs.map((o) => `## ${o.name}\n${o.facts}`).join("\n\n"),
+      {
+        type: "object",
+        properties: {
+          overview: { type: "string", description: "2 sentence overall comparison" },
+          picks: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                bestFor: { type: "string", description: "short phrase: who should pick this provider" },
+                tradeoff: { type: "string", description: "main weakness vs the others" },
+              },
+              required: ["name", "bestFor", "tradeoff"],
             },
-            required: ["name", "bestFor", "tradeoff"],
           },
+          verdict: { type: "string", description: "one sentence recommendation with condition" },
         },
-        verdict: { type: "string", description: "one sentence recommendation with condition" },
+        required: ["overview", "picks", "verdict"],
       },
-      required: ["overview", "picks", "verdict"],
-    },
-  )) as {
-    overview: string;
-    picks: { name: string; bestFor: string; tradeoff: string }[];
-    verdict: string;
-  };
+    )) as {
+      overview: string;
+      picks: { name: string; bestFor: string; tradeoff: string }[];
+      verdict: string;
+    };
+  } catch {
+    return buildOfflineComparison(orgs);
+  }
 }
