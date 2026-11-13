@@ -1,4 +1,5 @@
 /** Pure scoring helpers shared by search, comparison and dashboards. */
+import type { OrganizationSubscription, TrustVerificationBadge } from "@/types/platform-contracts";
 
 export type OrgView = {
   id: string;
@@ -33,6 +34,8 @@ export type OrgView = {
   recommendation: string;
   satisfactionTrend: number[];
   logoUrl: string | null;
+  subscription?: OrganizationSubscription;
+  verification?: TrustVerificationBadge;
 };
 
 export function averageRating(ratings: number[]) {
