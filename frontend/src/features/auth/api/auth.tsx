@@ -1,0 +1,52 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+
+type Role = "admin" | "org_owner" | "customer";
+type AuthState = {
+  user: User | null;
+  roles: Role[];
+  loading: boolean;
+  isAdmin: boolean;
+  displayName: string;
+};
+
+const Ctx = createContext<AuthState>({
+  user: null,
+  roles: [],
+  loading: true,
+  isAdmin: false,
+  displayName: "",
+});
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async (u: User | null) => {
+      setUser(u);
+      if (u) {
+        const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.id);
+        setRoles((data ?? []).map((r) => r.role as Role));
+      } else setRoles([]);
+      setLoading(false);
+    };
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setTimeout(() => load(session?.user ?? null), 0);
+    });
+    supabase.auth.getSession().then(({ data }) => load(data.session?.user ?? null));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const displayName =
+    (user?.user_metadata?.["display_name"] as string) || user?.email?.split("@")[0] || "";
+  return (
+    <Ctx.Provider value={{ user, roles, loading, isAdmin: roles.includes("admin"), displayName }}>
+      {children}
+    </Ctx.Provider>
+  );
+}
+
+export const useAuth = () => useContext(Ctx);
