@@ -1,7 +1,5 @@
-/** Comparison DTOs. Canonical shapes live in `src/types`. */
-export type {
-  Comparison,
-  ComparisonRequest,
-  ComparisonResult,
-  ComparisonRow,
-} from "@/types";
+export type ComparisonSummary = {
+  overview: string;
+  picks: { name: string; bestFor: string; tradeoff: string }[];
+  verdict: string;
+};

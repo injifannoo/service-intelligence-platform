@@ -22,6 +22,7 @@ urlpatterns = [
     path("api/v1/", include("features.reviews.urls", namespace="reviews")),
     path("api/v1/", include("features.bookings.urls", namespace="bookings")),
     path("api/v1/", include("features.notifications.urls", namespace="notifications")),
+    path("api/v1/", include("features.conversations.urls", namespace="conversations")),
     path("api/v1/", include("features.comparison.urls", namespace="comparison")),
     path("api/v1/", include("features.analytics.urls", namespace="analytics")),
 ]

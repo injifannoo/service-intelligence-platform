@@ -1,58 +1,33 @@
-import { vi } from "vitest";
-
 /**
- * Test stub for `next/navigation`.
+ * Minimal `next/navigation` replacement for Vitest, which has no Next router.
  *
- * The hooks return fixed values so a component rendering a pathname-dependent nav
- * or an active state is deterministic.
- *
- * `useRouter` and `useSearchParams` are backed by module-level singletons rather
- * than fresh objects per call. Without that, a test could not assert where a
- * component navigated to, because the `vi.fn()` recorded by the render under test
- * would not be the one it retrieved afterwards.
+ * Components under test should mock the hooks they care about. These defaults
+ * keep the rest of a tree renderable: link navigation is a no-op and the
+ * current location is the site root.
  */
-
-const push = vi.fn();
-const replace = vi.fn();
-
-export const routerMock = { push, replace };
-
-/** Overridable so a test can drive `usePathname` / `useSearchParams`. */
-let pathname = "/organizations";
-let searchParams = new URLSearchParams();
-
-export function __setPathname(next: string) {
-  pathname = next;
-}
-
-export function __setSearchParams(next: URLSearchParams | string) {
-  searchParams = typeof next === "string" ? new URLSearchParams(next) : next;
-}
-
-export function __resetNavigation() {
-  pathname = "/organizations";
-  searchParams = new URLSearchParams();
-  push.mockClear();
-  replace.mockClear();
-}
+const noop = () => undefined;
 
 export const useRouter = () => ({
-  push,
-  replace,
-  back: vi.fn(),
-  forward: vi.fn(),
-  refresh: vi.fn(),
-  prefetch: vi.fn(),
+  push: noop,
+  replace: noop,
+  refresh: noop,
+  back: noop,
+  forward: noop,
+  prefetch: noop,
 });
 
-export const usePathname = () => pathname;
+const emptySearchParams = new URLSearchParams();
 
-export const useParams = () => ({} as Record<string, string | string[]>);
+export const useSearchParams = () => emptySearchParams;
 
-export const useSearchParams = () => searchParams;
+export const usePathname = () => "/";
 
-export const redirect = vi.fn();
-export const permanentRedirect = vi.fn();
-export const notFound = vi.fn();
+export const useParams = () => ({});
+
 export const useSelectedLayoutSegment = () => null;
-export const useSelectedLayoutSegments = () => [] as string[];
+
+export const useSelectedLayoutSegments = () => [];
+
+export const redirect = noop;
+
+export const notFound = noop;

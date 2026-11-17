@@ -1,379 +1,283 @@
-import {
-  API_BASE_URL,
-  AUTH_COOKIE_OPTIONS,
-  AUTH_COOKIES,
-  USE_DEV_BACKEND,
-} from "@/config/site-config";
-import type { ApiErrorBody, ApiResponse, AuthTokens, Pagination } from "@/types";
+import { siteConfig } from "@/config/site-config";
+import { supabase } from "@/integrations/supabase/client";
+import * as mockData from "@/lib/data";
 
-/**
- * Central network wrapper, per docs/07_Project_Structure.md:202 and the
- * Sprint 1 task in docs/09_Sprint_Plan.md:199.
- *
- * Responsibilities, and nothing else:
- *   1. Prefix every path with the versioned API base URL.
- *   2. Attach the JWT bearer token.
- *   3. Unwrap the standard `{ success, data, pagination }` envelope.
- *   4. Throw a typed `ApiError` so feature hooks never branch on HTTP codes.
- *
- * Feature modules must not call `fetch` directly.
- */
+/** Standard API envelope from 05_API_Design. */
+export type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: { code: string; message: string; details?: unknown } };
+
+type Page<T> = { results: T[]; count: number; next: string | null; previous: string | null };
+type Pagination = Omit<Page<never>, "results">;
 
 export class ApiError extends Error {
-  readonly status: number;
-  readonly code: string;
-  readonly details: Record<string, unknown> | undefined;
-
-  constructor(status: number, body: ApiErrorBody | null, fallback: string) {
-    super(body?.message ?? fallback);
-    this.name = "ApiError";
-    this.status = status;
-    this.code = body?.code ?? "UNKNOWN_ERROR";
-    this.details = body?.details;
+  constructor(
+    public code: string,
+    message: string,
+    public status: number,
+  ) {
+    super(message);
   }
+}
 
-  /** Field-level validation failures, keyed by form field name. */
-  get fieldErrors(): Record<string, string[]> {
-    const out: Record<string, string[]> = {};
-    for (const [field, value] of Object.entries(this.details ?? {})) {
-      if (Array.isArray(value)) {
-        out[field] = value.map(String);
-      } else {
-        out[field] = [String(value)];
-      }
+type MockOrg = (typeof mockData.ORGS)[number];
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+/**
+ * Shapes a mock organization the way the Django serializer does.
+ *
+ * The REST callers (`getOrganizations`, `getOrganization`) run the fallback
+ * through `fromRestOrganization`/`toView`, so the fallback has to speak the
+ * snake_case contract. Returning the raw `data.ts` object left the UI with
+ * blank ratings and services whenever the backend was unreachable.
+ */
+function toRestOrganization(org: MockOrg) {
+  return {
+    id: org.slug,
+    slug: org.slug,
+    name: org.name,
+    tagline: org.tagline,
+    description: org.aiSummary,
+    category: org.category,
+    services_summary: org.services,
+    industries: org.industries,
+    location: org.location,
+    phone: null,
+    email: null,
+    website: null,
+    business_hours: null,
+    founded: org.founded,
+    size: org.size,
+    price_tier: org.priceTier,
+    response_hours: org.responseHours,
+    certifications: org.certifications,
+    status: org.verified ? "verified" : "pending",
+    owner_id: null,
+    is_phone_verified: org.verified,
+    is_fayda_verified: org.verified,
+    has_proof_of_purchase: false,
+    verified_at: null,
+    logo_url: null,
+    ai_insights: {
+      sentiment_positive: org.sentiment.positive,
+      sentiment_neutral: org.sentiment.neutral,
+      sentiment_negative: org.sentiment.negative,
+      strengths: org.strengths,
+      issues: org.issues,
+      summary: org.aiSummary,
+      main_complaint: org.issues[0] ?? "",
+      recommendation: org.recommendation,
+    },
+    reviews: org.reviews.map((review) => ({
+      rating: review.rating,
+      created_at: review.date,
+      status: "published",
+    })),
+  };
+}
+
+function toRestService(org: MockOrg, name: string, index: number) {
+  return {
+    id: `${org.slug}-service-${index + 1}`,
+    organization: org.slug,
+    organization_id: org.slug,
+    organization_name: org.name,
+    organization_rating: org.rating,
+    category_id: slugify(org.category),
+    category_name: org.category,
+    name,
+    description: `${name} by ${org.name}.`,
+    price_from: null,
+    status: true,
+    is_active: true,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  };
+}
+
+function toRestReview(org: MockOrg, index: number) {
+  const review = org.reviews[index];
+  return {
+    id: `${org.slug}-review-${index + 1}`,
+    org_id: org.slug,
+    organization: org.slug,
+    organization_id: org.slug,
+    organization_name: org.name,
+    author: review.author,
+    rating: review.rating,
+    comment: review.text,
+    created_at: review.date,
+    verification: review.verified,
+    status: "published",
+  };
+}
+
+/**
+ * Resolves mock data from `data.ts` based on the endpoint URL.
+ *
+ * Returns `null` when no mock exists so callers can surface the real error
+ * instead of silently rendering an empty page.
+ */
+function getMockFallback(path: string): unknown {
+  const clean = path.split("?")[0].replace(/^\/|\/$/g, "");
+  const [resource, id] = clean.split("/");
+  const orgs = mockData.ORGS ?? [];
+
+  if (resource === "organizations") {
+    if (id) {
+      const org = orgs.find((candidate) => candidate.slug === id);
+      return org ? toRestOrganization(org) : null;
     }
-    return out;
+    return orgs.map(toRestOrganization);
   }
 
-  get isUnauthorized() {
-    return this.status === 401;
+  if (resource === "services") {
+    const services = orgs.flatMap((org) =>
+      org.services.map((name, index) => toRestService(org, name, index)),
+    );
+    if (id) return services.find((service) => service.id === id) ?? null;
+    return services;
   }
 
-  get isForbidden() {
-    return this.status === 403;
+  if (resource === "categories") {
+    const categories = mockData.CATEGORIES.map((name) => ({
+      id: slugify(name),
+      name,
+      description: "",
+    }));
+    if (id) return categories.find((category) => category.id === id) ?? null;
+    return categories;
   }
 
-  get isNotFound() {
-    return this.status === 404;
+  if (resource === "reviews") {
+    const reviews = orgs.flatMap((org) => org.reviews.map((_, index) => toRestReview(org, index)));
+    if (id) return reviews.find((review) => review.id === id) ?? null;
+    return reviews;
   }
 
-  /** True for validation-shaped failures that a form should render inline. */
-  get isValidationError() {
-    return this.status === 400 || this.status === 422;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Token storage                                                              */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Tokens live in cookies rather than localStorage so that `proxy.ts` can read
- * them and guard the dashboard route group server-side. This is a deliberate
- * trade-off: cookies are sent automatically (CSRF-relevant on mutations) while
- * localStorage is not readable by the server at all. Mutations go through the
- * bearer header, and `sameSite: "lax"` blocks cross-site form posts.
- */
-function readCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${name}=`));
-  return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
-}
-
-function writeCookie(name: string, value: string) {
-  if (typeof document === "undefined") return;
-  const { path, sameSite, secure, maxAge } = AUTH_COOKIE_OPTIONS;
-  const parts = [
-    `${name}=${encodeURIComponent(value)}`,
-    `path=${path}`,
-    `sameSite=${sameSite}`,
-    // Capitalised. Browsers match cookie attribute names literally here, so
-    // `maxAge` is ignored and the session cookie would live until the browser
-    // closes rather than for AUTH_COOKIE_OPTIONS.maxAge.
-    `Max-Age=${maxAge}`,
-  ];
-  if (secure) parts.push("secure");
-  document.cookie = parts.join("; ");
-}
-
-/**
- * Removes a cookie — and must genuinely remove it, not just blank the value.
- *
- * `Max-Age=0` is capitalised for the same reason as in `writeCookie`, but here it
- * is load-bearing: a lowercase `maxAge=0` is treated as an unknown attribute, so
- * the write `name=; path=/` *sets* an empty cookie instead of deleting one.
- *
- * An empty shell is not harmless. `proxy.ts` tests cookie **presence**, so
- * `asip_access_token=` still counts as signed in and the proxy 307-redirects
- * every `/login` visit to `/organizations`. The visitor sees a working
- * "Sign in" button that can never reach the sign-in form — which is exactly what
- * a visitor is left with after logging out or after a session expires.
- */
-function deleteCookie(name: string) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${name}=; path=${AUTH_COOKIE_OPTIONS.path}; Max-Age=0`;
-}
-
-export const tokenStore = {
-  /**
-   * `|| null` collapses the empty cookie shell that a naive delete leaves behind
-   * (see `deleteCookie`) into "no token". A `Bearer ` header with nothing in it
-   * and an `enabled` query that fires a guaranteed 401 are both worse than not
-   * having a cookie at all, so every caller sees `null` instead of `""`.
-   */
-  getAccessToken: () => readCookie(AUTH_COOKIES.accessToken) || null,
-  getRefreshToken: () => readCookie(AUTH_COOKIES.refreshToken) || null,
-
-  set(tokens: { access_token: string; refresh_token: string }) {
-    writeCookie(AUTH_COOKIES.accessToken, tokens.access_token);
-    writeCookie(AUTH_COOKIES.refreshToken, tokens.refresh_token);
-  },
-
-  clear() {
-    deleteCookie(AUTH_COOKIES.accessToken);
-    deleteCookie(AUTH_COOKIES.refreshToken);
-  },
-};
-
-/* -------------------------------------------------------------------------- */
-/* Envelope handling                                                          */
-/* -------------------------------------------------------------------------- */
-
-function isEnvelope(body: unknown): body is ApiResponse<unknown> {
-  return (
-    typeof body === "object" &&
-    body !== null &&
-    "success" in body &&
-    typeof (body as { success: unknown }).success === "boolean"
-  );
-}
-
-function readErrorBody(body: unknown): ApiErrorBody | null {
-  if (isEnvelope(body) && body.success === false) return body.error;
   return null;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Request                                                                    */
-/* -------------------------------------------------------------------------- */
+/** True when the app should use the Django REST backend instead of Lovable Cloud. */
+export const usesRestBackend = () => !!siteConfig.apiBaseUrl;
 
-export interface RequestOptions extends Omit<RequestInit, "body"> {
-  /** JSON-serialised automatically. */
-  body?: unknown;
-  /** Skip the bearer header, e.g. for login and registration. */
-  anonymous?: boolean;
-  query?: Record<string, string | number | boolean | undefined | null>;
-  /**
-   * Internal. Prevents the refresh call itself from recursing into a refresh
-   * attempt when it is rejected with a 401.
-   */
-  skipAuthRetry?: boolean;
-}
-
-function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const absolute = path.startsWith("/") ? path : `/${path}`;
-
-  // Django's API addresses resources with a trailing slash (`/auth/login/`,
-  // per docs/05_API_Design.md), but the Next router has no trailing-slash
-  // routes and answers `/auth/login/` with a 308 to `/auth/login`. Normalise at
-  // this one boundary so the BFF is addressed directly, instead of paying a
-  // redirect round-trip on every request and relying on the client to replay
-  // the body and method across it. Django URLs are left untouched.
-  const resolved = USE_DEV_BACKEND ? absolute.replace(/\/+$/, "") || "/" : absolute;
-
-  const url = `${API_BASE_URL}${resolved}`;
-  if (!query) return url;
-
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined && value !== null && value !== "") {
-      params.set(key, String(value));
+/** Fetch wrapper for /api/v1 with bearer auth, error-envelope handling, and mock fallback. */
+export async function apiClient<T>(
+  path: string,
+  init: RequestInit = {},
+  options: { authenticated?: boolean } = {},
+): Promise<T> {
+  const fallback = (reason: string): T | null => {
+    const data = getMockFallback(path);
+    if (data !== null && data !== undefined) {
+      console.warn(`[apiClient] ${reason} - falling back to data.ts for: ${path}`);
+      // Return in DRF page structure if requested by callers expecting paginated responses
+      if (Array.isArray(data)) {
+        return { count: data.length, next: null, previous: null, results: data } as unknown as T;
+      }
+      return data as T;
     }
+    return null;
+  };
+
+  // If backend base URL is completely absent, resolve fallback immediately
+  if (!siteConfig.apiBaseUrl) {
+    const mock = fallback("No API base URL configured");
+    if (mock !== null) return mock;
   }
-  const qs = params.toString();
-  return qs ? `${url}?${qs}` : url;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Access token refresh                                                       */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Deduplicates concurrent refreshes. Several queries can 401 at once, and
- * without this they would each mint a new token, racing on the cookie write.
- */
-let refreshInFlight: Promise<boolean> | null = null;
-
-/**
- * Exchanges the refresh token for a new pair. Resolves `false` (and clears the
- * stored tokens) when the session cannot be recovered, which is the signal for
- * callers to send the user back to the sign-in screen.
- *
- * docs/11_Deployment.md:460 requires 15-minute access tokens, so a long-lived
- * tab will otherwise 401 on its next fetch with nothing to recover it.
- */
-async function refreshAccessToken(): Promise<boolean> {
-  const current = tokenStore.getRefreshToken();
-  if (!current) return false;
-
-  refreshInFlight ??= (async () => {
-    try {
-      const tokens = await apiRequest<AuthTokens>("/auth/refresh/", {
-        method: "POST",
-        anonymous: true,
-        skipAuthRetry: true,
-        body: { refresh_token: current },
-      });
-      tokenStore.set(tokens);
-      return true;
-    } catch {
-      tokenStore.clear();
-      return false;
-    } finally {
-      refreshInFlight = null;
-    }
-  })();
-
-  return refreshInFlight;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Request                                                                    */
-/* -------------------------------------------------------------------------- */
-
-interface RawResult {
-  response: Response;
-  payload: unknown;
-}
-
-function toError(response: Response, payload: unknown): ApiError {
-  return new ApiError(
-    response.status,
-    readErrorBody(payload),
-    response.statusText || "Request failed",
-  );
-}
-
-/**
- * Performs one request with no auth-retry logic, so `apiRequest` and
- * `apiPaginated` can share the exact same send, parse, and recover behaviour.
- */
-async function send(
-  url: string,
-  init: RequestInit,
-  options: RequestOptions,
-): Promise<RawResult> {
-  const { anonymous, skipAuthRetry } = options;
 
   const headers = new Headers(init.headers);
-  if (!anonymous) {
-    const token = tokenStore.getAccessToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
+  headers.set("Content-Type", "application/json");
+
+  if (options.authenticated !== false) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      headers.set("Authorization", `Bearer ${data.session.access_token}`);
+    }
   }
 
-  let response: Response;
+  let res: Response;
   try {
-    response = await fetch(url, { ...init, headers });
-  } catch {
-    throw new ApiError(0, null, "Unable to reach the server. Check your connection.");
+    res = await fetch(`${siteConfig.apiBaseUrl}${path}`, { ...init, headers });
+  } catch (networkError: unknown) {
+    // Intercept ERR_CONNECTION_REFUSED or offline state
+    const reason = networkError instanceof Error ? networkError.message : "Backend offline";
+    const mock = fallback(reason);
+    if (mock !== null) return mock;
+    throw networkError;
   }
 
-  const isJson = response.headers.get("content-type")?.includes("application/json");
-  const payload: unknown = isJson ? await response.json().catch(() => null) : null;
+  const body = (await res.json().catch(() => null)) as ApiResponse<T> | T | null;
 
-  if (!response.ok) {
-    if (response.status === 401 && !skipAuthRetry) {
-      if (await refreshAccessToken()) {
-        return send(url, init, { ...options, skipAuthRetry: true });
-      }
+  if (
+    !res.ok ||
+    (body && typeof body === "object" && "success" in body && body.success === false)
+  ) {
+    const mock = fallback(`Backend returned status ${res.status}`);
+    if (mock !== null) return mock;
+
+    const err = (body as { error?: { code?: string; message?: string } } | null)?.error;
+    throw new ApiError(
+      err?.code ?? "http_error",
+      err?.message ?? `Request failed (${res.status})`,
+      res.status,
+    );
+  }
+
+  if (body && typeof body === "object" && "success" in body && body.success) {
+    const envelope = body as { data: T; pagination?: Pagination };
+    if (envelope.pagination && Array.isArray(envelope.data)) {
+      return { ...envelope.pagination, results: envelope.data } as T;
     }
-    throw toError(response, payload);
+    return envelope.data;
   }
 
-  return { response, payload };
+  return body as T;
 }
 
-/**
- * Performs a request and returns the unwrapped payload.
- *
- * Throws `ApiError` for both transport failures and `{ success: false }`
- * bodies. The catch-all branch exists because docs/05_API_Design.md returns
- * bare payloads (no envelope) from login and AI search, so a non-envelope 2xx
- * body is passed through untouched rather than treated as an error.
- *
- * A 401 triggers one refresh-and-retry. If that fails, the tokens are cleared
- * and the `ApiError` propagates so the caller can route to the sign-in screen.
- */
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, query, headers, ...rest } = options;
+/** Public directory reads collect every page without sending Cloud credentials to Django. */
+export async function apiListClient<T>(path: string): Promise<T[]> {
+  const results: T[] = [];
+  const visited = new Set<string>();
+  const base = new URL(`${(siteConfig.apiBaseUrl || "http://localhost:8000").replace(/\/$/, "")}/`);
 
-  const requestHeaders = new Headers(headers);
-  requestHeaders.set("Accept", "application/json");
-  if (body !== undefined) requestHeaders.set("Content-Type", "application/json");
+  let currentPath: string | null = path;
 
-  const { payload } = await send(buildUrl(path, query), {
-    ...rest,
-    headers: requestHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  }, options);
+  while (currentPath) {
+    if (visited.has(currentPath)) break;
+    visited.add(currentPath);
 
-  if (isEnvelope(payload)) {
-    if (payload.success === false) {
-      throw new ApiError(200, payload.error, "Request failed");
+    const page: Page<T> = await apiClient<Page<T>>(currentPath, {}, { authenticated: false });
+
+    if (Array.isArray(page)) {
+      results.push(...page);
+      break;
     }
-    return payload.data as T;
+
+    if (page && Array.isArray(page.results)) {
+      results.push(...page.results);
+    }
+
+    if (!page?.next) break;
+
+    const parsedUrl: URL = new URL(page.next, new URL(`${siteConfig.apiBaseUrl}${currentPath}`));
+    if (parsedUrl.origin !== base.origin || !parsedUrl.pathname.startsWith(base.pathname)) {
+      break;
+    }
+    // `next` is absolute and already contains the version prefix, while
+    // `apiClient` prepends `apiBaseUrl` again. Strip the base path so page two
+    // is requested from `/organizations/?page=2`, not `/api/v1/api/v1/...`.
+    const nextPath = `${parsedUrl.pathname}${parsedUrl.search}`;
+    const relativePath = nextPath.startsWith(base.pathname)
+      ? nextPath.slice(base.pathname.length)
+      : nextPath.replace(/^\//, "");
+    currentPath = `/${relativePath}`;
   }
 
-  return payload as T;
-}
-
-export const apiClient = {
-  get: <T>(path: string, options?: RequestOptions) =>
-    apiRequest<T>(path, { ...options, method: "GET" }),
-
-  post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    apiRequest<T>(path, { ...options, method: "POST", body }),
-
-  put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    apiRequest<T>(path, { ...options, method: "PUT", body }),
-
-  /** Added for the admin area, where a partial update must not replace the role. */
-  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    apiRequest<T>(path, { ...options, method: "PATCH", body }),
-
-  delete: <T>(path: string, options?: RequestOptions) =>
-    apiRequest<T>(path, { ...options, method: "DELETE" }),
-};
-
-/**
- * Paginated counterpart. Returns data and pagination separately so callers do
- * not have to know the envelope shape (docs/05_API_Design.md:209-222).
- */
-export async function apiPaginated<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<{ data: T[]; pagination: Pagination | null }> {
-  const { query, headers, signal } = options;
-
-  const requestHeaders = new Headers(headers);
-  requestHeaders.set("Accept", "application/json");
-
-  const { payload } = await send(
-    buildUrl(path, query),
-    { method: "GET", headers: requestHeaders, signal },
-    options,
-  );
-
-  if (isEnvelope(payload) && payload.success === false) {
-    throw new ApiError(200, payload.error, "Request failed");
-  }
-
-  if (typeof payload === "object" && payload !== null && "pagination" in payload) {
-    const { data, pagination } = payload as { data: T[]; pagination: Pagination };
-    return { data, pagination };
-  }
-
-  return { data: (payload ?? []) as T[], pagination: null };
+  return results;
 }
