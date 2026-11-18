@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "features.reviews",
     "features.bookings",
     "features.notifications",
+    "features.conversations",
     "features.analytics",
     "features.comparison",
 ]
