@@ -1,5 +1,8 @@
+from uuid import UUID
+
+from django.core.cache import cache
 from rest_framework import status
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,7 +11,11 @@ from core.pagination import StandardResultsSetPagination
 from core.views import PublicReadMixin
 
 from .permissions import IsOrganizationOwnerOrAdmin
-from .selectors import get_organization_by_id, get_organizations
+from .selectors import (
+    get_organization_by_id,
+    get_organization_by_slug,
+    get_organizations,
+)
 from .serializers import (
     OrganizationCreateSerializer,
     OrganizationDetailSerializer,
@@ -20,6 +27,14 @@ from .services import (
     submit_verification_claim,
     update_organization,
 )
+
+
+def _resolve_organization(identifier: str):
+    try:
+        UUID(str(identifier))
+        return get_organization_by_id(identifier)
+    except (ValueError, TypeError):
+        return get_organization_by_slug(str(identifier))
 
 
 class OrganizationListCreateView(PublicReadMixin, APIView):
@@ -65,7 +80,7 @@ class OrganizationListCreateView(PublicReadMixin, APIView):
 
 
 class OrganizationDetailView(PublicReadMixin, APIView):
-    """GET/PUT `/api/v1/organizations/{id}/` (docs/05_API_Design.md:116-136)."""
+    """GET/PUT `/api/v1/organizations/{id_or_slug}/` (docs/05_API_Design.md:116-136)."""
 
     def get_permissions(self):
         if self.request.method == "PUT":
@@ -73,15 +88,25 @@ class OrganizationDetailView(PublicReadMixin, APIView):
         return [AllowAny()]
 
     def _get_object(self, organization_id):
-        organization = get_organization_by_id(organization_id)
+        organization = _resolve_organization(str(organization_id))
         if not organization:
             raise NotFound("Organization not found.")
         self.check_object_permissions(self.request, organization)
         return organization
 
     def get(self, request, organization_id):
+        key_id = str(organization_id)
+        cache_key = f"org:detail:{key_id}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
         organization = self._get_object(organization_id)
-        return Response(OrganizationDetailSerializer(organization).data)
+        payload = OrganizationDetailSerializer(organization).data
+        cache.set(f"org:detail:{organization.id}", payload, timeout=300)
+        if organization.slug:
+            cache.set(f"org:detail:{organization.slug}", payload, timeout=300)
+        return Response(payload)
 
     def put(self, request, organization_id):
         organization = self._get_object(organization_id)
@@ -98,7 +123,7 @@ class OrganizationVerifyClaimView(APIView):
     permission_classes = [IsAuthenticated, IsOrganizationOwnerOrAdmin]
 
     def post(self, request, organization_id):
-        organization = get_organization_by_id(organization_id)
+        organization = _resolve_organization(str(organization_id))
         if not organization:
             raise NotFound("Organization not found.")
         self.check_object_permissions(request, organization)

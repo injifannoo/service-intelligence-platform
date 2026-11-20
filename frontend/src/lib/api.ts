@@ -1,5 +1,4 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   averageRating,
   satisfactionTrend,
@@ -8,90 +7,155 @@ import {
 } from "./metrics";
 import * as mockData from "@/lib/data";
 import { resolveOrganizationSubscription } from "./tier-limits";
+import type {
+  SemanticSearchMatch,
+  SemanticSearchRequest,
+} from "@/types/platform-contracts";
 
-const ORG_SELECT = "*, ai_insights(*), reviews(rating, created_at, status)";
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+).replace(/\/$/, "");
+
 const mockOrganizations = mockData.ORGS ?? [];
 
-const isSupabaseOffline = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  return !supabaseUrl || supabaseUrl.includes("your-project-ref");
-};
+async function fetchBackendJson<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      ...init,
+    });
+    if (!res.ok) {
+      return null;
+    }
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toView(row: any): OrgView {
-  const ins = Array.isArray(row.ai_insights)
-    ? row.ai_insights[0]
-    : row.ai_insights;
-  const reviews = (
-    (row.reviews ?? []) as {
-      rating: number;
-      created_at: string;
-      status: string;
-    }[]
-  ).filter((r) => r.status === "published");
-  const rating = averageRating(reviews.map((r) => r.rating));
-  const verified = row.status === "verified";
+  const ins =
+    row.ai_insight ??
+    (Array.isArray(row.ai_insights) ? row.ai_insights[0] : row.ai_insights);
+
+  const rawReviews = Array.isArray(row.reviews) ? row.reviews : [];
+  const publishedReviews = rawReviews.filter(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (r: any) => !r.status || r.status === "published",
+  );
+
+  const reviewCount =
+    typeof row.total_reviews === "number"
+      ? row.total_reviews
+      : publishedReviews.length;
+
+  const rating =
+    typeof row.average_rating === "number"
+      ? Math.round(row.average_rating * 10) / 10
+      : averageRating(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          publishedReviews.map((r: any) => Number(r.rating) || 0),
+        );
+
+  const verificationStatus = String(
+    row.verification_status ?? row.status ?? "",
+  ).toUpperCase();
+  const verified =
+    Boolean(row.verification?.is_verified) ||
+    verificationStatus === "VERIFIED";
+
   const sentiment = {
     positive: ins?.sentiment_positive ?? 0,
     neutral: ins?.sentiment_neutral ?? 0,
     negative: ins?.sentiment_negative ?? 0,
   };
+
+  const computedTrust =
+    typeof row.trust_score === "number"
+      ? row.trust_score
+      : trustScore({
+          rating,
+          reviewCount,
+          verified,
+          positive: sentiment.positive,
+        });
+
+  const subInput = row.subscription ?? {};
+  const subscription = resolveOrganizationSubscription(
+    subInput.plan_tier ?? subInput.tier ?? row.plan_tier ?? row.subscription_tier,
+    subInput.status ?? row.subscription_status ?? "ACTIVE",
+    subInput.current_period_end ?? row.current_period_end ?? null,
+  );
+
+  const verInput = row.verification ?? {};
+  const isFaydaVerified = Boolean(
+    verInput.is_fayda_verified ?? row.is_fayda_verified,
+  );
+  const isPhoneVerified = Boolean(
+    verInput.is_phone_verified ?? row.is_phone_verified,
+  );
+  const hasProofOfPurchase = Boolean(
+    verInput.has_proof_of_purchase ?? row.has_proof_of_purchase,
+  );
+
+  const categoryName =
+    typeof row.industry === "object" && row.industry !== null
+      ? row.industry.name
+      : (row.industry_name ?? row.category ?? "General");
+
   return {
-    id: row.id ?? row.slug,
-    slug: row.slug,
+    id: String(row.id ?? row.slug),
+    slug: row.slug || slugify(row.name || String(row.id)),
     name: row.name,
-    tagline: row.tagline,
-    description: row.description,
-    category: row.category,
+    tagline: row.tagline ?? "",
+    description: row.description ?? "",
+    category: categoryName,
     services: row.services_summary ?? [],
-    industries: row.industries ?? [],
-    location: row.location,
-    phone: row.phone,
-    email: row.email,
-    website: row.website,
-    businessHours: row.business_hours,
-    founded: row.founded,
-    size: row.size,
-    priceTier: row.price_tier,
-    responseHours: row.response_hours,
+    industries: row.industries_served ?? row.industries ?? [],
+    location: row.location ?? "",
+    phone: row.phone || null,
+    email: row.email || null,
+    website: row.website || null,
+    businessHours: row.business_hours || null,
+    founded: row.founded ?? null,
+    size: row.size ?? "10-50",
+    priceTier: row.price_tier ?? 2,
+    responseHours: row.response_hours ?? 24,
     certifications: row.certifications ?? [],
-    status: row.status,
-    ownerId: row.owner_id,
+    status: verified ? "verified" : (row.status ?? "unverified"),
+    ownerId: row.owner_id ?? null,
     verified,
     rating,
-    reviewCount: reviews.length,
-    trustScore: trustScore({
-      rating,
-      reviewCount: reviews.length,
-      verified,
-      positive: sentiment.positive,
-    }),
+    reviewCount,
+    trustScore: computedTrust,
     sentiment,
     strengths: ins?.strengths ?? [],
-    issues: ins?.issues ?? [],
+    issues: ins?.weaknesses ?? ins?.issues ?? [],
     aiSummary: ins?.summary ?? "",
     mainComplaint: ins?.main_complaint ?? "",
-    recommendation: ins?.recommendation ?? "",
-    satisfactionTrend: satisfactionTrend(reviews),
-    logoUrl: row.logo_url ?? null,
-
-    subscription: resolveOrganizationSubscription(
-      row.plan_tier ?? row.subscription_tier,
-      row.subscription_status ?? "ACTIVE",
-      row.current_period_end ?? null,
-    ),
+    recommendation: ins?.overall_consensus ?? ins?.recommendation ?? "",
+    satisfactionTrend: satisfactionTrend(publishedReviews),
+    logoUrl: row.logo_url || null,
+    subscription,
     verification: {
-      tier: row.is_fayda_verified
+      tier: isFaydaVerified
         ? "FAYDA_VERIFIED"
-        : row.is_phone_verified
+        : isPhoneVerified
           ? "PHONE_VERIFIED"
           : verified
             ? "VERIFIED_BUYER"
             : "UNVERIFIED",
-      isPhoneVerified: Boolean(row.is_phone_verified),
-      isFaydaVerified: Boolean(row.is_fayda_verified),
-      hasProofOfPurchase: Boolean(row.has_proof_of_purchase),
-      verifiedAt: row.verified_at ?? null,
+      isPhoneVerified,
+      isFaydaVerified,
+      hasProofOfPurchase,
+      verifiedAt: verInput.verified_at ?? row.verified_at ?? null,
     },
   };
 }
@@ -99,7 +163,7 @@ export function toView(row: any): OrgView {
 function getMockOrgBySlug(slug: string): OrgView | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const found = (mockOrganizations as any[]).find(
-    (o) => o.slug === slug || o.id === slug,
+    (o) => o.slug === slug || String(o.id) === slug,
   );
   return found ? toView(found) : null;
 }
@@ -107,12 +171,15 @@ function getMockOrgBySlug(slug: string): OrgView | null {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getMockReviewsByOrgId(orgId: string): any[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const standaloneReviews = (mockData as any).REVIEWS ?? (mockData as any).reviews ?? [];
+  const standaloneReviews =
+    (mockData as any).REVIEWS ?? (mockData as any).reviews ?? [];
   if (Array.isArray(standaloneReviews) && standaloneReviews.length > 0) {
     return standaloneReviews
       .filter(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (r: any) => (r.org_id === orgId || r.orgId === orgId) && (!r.status || r.status === "published"),
+        (r: any) =>
+          (r.org_id === orgId || r.orgId === orgId) &&
+          (!r.status || r.status === "published"),
       )
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((r: any, idx: number) => ({
@@ -121,7 +188,9 @@ function getMockReviewsByOrgId(orgId: string): any[] {
       }));
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const org = (mockOrganizations as any[]).find((o) => o.id === orgId || o.slug === orgId);
+  const org = (mockOrganizations as any[]).find(
+    (o) => String(o.id) === orgId || o.slug === orgId,
+  );
   return (org?.reviews ?? [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((r: any) => !r.status || r.status === "published")
@@ -145,7 +214,7 @@ function getMockServicesByOrgId(orgId: string): any[] {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const org = (mockOrganizations as any[]).find(
-    (o) => o.id === orgId || o.slug === orgId,
+    (o) => String(o.id) === orgId || o.slug === orgId,
   );
   const catalog = org?.service_catalog ?? org?.services_list;
   if (Array.isArray(catalog)) return catalog;
@@ -165,32 +234,21 @@ export const orgsQuery = () =>
   queryOptions({
     queryKey: ["orgs"],
     queryFn: async () => {
-      if (isSupabaseOffline()) {
-        return mockOrganizations.map(toView);
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from("organizations")
-          .select(ORG_SELECT)
-          .order("name", { ascending: true });
-
-        if (error || !data) {
-          console.warn(
-            "[orgsQuery] Supabase request failed, using mockOrganizations:",
-            error,
-          );
-          return mockOrganizations.map(toView);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload = await fetchBackendJson<{ results?: any[] } | any[]>(
+        "/organizations/?page_size=100",
+      );
+      if (payload) {
+        const items = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.results)
+            ? payload.results
+            : [];
+        if (items.length > 0) {
+          return items.map(toView);
         }
-
-        return data.map(toView);
-      } catch (err) {
-        console.warn(
-          "[orgsQuery] Supabase offline, using mockOrganizations:",
-          err,
-        );
-        return mockOrganizations.map(toView);
       }
+      return mockOrganizations.map(toView);
     },
   });
 
@@ -198,32 +256,14 @@ export const orgQuery = (slug: string) =>
   queryOptions({
     queryKey: ["org", slug],
     queryFn: async () => {
-      if (isSupabaseOffline()) {
-        return getMockOrgBySlug(slug);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload = await fetchBackendJson<any>(
+        `/organizations/${encodeURIComponent(slug)}/`,
+      );
+      if (payload && payload.id) {
+        return toView(payload);
       }
-
-      try {
-        const { data, error } = await supabase
-          .from("organizations")
-          .select(ORG_SELECT)
-          .eq("slug", slug)
-          .maybeSingle();
-
-        if (error) {
-          console.warn(
-            `[orgQuery] Supabase request failed for "${slug}", using mock:`,
-            error,
-          );
-          return getMockOrgBySlug(slug);
-        }
-        return data ? toView(data) : getMockOrgBySlug(slug);
-      } catch (err) {
-        console.warn(
-          `[orgQuery] Supabase offline for "${slug}", using mock:`,
-          err,
-        );
-        return getMockOrgBySlug(slug);
-      }
+      return getMockOrgBySlug(slug);
     },
   });
 
@@ -231,33 +271,31 @@ export const orgReviewsQuery = (orgId: string) =>
   queryOptions({
     queryKey: ["reviews", orgId],
     queryFn: async () => {
-      if (isSupabaseOffline()) {
-        return getMockReviewsByOrgId(orgId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload = await fetchBackendJson<{ results?: any[] } | any[]>(
+        `/organizations/${encodeURIComponent(orgId)}/reviews/?page_size=50`,
+      );
+      if (payload) {
+        const items = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.results)
+            ? payload.results
+            : [];
+        return items.map((r) => ({
+          ...r,
+          org_id: r.organization_id ?? orgId,
+          author_name: r.user_name ?? "Verified Client",
+          review_responses: r.provider_response
+            ? [
+                {
+                  body: r.provider_response,
+                  updated_at: r.provider_responded_at ?? r.updated_at,
+                },
+              ]
+            : [],
+        }));
       }
-
-      try {
-        const { data, error } = await supabase
-          .from("reviews")
-          .select("*, review_responses(body, updated_at, author_id)")
-          .eq("org_id", orgId)
-          .eq("status", "published")
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.warn(
-            `[orgReviewsQuery] Supabase failed for org "${orgId}", using mock:`,
-            error,
-          );
-          return getMockReviewsByOrgId(orgId);
-        }
-        return data ?? [];
-      } catch (err) {
-        console.warn(
-          `[orgReviewsQuery] Supabase offline for org "${orgId}", using mock:`,
-          err,
-        );
-        return getMockReviewsByOrgId(orgId);
-      }
+      return getMockReviewsByOrgId(orgId);
     },
   });
 
@@ -265,34 +303,61 @@ export const servicesQuery = (orgId: string) =>
   queryOptions({
     queryKey: ["services", orgId],
     queryFn: async () => {
-      if (isSupabaseOffline()) {
-        return getMockServicesByOrgId(orgId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload = await fetchBackendJson<{ results?: any[] } | any[]>(
+        `/organizations/${encodeURIComponent(orgId)}/services/?page_size=50`,
+      );
+      if (payload) {
+        const items = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.results)
+            ? payload.results
+            : [];
+        return items.map((s) => ({
+          ...s,
+          org_id: s.organization_id ?? orgId,
+          title: s.name,
+        }));
       }
-
-      try {
-        const { data, error } = await supabase
-          .from("services")
-          .select("*")
-          .eq("org_id", orgId)
-          .order("created_at");
-
-        if (error) {
-          console.warn(
-            `[servicesQuery] Supabase failed for org "${orgId}", using mock:`,
-            error,
-          );
-          return getMockServicesByOrgId(orgId);
-        }
-        return data ?? [];
-      } catch (err) {
-        console.warn(
-          `[servicesQuery] Supabase offline for org "${orgId}", using mock:`,
-          err,
-        );
-        return getMockServicesByOrgId(orgId);
-      }
+      return getMockServicesByOrgId(orgId);
     },
   });
+
+export async function runSemanticSearch(
+  params: SemanticSearchRequest,
+): Promise<SemanticSearchMatch[]> {
+  const payload = await fetchBackendJson<{ results?: SemanticSearchMatch[] }>(
+    "/search/ai/",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        query: params.query,
+        location: params.location,
+        verified_only: params.verifiedOnly ?? false,
+        limit: params.limit ?? 10,
+      }),
+    },
+  );
+  return payload?.results ?? [];
+}
+
+export async function runProviderComparison(
+  organizationIds: string[],
+  query?: string,
+) {
+  const payload = await fetchBackendJson<{
+    success: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any[];
+  }>("/comparison/", {
+    method: "POST",
+    body: JSON.stringify({
+      organization_ids: organizationIds,
+      ...(query ? { query } : {}),
+    }),
+  });
+  return payload?.data ?? [];
+}
 
 export const slugify = (s: string) =>
   s
