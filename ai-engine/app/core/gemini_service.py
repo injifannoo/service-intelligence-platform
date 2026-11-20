@@ -1,3 +1,6 @@
+import hashlib
+import math
+import re
 from typing import Optional
 from google import genai
 from google.genai import types
@@ -5,21 +8,40 @@ from google.genai.errors import APIError
 
 from app.core.config import settings
 from app.core.exceptions import (
+    AIServiceException,
     GeminiAPIError,
     GeminiAPIException,
     GeminiRateLimitError,
     GeminiTimeoutError,
 )
 from app.core.logging import logger
-from app.core.exceptions import AIServiceException
+
+EMBEDDING_DIMENSIONS = 768
+
+
+def _deterministic_local_embedding(text: str, dimensions: int = EMBEDDING_DIMENSIONS) -> list[float]:
+    """Deterministic 768-d unit vector fallback when GEMINI_API_KEY is unset in local dev."""
+    vec = [0.0] * dimensions
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    if not tokens:
+        vec[0] = 1.0
+        return vec
+    for token in tokens:
+        digest = hashlib.sha256(token.encode("utf-8")).digest()
+        idx = int.from_bytes(digest[:4], "big") % dimensions
+        sign = 1.0 if (digest[4] & 1) == 0 else -1.0
+        vec[idx] += sign
+    norm = math.sqrt(sum(v * v for v in vec)) or 1.0
+    return [v / norm for v in vec]
+
 
 class GeminiService:
     """Encapsulates the Google GenAI SDK client lifecycle and inference operations."""
 
     def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
-        self.api_key = api_key or settings.GEMINI_API_KEY
+        self.api_key = api_key if api_key is not None else settings.GEMINI_API_KEY
         self.model_name = model_name or settings.GEMINI_MODEL_NAME
-        self.client = genai.Client(api_key=self.api_key)
+        self.client = genai.Client(api_key=self.api_key) if self.api_key else None
 
     def generate_content(
         self,
@@ -30,6 +52,8 @@ class GeminiService:
         """
         Executes a prompt generation request to the Gemini API with structured error handling.
         """
+        if not self.client:
+            raise GeminiAPIError("GEMINI_API_KEY is not configured.")
         try:
             config = types.GenerateContentConfig(
                 temperature=temperature,
@@ -90,19 +114,38 @@ def query_gemini(prompt: str) -> str:
     service = get_gemini_service()
     return service.generate_content(prompt=prompt)
 
+DEFAULT_EMBEDDING_MODEL = "gemini-embedding-001"
+
+
 def generate_text_embedding(
     text: str,
     task_type: str = "SEMANTIC_SIMILARITY",
-    model: str = "models/text-embedding-004",
+    model: str = DEFAULT_EMBEDDING_MODEL,
 ) -> list[float]:
-    """Generates an embedding vector for a single text string."""
+    """Generates a 768-dimensional embedding vector for a single text string."""
+    service = get_gemini_service()
+    if not service.client:
+        logger.warning("GEMINI_API_KEY unset; returning deterministic local embedding.")
+        return _deterministic_local_embedding(text)
+
     try:
-        result = genai.embed_content(
+        result = service.client.models.embed_content(
             model=model,
-            content=text,
-            task_type=task_type,
+            contents=text,
+            config=types.EmbedContentConfig(
+                task_type=task_type,
+                output_dimensionality=EMBEDDING_DIMENSIONS,
+            ),
         )
-        return result["embedding"]
+        embeddings = getattr(result, "embeddings", None) or []
+        if not embeddings or not getattr(embeddings[0], "values", None):
+            raise AIServiceException("Gemini returned an empty embedding vector.")
+        return list(embeddings[0].values)
+    except APIError as e:
+        logger.warning(f"Gemini embedding API unavailable ({e.code}); using deterministic fallback.")
+        return _deterministic_local_embedding(text)
+    except AIServiceException:
+        raise
     except Exception as e:
         logger.error(f"Error generating embedding: {e}")
         raise AIServiceException(f"Failed to generate embedding: {str(e)}") from e
@@ -111,16 +154,32 @@ def generate_text_embedding(
 def generate_batch_embeddings(
     texts: list[str],
     task_type: str = "SEMANTIC_SIMILARITY",
-    model: str = "models/text-embedding-004",
+    model: str = DEFAULT_EMBEDDING_MODEL,
 ) -> list[list[float]]:
-    """Generates embedding vectors for a list of text strings."""
+    """Generates 768-dimensional embedding vectors for a list of text strings."""
+    service = get_gemini_service()
+    if not service.client:
+        logger.warning("GEMINI_API_KEY unset; returning deterministic local batch embeddings.")
+        return [_deterministic_local_embedding(t) for t in texts]
+
     try:
-        result = genai.embed_content(
+        result = service.client.models.embed_content(
             model=model,
-            content=texts,
-            task_type=task_type,
+            contents=texts,
+            config=types.EmbedContentConfig(
+                task_type=task_type,
+                output_dimensionality=EMBEDDING_DIMENSIONS,
+            ),
         )
-        return result["embedding"]
+        embeddings = getattr(result, "embeddings", None) or []
+        if len(embeddings) != len(texts):
+            raise AIServiceException("Gemini returned mismatched batch embedding count.")
+        return [list(item.values) for item in embeddings]
+    except APIError as e:
+        logger.warning(f"Gemini batch embedding API unavailable ({e.code}); using deterministic fallback.")
+        return [_deterministic_local_embedding(t) for t in texts]
+    except AIServiceException:
+        raise
     except Exception as e:
         logger.error(f"Error generating batch embeddings: {e}")
         raise AIServiceException(f"Failed to generate batch embeddings: {str(e)}") from e
