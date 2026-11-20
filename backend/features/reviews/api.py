@@ -28,7 +28,7 @@ class OrganizationReviewListCreateView(PublicReadMixin, APIView):
     def get(self, request, organization_id):
         if not Organization.objects.filter(pk=organization_id).exists():
             raise NotFound("Organization not found.")
-            
+
         queryset = get_organization_reviews(organization_id=organization_id)
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
@@ -48,6 +48,12 @@ class OrganizationReviewListCreateView(PublicReadMixin, APIView):
             organization=organization,
             user=request.user,
             rating=data["rating"],
+            title=data.get("title", ""),
             comment=data.get("comment", ""),
+            service_id=data.get("service_id"),
+            rating_technical=data.get("rating_technical"),
+            rating_communication=data.get("rating_communication"),
+            rating_delivery=data.get("rating_delivery"),
+            rating_value=data.get("rating_value"),
         )
         return Response(ReviewSerializer(review).data, status=status.HTTP_201_CREATED)

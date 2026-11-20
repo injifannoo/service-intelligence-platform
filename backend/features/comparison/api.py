@@ -1,5 +1,7 @@
 """Comparison API endpoints."""
 
+from typing import Any
+
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -17,11 +19,20 @@ class ComparisonMatrixView(APIView):
     def post(self, request):
         serializer = ComparisonRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        org_ids = serializer.validated_data["organization_ids"]
-        comparison_data = get_organizations_comparison_data(organization_ids=org_ids)
+        data: dict[str, Any] = dict(serializer.validated_data)
 
-        return Response({
-            "success": True,
-            "data": comparison_data
-        }, status=status.HTTP_200_OK)
+        org_ids = data["organization_ids"]
+        query = request.data.get("query") or request.data.get("requirement")
+
+        comparison_data = get_organizations_comparison_data(
+            organization_ids=org_ids,
+            query=str(query) if query else None,
+        )
+
+        return Response(
+            {
+                "success": True,
+                "data": comparison_data,
+            },
+            status=status.HTTP_200_OK,
+        )

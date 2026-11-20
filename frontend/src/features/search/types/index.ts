@@ -1,2 +1,1 @@
-/** Search DTOs. Canonical shapes live in `src/types`. */
-export type { SearchResults, SemanticSearchHit } from "@/types";
+export type { Intent, Scored, Rankable } from "@/lib/search";
