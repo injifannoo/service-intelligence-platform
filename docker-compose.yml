@@ -20,8 +20,11 @@ x-backend-env: &backend-env
   ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend,0.0.0.0}
   CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
   DATABASE_URL: postgres://${POSTGRES_USER:-postgres_admin}:${POSTGRES_PASSWORD:-postgres_secure_password}@postgres:5432/${POSTGRES_DB:-service_intel_db}
-  CELERY_BROKER_URL: redis://redis:6379/1
-  CELERY_RESULT_BACKEND: redis://redis:6379/2
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/1}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+  AI_ENGINE_BASE_URL: ${AI_ENGINE_BASE_URL:-http://ai_engine:8001}
+  AI_ENGINE_TIMEOUT: ${AI_ENGINE_TIMEOUT:-30.0}
   SEED_DEMO: ${SEED_DEMO:-true}
 
 services:
@@ -77,7 +80,8 @@ services:
   celery_worker:
     build: *backend-build
     container_name: sip_celery_worker
-    command: sh -c "pip install --no-cache-dir djangorestframework-simplejwt pyjwt && celery -A config worker -l INFO"
+    restart: unless-stopped
+    command: ["celery", "-A", "config", "worker", "-l", "INFO"]
     volumes:
       - ./backend:/app
     environment:
@@ -104,7 +108,7 @@ services:
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
-      NEXT_PUBLIC_USE_DEV_BACKEND: ${NEXT_PUBLIC_USE_DEV_BACKEND:-true}
+      NEXT_PUBLIC_USE_DEV_BACKEND: ${NEXT_PUBLIC_USE_DEV_BACKEND:-false}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
     depends_on:
       - backend
