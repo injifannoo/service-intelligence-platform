@@ -10,6 +10,7 @@ import { Page, Stars, TrustBadge, Loading, inputCls } from "@/components/shared/
 import { matchPercent, type Intent } from "@/lib/search";
 import { interpretLocally, smartRank } from "../api/smart-search";
 import { getOrganizations } from "@/features/organizations";
+import { runSemanticSearch } from "@/lib/api";
 import { priceLabel } from "@/lib/metrics";
 import { CATEGORIES } from "@/lib/data";
 import { understandQuery } from "@/lib/ai.functions";
@@ -26,13 +27,26 @@ export function SearchPage() {
   const [price, setPrice] = useState(0);
   const [location, setLocation] = useState("");
   const orgs = useQuery(getOrganizations());
-  
+
   const ai = useQuery({
     queryKey: ["intent", q],
     queryFn: () => understandQuery({ data: { q } }),
     enabled: aiEnabled && !!q.trim(),
     retry: false,
     staleTime: Infinity,
+  });
+
+  const semanticQuery = useQuery({
+    queryKey: ["semantic-search", q, location, verified],
+    queryFn: () =>
+      runSemanticSearch({
+        query: q,
+        location: location || undefined,
+        verifiedOnly: verified,
+        limit: 25,
+      }),
+    enabled: !!q.trim(),
+    staleTime: 60_000,
   });
 
   const intent: Intent = useMemo(() => {
@@ -57,8 +71,40 @@ export function SearchPage() {
       list = list.filter((o) => o.location.toLowerCase().includes(location.toLowerCase()));
     const v = verified || intent.verifiedOnly;
     if (v) list = list.filter((o) => o.verified);
-    return smartRank(intent, list);
-  }, [orgs.data, intent, verified, category, price, location]);
+
+    const ranked = smartRank(intent, list);
+    const semanticMatches = semanticQuery.data ?? [];
+    if (!q.trim() || semanticMatches.length === 0) {
+      return ranked;
+    }
+
+    const matchByOrg = new Map(
+      semanticMatches.flatMap((m) => [
+        [m.orgId, m],
+        [m.slug, m],
+      ]),
+    );
+
+    return ranked
+      .map((item) => {
+        const sem = matchByOrg.get(item.org.id) ?? matchByOrg.get(item.org.slug);
+        if (!sem) return item;
+        const semanticBoost = Math.round((sem.semanticScore || sem.combinedRank || 0) * 35);
+        const semanticReasons: string[] = [];
+        if (sem.semanticScore > 0) {
+          semanticReasons.push(`Semantic match (${Math.round(sem.semanticScore * 100)}%)`);
+        }
+        if (Array.isArray(sem.matchedConcepts) && sem.matchedConcepts.length > 0) {
+          semanticReasons.push(`Concepts: ${sem.matchedConcepts.slice(0, 3).join(", ")}`);
+        }
+        return {
+          ...item,
+          score: item.score + semanticBoost,
+          reasons: [...new Set([...semanticReasons, ...item.reasons])],
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+  }, [orgs.data, intent, verified, category, price, location, q, semanticQuery.data]);
 
   const chips = [
     ...intent.categories,

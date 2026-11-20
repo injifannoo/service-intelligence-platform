@@ -1,7 +1,15 @@
 from uuid import UUID
-from django.db.models import QuerySet
 
-from .models import Organization, VerificationStatus
+from django.db.models import Avg, Count, Q, QuerySet
+
+from .models import Organization
+
+
+def _annotated_org_queryset() -> QuerySet[Organization]:
+    return Organization.objects.select_related("industry", "owner", "ai_insight").annotate(
+        average_rating=Avg("reviews__rating"),
+        total_reviews=Count("reviews", distinct=True),
+    )
 
 
 def get_organizations(
@@ -11,11 +19,8 @@ def get_organizations(
     verification_status: str | None = None,
     search_query: str | None = None,
 ) -> QuerySet[Organization]:
-    """Retrieves organizations with optional filtering.
-    
-    Includes select_related on `industry` to eliminate N+1 database queries.
-    """
-    queryset = Organization.objects.select_related("industry").all()
+    """Retrieves organizations with optional filtering and aggregated rating metrics."""
+    queryset = _annotated_org_queryset()
 
     if industry_id:
         queryset = queryset.filter(industry_id=industry_id)
@@ -27,15 +32,21 @@ def get_organizations(
         queryset = queryset.filter(verification_status=verification_status)
 
     if search_query:
-        queryset = queryset.filter(name__icontains=search_query.strip())
+        q = search_query.strip()
+        queryset = queryset.filter(
+            Q(name__icontains=q)
+            | Q(tagline__icontains=q)
+            | Q(description__icontains=q)
+        )
 
-    return queryset
+    return queryset.order_by("-created_at")
 
 
 def get_organization_by_id(organization_id: UUID | str) -> Organization | None:
-    """Fetches a single organization by its UUID."""
-    return (
-        Organization.objects.select_related("industry", "owner")
-        .filter(pk=organization_id)
-        .first()
-    )
+    """Fetches a single organization by its UUID with preloaded relations and rating metrics."""
+    return _annotated_org_queryset().filter(pk=organization_id).first()
+
+
+def get_organization_by_slug(slug: str) -> Organization | None:
+    """Fetches a single organization by its URL slug with preloaded relations and rating metrics."""
+    return _annotated_org_queryset().filter(slug=slug).first()
