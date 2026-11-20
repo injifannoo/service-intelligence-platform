@@ -14,5 +14,14 @@ from core.health import HealthView
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/health/", HealthView.as_view(), name="health"),
-    path("api/v1/", include("features.users.urls")),
+    path("health/", HealthView.as_view(), name="health"),
+    path("api/v1/", include("features.users.urls", namespace="users")),
+    path("api/v1/", include("features.organizations.urls", namespace="organizations")),
+    path("api/v1/", include("features.services.urls", namespace="services")),
+    path("api/v1/", include("features.search.urls", namespace="search")),
+    path("api/v1/", include("features.reviews.urls", namespace="reviews")),
+    path("api/v1/", include("features.bookings.urls", namespace="bookings")),
+    path("api/v1/", include("features.notifications.urls", namespace="notifications")),
+    path("api/v1/", include("features.comparison.urls", namespace="comparison")),
+    path("api/v1/", include("features.analytics.urls", namespace="analytics")),
 ]
