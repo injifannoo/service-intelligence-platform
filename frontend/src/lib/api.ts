@@ -40,6 +40,15 @@ async function fetchBackendJson<T>(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractList(payload: any): any[] {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.results)) return payload.results;
+  return [];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toView(row: any): OrgView {
   const ins =
     row.ai_insight ??
@@ -234,19 +243,12 @@ export const orgsQuery = () =>
   queryOptions({
     queryKey: ["orgs"],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload = await fetchBackendJson<{ results?: any[] } | any[]>(
+      const payload = await fetchBackendJson<unknown>(
         "/organizations/?page_size=100",
       );
-      if (payload) {
-        const items = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload.results)
-            ? payload.results
-            : [];
-        if (items.length > 0) {
-          return items.map(toView);
-        }
+      const items = extractList(payload);
+      if (items.length > 0) {
+        return items.map(toView);
       }
       return mockOrganizations.map(toView);
     },
@@ -260,8 +262,9 @@ export const orgQuery = (slug: string) =>
       const payload = await fetchBackendJson<any>(
         `/organizations/${encodeURIComponent(slug)}/`,
       );
-      if (payload && payload.id) {
-        return toView(payload);
+      const record = payload?.data?.id ? payload.data : payload;
+      if (record && record.id) {
+        return toView(record);
       }
       return getMockOrgBySlug(slug);
     },
@@ -271,16 +274,11 @@ export const orgReviewsQuery = (orgId: string) =>
   queryOptions({
     queryKey: ["reviews", orgId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload = await fetchBackendJson<{ results?: any[] } | any[]>(
+      const payload = await fetchBackendJson<unknown>(
         `/organizations/${encodeURIComponent(orgId)}/reviews/?page_size=50`,
       );
       if (payload) {
-        const items = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload.results)
-            ? payload.results
-            : [];
+        const items = extractList(payload);
         return items.map((r) => ({
           ...r,
           org_id: r.organization_id ?? orgId,
@@ -303,16 +301,11 @@ export const servicesQuery = (orgId: string) =>
   queryOptions({
     queryKey: ["services", orgId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload = await fetchBackendJson<{ results?: any[] } | any[]>(
+      const payload = await fetchBackendJson<unknown>(
         `/organizations/${encodeURIComponent(orgId)}/services/?page_size=50`,
       );
       if (payload) {
-        const items = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload.results)
-            ? payload.results
-            : [];
+        const items = extractList(payload);
         return items.map((s) => ({
           ...s,
           org_id: s.organization_id ?? orgId,
@@ -326,19 +319,24 @@ export const servicesQuery = (orgId: string) =>
 export async function runSemanticSearch(
   params: SemanticSearchRequest,
 ): Promise<SemanticSearchMatch[]> {
-  const payload = await fetchBackendJson<{ results?: SemanticSearchMatch[] }>(
-    "/search/ai/",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        query: params.query,
-        location: params.location,
-        verified_only: params.verifiedOnly ?? false,
-        limit: params.limit ?? 10,
-      }),
-    },
-  );
-  return payload?.results ?? [];
+  const payload = await fetchBackendJson<{
+    results?: SemanticSearchMatch[];
+    data?: SemanticSearchMatch[] | { results?: SemanticSearchMatch[] };
+  }>("/search/ai/", {
+    method: "POST",
+    body: JSON.stringify({
+      query: params.query,
+      location: params.location,
+      verified_only: params.verifiedOnly ?? false,
+      limit: params.limit ?? 10,
+    }),
+  });
+  if (Array.isArray(payload?.results)) return payload.results;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (payload?.data && Array.isArray(payload.data.results)) {
+    return payload.data.results;
+  }
+  return [];
 }
 
 export async function runProviderComparison(
