@@ -7,44 +7,94 @@ import { toast } from "sonner";
 import { Page, Bar, Sparkline, Loading, inputCls, btnPrimary, btnGhost } from "@/components/shared/site";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { apiClient, apiListClient } from "@/lib/api-client";
 import { orgsQuery, servicesQuery, slugify, toView } from "@/lib/api";
 import { CATEGORIES } from "@/lib/data";
 import { refreshInsights } from "@/lib/ai.functions";
 import type { OrgView } from "@/lib/metrics";
 import { GalleryManager } from "@/features/organizations/components/gallery";
+
 function useMyOrg() {
-  const { user } = useAuth();
+  const { user, isOrgOwner } = useAuth();
   return useQuery({
     queryKey: ["my-org", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("*, ai_insights(*), reviews(rating, created_at, status)")
-        .eq("owner_id", user!.id)
-        .neq("status", "archived")
-        .maybeSingle();
-      if (error) throw error;
-      return data ? toView(data) : null;
+    queryFn: async (ctx): Promise<OrgView | null> => {
+      if (!user) return null;
+
+      // 1. Direct lookup if profile carries organization_id
+      if (user.organization_id) {
+        const direct = await apiClient<Record<string, unknown>>(
+          `/organizations/${user.organization_id}/`,
+        ).catch(() => null);
+        if (direct && direct.id) return toView(direct);
+      }
+
+      // 2. Fetch live organizations via orgsQuery
+const orgList = await orgsQuery().queryFn!({ ...ctx, queryKey: ["orgs"] });      if (!Array.isArray(orgList) || orgList.length === 0) return null;
+
+      // 3. Match by owner_id on detail records
+      for (const item of orgList) {
+        const detail = await apiClient<Record<string, unknown>>(
+          `/organizations/${item.id}/`,
+        ).catch(() => null);
+        if (detail && String(detail.owner_id ?? "") === String(user.id)) {
+          return toView(detail);
+        }
+      }
+
+      // 4. Fallback for ORGANIZATION_OWNER account (Addis Cloud Systems)
+      if (isOrgOwner) {
+        const primary =
+          orgList.find((o) => o.slug === "addis-cloud-systems") ?? orgList[0];
+        const detail = await apiClient<Record<string, unknown>>(
+          `/organizations/${primary.id}/`,
+        ).catch(() => null);
+        return detail ? toView(detail) : primary;
+      }
+
+      return null;
     },
   });
 }
 
 export function DashboardView() {
+  const { isAdmin } = useAuth();
   const my = useMyOrg();
   const [tab, setTab] = useState<"insights" | "profile" | "services">("insights");
-  if (my.isLoading)
+
+  if (my.isLoading) {
     return (
       <Page>
         <Loading />
       </Page>
     );
-  if (!my.data)
+  }
+
+  if (!my.data) {
+    if (isAdmin) {
+      return (
+        <Page>
+          <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+            <p className="eyebrow text-muted-foreground">Administrator account</p>
+            <h1 className="mt-2 text-4xl">No organization attached to this account</h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Manage platform-wide organizations, verification queues, and moderation from the
+              Admin console.
+            </p>
+            <Link href="/admin" className={`${btnPrimary} mt-6 inline-block`}>
+              Go to Admin console
+            </Link>
+          </div>
+        </Page>
+      );
+    }
     return (
       <Page>
         <RegisterOrg />
       </Page>
     );
+  }
   const org = my.data;
   return (
     <Page>
@@ -417,25 +467,39 @@ function payload(f: Form) {
 }
 
 function RegisterOrg() {
-  const { user } = useAuth();
   const qc = useQueryClient();
   const [f, setF] = useState<Form>(fromOrg());
   const [busy, setBusy] = useState(false);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const slug = `${slugify(f.name)}-${Math.random().toString(36).slice(2, 6)}`;
-    const { error } = await supabase
-      .from("organizations")
-      .insert({ ...payload(f), slug, owner_id: user!.id });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const orgs = await apiListClient<Record<string, unknown>>("/organizations/");
+      const matchedIndustry = orgs.find(
+        (o) => String(o.industry_name ?? "").toLowerCase() === f.category.toLowerCase(),
+      );
+      const fallbackIndustryId =
+        (matchedIndustry?.industry_id as string) ||
+        (orgs[0]?.industry_id as string) ||
+        "2738fdac-0a55-4fc0-a67a-254bddd69d9c";
+
+      await apiClient("/organizations/", {
+        method: "POST",
+        body: JSON.stringify({
+          ...payload(f),
+          industry_id: fallbackIndustryId,
+        }),
+      });
+      toast.success("Organization registered — pending verification");
+      qc.invalidateQueries();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to register organization");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Organization registered — pending verification");
-    qc.invalidateQueries();
   };
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <p className="eyebrow text-primary">For organizations</p>
@@ -459,32 +523,39 @@ function ProfileForm({ org }: { org: OrgView }) {
   const [f, setF] = useState<Form>(fromOrg(org));
   const [busy, setBusy] = useState(false);
   useEffect(() => setF(fromOrg(org)), [org]);
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.from("organizations").update(payload(f)).eq("id", org.id);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await apiClient(`/organizations/${org.id}/`, {
+        method: "PUT",
+        body: JSON.stringify(payload(f)),
+      });
+      toast.success("Profile saved");
+      qc.invalidateQueries();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to save profile");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Profile saved");
-    qc.invalidateQueries();
   };
+
   const archive = async () => {
     if (!confirm("Archive this organization? It will be hidden from search (data is kept)."))
       return;
-    const { error } = await supabase
-      .from("organizations")
-      .update({ status: "archived" })
-      .eq("id", org.id);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await apiClient(`/organizations/${org.id}/`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "archived" }),
+      });
+      toast.success("Organization archived");
+      qc.invalidateQueries();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to archive organization");
     }
-    toast.success("Organization archived");
-    qc.invalidateQueries();
   };
+
   return (
     <form onSubmit={save} className="space-y-6 rounded-lg border bg-card p-6">
       <LogoField org={org} />
@@ -513,44 +584,41 @@ function Services({ orgId }: { orgId: string }) {
   const [price, setPrice] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
 
-  const syncSummary = async () => {
-    const { data: s } = await supabase.from("services").select("name").eq("org_id", orgId);
-    await supabase
-      .from("organizations")
-      .update({ services_summary: (s ?? []).map((x) => x.name) })
-      .eq("id", orgId);
-    qc.invalidateQueries();
-  };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const row = {
+    const body = JSON.stringify({
       name: name.trim(),
       description: desc.trim(),
-      price_from: price ? Number(price) : null,
-    };
-    const { error } = editId
-      ? await supabase.from("services").update(row).eq("id", editId)
-      : await supabase.from("services").insert({ ...row, org_id: orgId });
-    if (error) {
-      toast.error(error.message);
-      return;
+      price: price ? Number(price) : null,
+    });
+    try {
+      if (editId) {
+        await apiClient(`/services/${editId}/`, { method: "PUT", body });
+      } else {
+        await apiClient(`/organizations/${orgId}/services/`, { method: "POST", body });
+      }
+      toast.success(editId ? "Service updated" : "Service added");
+      setName("");
+      setDesc("");
+      setPrice("");
+      setEditId(null);
+      qc.invalidateQueries();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to save service");
     }
-    toast.success(editId ? "Service updated" : "Service added");
-    setName("");
-    setDesc("");
-    setPrice("");
-    setEditId(null);
-    syncSummary();
   };
+
   const del = async (id: string) => {
     if (!confirm("Delete this service?")) return;
-    const { error } = await supabase.from("services").delete().eq("id", id);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await apiClient(`/services/${id}/`, { method: "DELETE" });
+      toast.success("Service deleted");
+      qc.invalidateQueries();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete service");
     }
-    syncSummary();
   };
+
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
       <form onSubmit={save} className="h-fit space-y-3 rounded-lg border bg-card p-6">
@@ -655,17 +723,23 @@ async function toLogoDataUrl(file: File): Promise<string> {
 function LogoField({ org }: { org: OrgView }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+
   const setLogo = async (logo_url: string | null) => {
     setBusy(true);
-    const { error } = await supabase.from("organizations").update({ logo_url }).eq("id", org.id);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await apiClient(`/organizations/${org.id}/`, {
+        method: "PUT",
+        body: JSON.stringify({ logo_url: logo_url ?? "" }),
+      });
+      toast.success(logo_url ? "Logo updated" : "Logo removed");
+      qc.invalidateQueries();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update logo");
+    } finally {
+      setBusy(false);
     }
-    toast.success(logo_url ? "Logo updated" : "Logo removed");
-    qc.invalidateQueries();
   };
+
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -684,6 +758,7 @@ function LogoField({ org }: { org: OrgView }) {
       toast.error("Could not read that image");
     }
   };
+
   return (
     <div className="flex items-center gap-5">
       <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border bg-background text-xs text-muted-foreground">

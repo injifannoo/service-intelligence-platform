@@ -32,6 +32,7 @@ type AuthState = {
   roles: Role[];
   loading: boolean;
   isAdmin: boolean;
+  isOrgOwner: boolean;
   displayName: string;
   accessToken: string | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -76,6 +77,7 @@ const Ctx = createContext<AuthState>({
   roles: [],
   loading: true,
   isAdmin: false,
+  isOrgOwner: false,
   displayName: "",
   accessToken: null,
   signIn: async () => {},
@@ -211,6 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roles,
         loading,
         isAdmin: roles.includes("admin"),
+        isOrgOwner: roles.includes("org_owner") || Boolean(user?.organization_id),
         displayName,
         accessToken,
         signIn,

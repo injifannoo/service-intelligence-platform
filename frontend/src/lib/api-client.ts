@@ -152,7 +152,8 @@ export async function apiListClient<T>(path: string): Promise<T[]> {
     if (parsedUrl.origin !== base.origin || !parsedUrl.pathname.startsWith(base.pathname)) {
       break;
     }
-    currentPath = `${parsedUrl.pathname}${parsedUrl.search}`;
+    const relativePath = parsedUrl.pathname.slice(base.pathname.length - 1);
+    currentPath = `${relativePath}${parsedUrl.search}`;
   }
 
   return results;

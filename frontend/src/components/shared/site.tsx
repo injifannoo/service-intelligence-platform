@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { NotificationBell } from "@/features/notifications";
 
 export function SiteHeader() {
-  const { user, isAdmin, displayName, signOut: authSignOut } = useAuth();
+  const { user, isAdmin, isOrgOwner, displayName, signOut: authSignOut } = useAuth();
   const qc = useQueryClient();
   const router = useRouter();
   const signOut = async () => {
@@ -29,23 +29,16 @@ export function SiteHeader() {
           <Link href="/search" className="text-muted-foreground hover:text-foreground">
             Discover
           </Link>
-          <Link
-            href="/compare"
-            className="text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/compare" className="text-muted-foreground hover:text-foreground">
             Compare
           </Link>
-          <Link
-            href="/dashboard"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            For organizations
-          </Link>
+          {(!isAdmin || isOrgOwner) && (
+            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
+              {isOrgOwner ? "Organization workspace" : "For organizations"}
+            </Link>
+          )}
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Link href="/admin" className="text-muted-foreground hover:text-foreground">
               Admin
             </Link>
           )}
