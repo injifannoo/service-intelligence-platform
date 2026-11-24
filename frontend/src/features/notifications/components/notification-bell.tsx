@@ -2,15 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
-import { notificationsQuery, markRead } from "../api/notifications";
+import { notificationsQuery, markRead, markAllRead } from "../api/notifications";
 import { unreadCount } from "../types";
 
 export function NotificationBell({ userId }: { userId: string }) {
   const qc = useQueryClient();
-  const { data = [] } = useQuery(notificationsQuery(userId));
+  const { data } = useQuery(notificationsQuery(userId));
+  const items = Array.isArray(data) ? data : [];
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const unread = unreadCount(data);
+  const unread = unreadCount(items);
 
   useEffect(() => {
     if (!open) return;
@@ -22,7 +23,7 @@ export function NotificationBell({ userId }: { userId: string }) {
   }, [open]);
 
   const readAll = async () => {
-    await markRead(data.filter((n) => !n.read_at).map((n) => n.id));
+    await markAllRead();
     qc.invalidateQueries({ queryKey: ["notifications", userId] });
   };
 
@@ -31,7 +32,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       <button
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
         onClick={() => setOpen((o) => !o)}
-        className="relative grid h-9 w-9 place-items-center rounded-md border hover:bg-muted"
+        className="relative grid h-9 w-9 cursor-pointer place-items-center rounded-md border hover:bg-muted"
       >
         <Bell className="h-4 w-4" />
         {unread > 0 && (
@@ -45,36 +46,48 @@ export function NotificationBell({ userId }: { userId: string }) {
           <div className="flex items-center justify-between border-b px-4 py-3">
             <span className="font-display text-base">Notifications</span>
             {unread > 0 && (
-              <button onClick={readAll} className="text-xs text-muted-foreground hover:text-foreground">
+              <button
+                onClick={readAll}
+                className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
+              >
                 Mark all read
               </button>
             )}
           </div>
           <ul className="max-h-96 overflow-y-auto">
-            {data.length === 0 && (
-              <li className="px-4 py-8 text-center text-sm text-muted-foreground">You're all caught up.</li>
-            )}
-            {data.map((n) => (
-              <li key={n.id} className={n.read_at ? "" : "bg-accent/40"}>
-                <Link
-                  href={n.link ?? "/"}
-                  onClick={async () => {
-                    setOpen(false);
-                    if (!n.read_at) {
-                      await markRead([n.id]);
-                      qc.invalidateQueries({ queryKey: ["notifications", userId] });
-                    }
-                  }}
-                  className="block border-b px-4 py-3 hover:bg-muted"
-                >
-                  <p className="text-sm font-medium">{n.title}</p>
-                  {n.body && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>}
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {new Date(n.created_at).toLocaleString()}
-                  </p>
-                </Link>
+            {items.length === 0 && (
+              <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                You're all caught up.
               </li>
-            ))}
+            )}
+            {items.map((n) => {
+              const description = n.body ?? n.message;
+              return (
+                <li key={n.id} className={n.read_at ? "" : "bg-accent/40"}>
+                  <Link
+                    href={n.link ?? "/"}
+                    onClick={async () => {
+                      setOpen(false);
+                      if (!n.read_at) {
+                        await markRead([n.id]);
+                        qc.invalidateQueries({ queryKey: ["notifications", userId] });
+                      }
+                    }}
+                    className="block border-b px-4 py-3 hover:bg-muted"
+                  >
+                    <p className="text-sm font-medium">{n.title}</p>
+                    {description && (
+                      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                        {description}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {new Date(n.created_at).toLocaleString()}
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
