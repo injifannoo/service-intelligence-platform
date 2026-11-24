@@ -1,5 +1,4 @@
 import { siteConfig } from "@/config/site-config";
-import { supabase } from "@/integrations/supabase/client";
 import * as mockData from "@/lib/data";
 
 /** Standard API envelope from 05_API_Design. */
@@ -21,34 +20,34 @@ export class ApiError extends Error {
 }
 
 /** Resolves mock data from data.ts based on endpoint URL */
-function getMockFallback(path: string): any {
+function getMockFallback(path: string): unknown {
   const clean = path.split("?")[0].replace(/^\/|\/$/g, "");
 
   if (clean.startsWith("organizations")) {
     const parts = clean.split("/");
-    const orgs = (mockData as any).organizations || (mockData as any).mockOrganizations || [];
-    if (parts.length > 1 && parts[1]) {
-      return orgs.find((o: any) => o.slug === parts[1] || o.id === parts[1]) || orgs[0];
+    const orgs = (mockData as Record<string, unknown>).organizations || [];
+    if (parts.length > 1 && parts[1] && Array.isArray(orgs)) {
+      return orgs.find((o: { slug?: string; id?: string }) => o.slug === parts[1] || o.id === parts[1]) || orgs[0];
     }
     return orgs;
   }
 
   if (clean.startsWith("services")) {
-    return (mockData as any).services || (mockData as any).mockServices || [];
+    return (mockData as Record<string, unknown>).services || [];
   }
 
   if (clean.startsWith("categories")) {
-    return (mockData as any).categories || (mockData as any).mockCategories || [];
+    return (mockData as Record<string, unknown>).categories || [];
   }
 
   if (clean.startsWith("reviews")) {
-    return (mockData as any).reviews || (mockData as any).mockReviews || [];
+    return (mockData as Record<string, unknown>).reviews || [];
   }
 
   return null;
 }
 
-/** True when the app should use the Django REST backend instead of Lovable Cloud. */
+/** True when the app should use the Django REST backend. */
 export const usesRestBackend = () => !!siteConfig.apiBaseUrl;
 
 /** Fetch wrapper for /api/v1 with bearer auth, error-envelope handling, and mock fallback. */
@@ -61,7 +60,6 @@ export async function apiClient<T>(
     const data = getMockFallback(path);
     if (data !== null) {
       console.warn(`[apiClient] ${reason} - falling back to data.ts for: ${path}`);
-      // Return in DRF page structure if requested by callers expecting paginated responses
       if (Array.isArray(data)) {
         return { count: data.length, next: null, previous: null, results: data } as unknown as T;
       }
@@ -70,28 +68,29 @@ export async function apiClient<T>(
     return null;
   };
 
-  // If backend base URL is completely absent, resolve fallback immediately
   if (!siteConfig.apiBaseUrl) {
     const mock = fallback("No API base URL configured");
     if (mock !== null) return mock;
   }
 
   const headers = new Headers(init.headers);
-  headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
-  if (options.authenticated !== false) {
-    const { data } = await supabase.auth.getSession();
-    if (data.session?.access_token) {
-      headers.set("Authorization", `Bearer ${data.session.access_token}`);
+  if (options.authenticated !== false && typeof window !== "undefined") {
+    const token = localStorage.getItem("asip_access_token");
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
     }
   }
 
   let res: Response;
   try {
     res = await fetch(`${siteConfig.apiBaseUrl}${path}`, { ...init, headers });
-  } catch (networkError: any) {
-    // Intercept ERR_CONNECTION_REFUSED or offline state
-    const mock = fallback(networkError?.message || "Backend offline");
+  } catch (networkError: unknown) {
+    const msg = networkError instanceof Error ? networkError.message : "Backend offline";
+    const mock = fallback(msg);
     if (mock !== null) return mock;
     throw networkError;
   }
@@ -124,7 +123,7 @@ export async function apiClient<T>(
   return body as T;
 }
 
-/** Public directory reads collect every page without sending Cloud credentials to Django. */
+/** Public directory reads collect every page cleanly. */
 export async function apiListClient<T>(path: string): Promise<T[]> {
   const results: T[] = [];
   const visited = new Set<string>();
@@ -137,7 +136,7 @@ export async function apiListClient<T>(path: string): Promise<T[]> {
     visited.add(currentPath);
 
     const page: Page<T> = await apiClient<Page<T>>(currentPath, {}, { authenticated: false });
-    
+
     if (Array.isArray(page)) {
       results.push(...page);
       break;
@@ -153,7 +152,8 @@ export async function apiListClient<T>(path: string): Promise<T[]> {
     if (parsedUrl.origin !== base.origin || !parsedUrl.pathname.startsWith(base.pathname)) {
       break;
     }
-    currentPath = `${parsedUrl.pathname}${parsedUrl.search}`;
+    const relativePath = parsedUrl.pathname.slice(base.pathname.length - 1);
+    currentPath = `${relativePath}${parsedUrl.search}`;
   }
 
   return results;
