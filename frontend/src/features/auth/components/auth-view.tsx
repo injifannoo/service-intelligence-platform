@@ -3,14 +3,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { Page, inputCls, btnPrimary, btnGhost } from "@/components/shared/site";
+import { Page, inputCls, btnPrimary } from "@/components/shared/site";
 
 export function AuthView() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/";
-  const { user } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
   const [email, setEmail] = useState("");
@@ -27,44 +26,20 @@ export function AuthView() {
     setBusy(true);
     try {
       if (mode === "in") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        await signIn(email, password);
         toast.success("Welcome back");
       } else if (mode === "up") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin, data: { display_name: name } },
-        });
-        if (error) throw error;
-        toast.success("Check your email to confirm your account.");
-        setMode("in");
+        await signUp(name, email, password);
+        await signIn(email, password);
+        toast.success("Account created");
       } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (error) throw error;
-        toast.success("Password reset link sent to your email.");
+        toast.info("Password reset instructions sent if the account exists.");
         setMode("in");
       }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
       setBusy(false);
-    }
-  };
-
-  const google = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}${redirect}`,
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      toast.error((err as Error).message);
     }
   };
 
@@ -84,24 +59,19 @@ export function AuthView() {
             Customers write verified reviews and save comparisons. Organizations claim a profile,
             manage services and see AI insights.
           </p>
+          <div className="mt-6 rounded-md border bg-muted/40 p-4 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Seeded demo accounts (Password123!):</p>
+            <p className="mt-1">Customer: customer@asip.dev · Verified: verified@asip.dev</p>
+            <p>Organization Owner: owner@asip.dev · Admin: admin@asip.dev</p>
+          </div>
         </div>
         <div className="rounded-lg border bg-card p-6 shadow-card">
-          {mode !== "forgot" && (
-            <>
-              <button onClick={google} className={`${btnGhost} w-full`}>
-                Continue with Google
-              </button>
-              <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="h-px flex-1 bg-border" />
-                or
-                <span className="h-px flex-1 bg-border" />
-              </div>
-            </>
-          )}
           <form onSubmit={submit} className="space-y-3">
             {mode === "up" && (
               <input
                 required
+                name="name"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Full name"
@@ -110,7 +80,9 @@ export function AuthView() {
             )}
             <input
               required
+              name="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
@@ -119,8 +91,10 @@ export function AuthView() {
             {mode !== "forgot" && (
               <input
                 required
-                minLength={6}
+                name="password"
+                minLength={8}
                 type="password"
+                autoComplete={mode === "up" ? "new-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
@@ -129,7 +103,7 @@ export function AuthView() {
             )}
             <button disabled={busy} className={`${btnPrimary} w-full py-2.5`}>
               {busy
-                ? "Please wait…"
+                ? "Please wait..."
                 : mode === "in"
                   ? "Sign in"
                   : mode === "up"
@@ -139,16 +113,25 @@ export function AuthView() {
           </form>
           <div className="mt-4 flex justify-between text-sm">
             {mode === "in" ? (
-              <button onClick={() => setMode("up")} className="text-primary hover:underline">
+              <button
+                type="button"
+                onClick={() => setMode("up")}
+                className="text-primary hover:underline"
+              >
                 Create account
               </button>
             ) : (
-              <button onClick={() => setMode("in")} className="text-primary hover:underline">
+              <button
+                type="button"
+                onClick={() => setMode("in")}
+                className="text-primary hover:underline"
+              >
                 Back to sign in
               </button>
             )}
             {mode === "in" && (
               <button
+                type="button"
                 onClick={() => setMode("forgot")}
                 className="text-muted-foreground hover:underline"
               >

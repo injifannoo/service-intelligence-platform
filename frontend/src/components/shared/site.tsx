@@ -4,17 +4,16 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/features/notifications";
 
 export function SiteHeader() {
-  const { user, isAdmin, displayName } = useAuth();
+  const { user, isAdmin, displayName, signOut: authSignOut } = useAuth();
   const qc = useQueryClient();
   const router = useRouter();
   const signOut = async () => {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    await authSignOut();
     router.replace("/auth");
   };
   return (
@@ -46,7 +45,7 @@ export function SiteHeader() {
             <Link
               href="/admin"
               className="text-muted-foreground hover:text-foreground"
-              >
+            >
               Admin
             </Link>
           )}
@@ -55,14 +54,17 @@ export function SiteHeader() {
           <div className="flex items-center gap-3 text-sm">
             <NotificationBell userId={user.id} />
             <span className="hidden text-muted-foreground sm:inline">{displayName}</span>
-            <button onClick={signOut} className="rounded-md border px-3 py-2 hover:bg-muted">
+            <button
+              onClick={signOut}
+              className="cursor-pointer rounded-md border px-3 py-2 hover:bg-muted"
+            >
               Sign out
             </button>
           </div>
         ) : (
           <Link
             href="/auth"
-            className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
+            className="cursor-pointer rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
           >
             Sign in
           </Link>
@@ -168,5 +170,6 @@ export function Loading({ label = "Loading…" }: { label?: string }) {
 export const inputCls =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 export const btnPrimary =
-  "rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:opacity-90 disabled:opacity-50";
-export const btnGhost = "rounded-md border px-4 py-2 text-sm hover:bg-muted disabled:opacity-50";
+  "cursor-pointer rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+export const btnGhost =
+  "cursor-pointer rounded-md border px-4 py-2 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50";
